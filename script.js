@@ -1165,6 +1165,14 @@ function handleResult(res, method, expr, tableHtml) {
   /* Mostrar botón de descarga T2 */
   if (typeof numerixExport !== 'undefined') numerixExport.showT2Bar();
 
+  /* En mobile, hacer scroll al resultado */
+  if (window.innerWidth <= 768) {
+    setTimeout(() => {
+      const el = document.getElementById('methodIterTable');
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 100);
+  }
+
   return converged
     ? `Convergencia en ${iterations} iteración(es). Raíz ≈ ${fmt(root,8)}`
     : `Máximo de ${iterations} iteraciones alcanzado. Raíz aprox ≈ ${fmt(root,8)}`;

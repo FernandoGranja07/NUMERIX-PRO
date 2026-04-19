@@ -238,7 +238,7 @@ body {
   border-right: 1px solid var(--border);
   padding: 1.25rem 0;
   position: sticky;
-  top: 112px;
+  top: 112px; /* header(62) + nav(50) */
   height: calc(100vh - 112px);
   overflow-y: auto;
 }
@@ -860,11 +860,11 @@ tbody tr:hover { background: var(--gray-50); }
    MOBILE
 ══════════════════════════════════════════════════════════════ */
 @media (max-width: 768px) {
-  .app-header { padding: 0 1rem; height: 56px; }
+  .app-header { padding: 0 1rem; height: var(--header-h-mobile); }
   .header-brand h1 { font-size: 0.95rem; }
   .header-brand p  { display: none; }
 
-  .theme-nav { top: 56px; padding: 0 0.5rem; gap: 0; }
+  .theme-nav { top: var(--header-h-mobile); padding: 0 0.5rem; gap: 0; }
   .theme-tab { padding: 0 0.75rem; font-size: 0.72rem; }
   .theme-tab .tab-sublabel { display: none; }
 
@@ -893,7 +893,7 @@ tbody tr:hover { background: var(--gray-50); }
     padding: 0.25rem 0.5rem;
     gap: 0.25rem;
     position: sticky;
-    top: calc(56px + 50px);
+    top: calc(var(--header-h-mobile) + var(--nav-h-mobile));
     z-index: 100;
     scrollbar-width: none;
   }
@@ -2484,3 +2484,344 @@ tbody tr:hover { background: var(--gray-50); }
   transform: translateY(-1px);
 }
 .btn-download-excel:active { transform: translateY(0); }
+
+/* ══════════════════════════════════════════════════════════════
+   NUMERIX — RESPONSIVE COMPLETO
+   Breakpoints: 480px (xs), 640px (sm), 768px (md), 1024px (lg)
+   Estrategia: mobile-first corrections sobre base existente
+══════════════════════════════════════════════════════════════ */
+
+/* ── Variables responsive ─────────────────────────────────── */
+:root {
+  --header-h-mobile: 54px;
+  --nav-h-mobile:    44px;
+  --topbar-total:    calc(var(--header-h-mobile) + var(--nav-h-mobile));
+}
+
+/* ════════════════════════════════════════════════════════════
+   MOBILE — max 480px (xs: teléfonos pequeños)
+════════════════════════════════════════════════════════════ */
+@media (max-width: 480px) {
+
+  /* ── Header ── */
+  .app-header {
+    height: var(--header-h-mobile);
+    padding: 0 .875rem;
+    gap: .625rem;
+  }
+  .header-icon-numerix { width: 34px; height: 34px; font-size: .85rem; }
+  .numerix-title        { font-size: 1rem; letter-spacing: 1px; }
+  .header-brand p,
+  .header-authors       { display: none; }
+
+  /* ── Theme nav tabs — horizontal scroll sin texto sublabel ── */
+  .theme-nav {
+    top: var(--header-h-mobile);
+    padding: 0 .25rem;
+    gap: 0;
+    height: var(--nav-h-mobile);
+  }
+  .theme-tab {
+    padding: 0 .5rem;
+    font-size: .65rem;
+    flex-shrink: 0;
+  }
+  .tab-sublabel,
+  .tab-badge,
+  .tab-soon  { display: none; }
+  .tab-num   { font-size: .7rem; }
+
+  /* ── Layout base ── */
+  .app-layout { padding-top: 0; }
+  .app-main   { padding: .75rem; }
+
+  /* ── Sidebar oculto, mobile nav visible ── */
+  .inner-sidebar    { display: none !important; }
+  .mobile-inner-nav {
+    display: flex !important;
+    top: var(--topbar-total);
+    padding: .2rem .35rem;
+    gap: .2rem;
+  }
+  .mobile-inner-item  { padding: .35rem .5rem; font-size: .58rem; }
+  .mobile-inner-icon  { font-size: 13px; }
+
+  /* ── Paneles ── */
+  .theme-panel.with-sidebar,
+  .theme-panel.no-sidebar,
+  #panel-t1.with-sidebar,
+  #panel-t3.with-sidebar { flex-direction: column !important; padding: 0; }
+
+  /* ── Cards ── */
+  .card           { padding: .875rem; border-radius: var(--radius-sm); }
+  .card-header    { flex-wrap: wrap; gap: .5rem; }
+  .card-title     { font-size: .9rem; }
+  .card-subtitle  { font-size: .72rem; }
+  .card-header-icon { width: 32px; height: 32px; font-size: 14px; flex-shrink: 0; }
+
+  /* ── Page headers ── */
+  .page-header       { margin-bottom: 1rem; }
+  .page-header h2    { font-size: 1.1rem; }
+  .page-header p     { font-size: .8rem; }
+
+  /* ── Formularios ── */
+  .form-grid,
+  .form-grid-3,
+  .verify-grid       { grid-template-columns: 1fr !important; }
+  .results-grid      { grid-template-columns: 1fr 1fr !important; }
+  input[type="text"],
+  input[type="number"] { font-size: .875rem; padding: .5rem .75rem; }
+  label              { font-size: .78rem; }
+  .hint              { font-size: .72rem; }
+
+  /* ── Botones ── */
+  .btn         { font-size: .8rem; padding: .55rem 1rem; }
+  .btn-group   { flex-direction: column; }
+  .btn-group .btn { width: 100%; justify-content: center; }
+
+  /* ── Method tabs (T2) ── */
+  .method-tabs  {
+    gap: 0;
+    overflow-x: auto;
+    scrollbar-width: none;
+    padding-bottom: 2px;
+  }
+  .method-tabs::-webkit-scrollbar { display: none; }
+  .method-tab   { min-width: 70px; font-size: .62rem; padding: .4rem .5rem; flex-shrink: 0; }
+
+  /* ── Section nav interna T2 ── */
+  .t2-inner-nav { flex-wrap: wrap; gap: .25rem; }
+  .nav-btn      { font-size: .72rem; padding: .35rem .6rem; }
+
+  /* ── Tables ── */
+  .table-wrapper { border-radius: 6px; }
+  table          { font-size: .72rem; }
+  th, td         { padding: .4rem .5rem !important; white-space: nowrap; }
+
+  /* ── Cuaderno table (Taylor) ── */
+  .cuaderno-table th,
+  .cuaderno-table td  { padding: .4rem .5rem !important; font-size: .72rem; }
+  .cuaderno-table .expr-col,
+  .cuaderno-table .calc-col { max-width: 140px; overflow: hidden; text-overflow: ellipsis; }
+
+  /* ── Taylor ref grid ── */
+  .taylor-ref-grid   { grid-template-columns: 1fr !important; }
+  .paso-block        { border-radius: var(--radius-sm); }
+  .paso-header       { padding: .65rem .875rem; }
+  .paso-body         { padding: .75rem; }
+  .paso-title        { font-size: .85rem; }
+
+  /* ── Müller ── */
+  .muller-result-grid   { grid-template-columns: 1fr 1fr !important; }
+  .muller-table th,
+  .muller-table td      { padding: .4rem .5rem !important; font-size: .72rem; }
+  .muller-step-body     { grid-template-columns: 1fr !important; }
+  .muller-data-row      { padding: .5rem .65rem; }
+  .muller-data-label    { font-size: .62rem; }
+  .muller-data-val      { font-size: .78rem; }
+  .muller-anim-bar      { flex-wrap: wrap; gap: .5rem; padding: .5rem .75rem; }
+  .muller-graph-controls { display: flex; flex-wrap: wrap; gap: .4rem; margin-left:0; width:100%; }
+  .mgc-group input      { width: 54px; font-size: .75rem; }
+  .muller-legend        { gap: .5rem; padding: .5rem .75rem; }
+  .ml-item              { font-size: .68rem; }
+
+  /* ── Punto Fijo lab ── */
+  .auto-mode-toggle     { flex-direction: column; gap: .4rem; }
+  .auto-mode-opt        { font-size: .78rem; }
+  .pf-section-label     { font-size: .65rem; }
+  #pf-transform-cards   { grid-template-columns: 1fr !important; }
+  .pf-card              { padding: .75rem; }
+  .pf-active-box        { flex-direction: column; gap: .75rem; }
+
+  /* ── Auto-mode ── */
+  .auto-mode-toggle     { flex-direction: column; }
+
+  /* ── Resultados ── */
+  .result-card          { padding: .75rem; }
+  .result-value         { font-size: 1rem; }
+
+  /* ── Historia ── */
+  .history-item         { flex-wrap: wrap; gap: .4rem; }
+  .history-root         { display: none; }
+  .history-actions      { flex-direction: row; flex-shrink: 0; }
+
+  /* ── Footer ── */
+  .app-footer           { display: none; }
+  .app-main::after      { display: none; }
+
+  /* ── Botón descarga ── */
+  .btn-download-excel   { width: 100%; justify-content: center; font-size: .78rem; }
+
+  /* ── Placeholder hero ── */
+  .placeholder-hero     { padding: 1.5rem 1rem; }
+  .placeholder-features { grid-template-columns: 1fr !important; }
+  .submethod-list       { gap: .5rem; }
+  .submethod-item       { padding: .6rem .75rem; }
+  .t3-construccion-card { padding: 1.5rem 1rem; }
+  .t3cc-features        { max-width: 100%; }
+
+  /* ── PF deriv bar ── */
+  .pf-deriv-bar-label { font-size: .62rem; }
+
+  /* ── Canvas Müller ── */
+  .muller-canvas-wrap canvas { min-height: 200px; }
+  #m3Canvas { height: 220px !important; }
+}
+
+/* ════════════════════════════════════════════════════════════
+   SMALL — max 640px (sm: teléfonos grandes / landscape)
+════════════════════════════════════════════════════════════ */
+@media (max-width: 640px) {
+
+  /* ── Mismo layout sin sidebar ── */
+  .inner-sidebar    { display: none !important; }
+  .theme-panel.with-sidebar,
+  #panel-t1.with-sidebar,
+  #panel-t3.with-sidebar { flex-direction: column !important; padding: 0; }
+
+  .app-main { padding: 1rem; }
+  .card     { padding: 1rem; }
+
+  /* ── Forms ── */
+  .form-grid,
+  .form-grid-3  { grid-template-columns: 1fr !important; }
+
+  /* ── Grids de resultados ── */
+  .muller-result-grid   { grid-template-columns: 1fr 1fr !important; }
+  .results-grid         { grid-template-columns: 1fr 1fr !important; }
+
+  /* ── Müller steps ── */
+  .muller-step-body     { grid-template-columns: 1fr !important; }
+  .muller-graph-controls { flex-wrap: wrap; margin-left: 0; width: 100%; }
+
+  /* ── PF cards ── */
+  #pf-transform-cards   { grid-template-columns: 1fr !important; }
+
+  /* ── Botón descarga ── */
+  .btn-download-excel   { width: 100%; justify-content: center; }
+
+  /* ── Auto mode ── */
+  .auto-mode-toggle     { flex-direction: column; }
+
+  /* ── T3 construccion ── */
+  .t3cc-features { max-width: 100%; }
+  .placeholder-features { grid-template-columns: 1fr !important; }
+}
+
+/* ════════════════════════════════════════════════════════════
+   TABLET — max 768px (md) — ya existe, EXTENDER
+════════════════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+
+  /* Correcciones que faltaban en el bloque existente */
+  .theme-panel.with-sidebar,
+  #panel-t1.with-sidebar,
+  #panel-t3.with-sidebar { flex-direction: column !important; padding: 0; }
+
+  .card-header { flex-wrap: wrap; gap: .5rem; }
+
+  /* Tables horizontales */
+  .cuaderno-table-wrap,
+  .muller-table-wrap    { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+  /* Müller graph */
+  .muller-graph-controls { flex-wrap: wrap; margin-left: 0; margin-top: .5rem; width: 100%; }
+
+  /* Method panels layout */
+  .method-panel.active  { border-radius: var(--radius-sm); }
+
+  /* Results */
+  .results-grid         { grid-template-columns: 1fr 1fr; }
+
+  /* PF */
+  .pf-active-box        { flex-wrap: wrap; }
+
+  /* Footer simplified */
+  .footer-legal         { display: none; }
+  .footer-inner         { padding: .65rem 1rem; flex-direction: column; align-items: flex-start; gap: .35rem; }
+}
+
+/* ════════════════════════════════════════════════════════════
+   MEDIUM — max 1024px (lg: tablets landscape / small laptops)
+════════════════════════════════════════════════════════════ */
+@media (max-width: 1024px) {
+
+  /* Reducir padding del sidebar */
+  .inner-sidebar { width: 175px; padding: 1rem .625rem; }
+  .app-main      { padding: 1.25rem; }
+
+  /* Card header text */
+  .card-title    { font-size: .93rem; }
+
+  /* Graph controls */
+  .muller-graph-controls { gap: .4rem; }
+
+  /* Results grid */
+  .results-grid  { grid-template-columns: repeat(3, 1fr); }
+
+  /* PF cards */
+  #pf-transform-cards { grid-template-columns: repeat(2, 1fr); }
+}
+
+/* ════════════════════════════════════════════════════════════
+   TOUCH IMPROVEMENTS — todos los dispositivos táctiles
+════════════════════════════════════════════════════════════ */
+@media (hover: none) and (pointer: coarse) {
+  /* Targets táctiles más grandes */
+  .btn, .method-tab, .theme-tab,
+  .nav-item, .mobile-inner-item,
+  .pf-card, .pf-mode-opt,
+  .auto-mode-opt, .t3-method-nav { min-height: 44px; }
+
+  /* Scrolls suaves */
+  .theme-nav, .method-tabs,
+  .mobile-inner-nav, .table-wrapper,
+  .cuaderno-table-wrap, .muller-table-wrap {
+    -webkit-overflow-scrolling: touch;
+    scroll-snap-type: x mandatory;
+  }
+
+  /* Quitar hover effects que no aplican en touch */
+  .pf-card:hover    { transform: none; }
+  .btn:hover        { transform: none; }
+  .nav-item:hover   { transform: none; }
+  .btn-download-excel:hover { transform: none; }
+}
+
+/* ════════════════════════════════════════════════════════════
+   OVERFLOW PREVENTION — evitar scroll horizontal global
+════════════════════════════════════════════════════════════ */
+html, body { overflow-x: hidden; max-width: 100vw; }
+
+.app-layout,
+.app-header,
+.theme-nav  { max-width: 100vw; box-sizing: border-box; }
+
+/* Todas las tablas deben ser scrolleables, no expandirse */
+.table-wrapper,
+.cuaderno-table-wrap,
+.muller-table-wrap,
+.pf-iter-table {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  max-width: 100%;
+}
+
+/* Textos largos no rompen layout */
+.card-subtitle,
+.pf-card-expr,
+.pf-active-val.mono-expr,
+.muller-data-val { word-break: break-word; overflow-wrap: anywhere; }
+
+/* ════════════════════════════════════════════════════════════
+   SAFE AREA — iPhone con notch / Dynamic Island
+════════════════════════════════════════════════════════════ */
+@supports (padding: max(0px)) {
+  .app-header {
+    padding-left:  max(.875rem, env(safe-area-inset-left));
+    padding-right: max(.875rem, env(safe-area-inset-right));
+  }
+  .app-footer .footer-inner {
+    padding-bottom: max(.875rem, env(safe-area-inset-bottom));
+  }
+}
