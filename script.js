@@ -3637,6 +3637,688 @@ function renderAllRootsPanel(allRoots, expr, tol) {
 window.t3GoTo = t3GoTo;
 
 /* ══════════════════════════════════════════════════════════════
+   BAIRSTOW — Motor completo
+   División sintética doble → deflación → todas las raíces
+   reales y complejas conjugadas
+══════════════════════════════════════════════════════════════ */
+
+/**
+ * bairstowStep(coeffs, r0, s0, tol, maxIter)
+ *   Una sesión de Bairstow. Retorna:
+ *   { r, s, rows, converged, iterations, quotient }
+ */
+function bairstowStep(coeffs, r0, s0, tol, maxIter) {
+  let r = r0, s = s0;
+  const n = coeffs.length - 1;
+  const rows = [];
+
+  for (let iter = 1; iter <= maxIter; iter++) {
+    /* ── División sintética 1 → b ── */
+    const b = new Array(n + 1).fill(0);
+    b[0] = coeffs[0];
+    if (n > 0) b[1] = coeffs[1] + r * b[0];
+    for (let i = 2; i <= n; i++)
+      b[i] = coeffs[i] + r * b[i-1] + s * b[i-2];
+
+    /* ── División sintética 2 → c ── */
+    const c = new Array(n).fill(0);
+    c[0] = b[0];
+    if (n > 1) c[1] = b[1] + r * c[0];
+    for (let i = 2; i <= n - 1; i++)
+      c[i] = b[i] + r * c[i-1] + s * c[i-2];
+
+    const R   = b[n];
+    const S   = b[n - 1];
+    const cn2 = (c[n-2] !== undefined) ? c[n-2] : 0;
+    const cn3 = (c[n-3] !== undefined) ? c[n-3] : 0;
+    const cn1 = (c[n-1] !== undefined) ? c[n-1] : 0;
+
+    /* ── Jacobiano y correcciones ── */
+    const det = cn2 * cn2 - cn1 * cn3;
+    if (Math.abs(det) < 1e-20) break;
+
+    const dr = (-S * cn2 + R * cn3) / det;
+    const ds = (-R * cn2 + S * cn1) / det;
+
+    const ea_r = Math.abs(r + dr) > 1e-14 ? Math.abs(dr) / Math.abs(r + dr) * 100 : 0;
+    const ea_s = Math.abs(s + ds) > 1e-14 ? Math.abs(ds) / Math.abs(s + ds) * 100 : 0;
+
+    rows.push({ iter, r, s, b: [...b], c: [...c], R, S, dr, ds, ea_r, ea_s,
+                converged: Math.abs(dr) < tol && Math.abs(ds) < tol });
+
+    r += dr;  s += ds;
+    if (!isFinite(r) || !isFinite(s) || Math.abs(r) > 1e10 || Math.abs(s) > 1e10) break;
+
+    if (Math.abs(dr) < tol && Math.abs(ds) < tol) {
+      /* Recalcular b final para el cociente */
+      const bf = new Array(n + 1).fill(0);
+      bf[0] = coeffs[0];
+      if (n > 0) bf[1] = coeffs[1] + r * bf[0];
+      for (let i = 2; i <= n; i++) bf[i] = coeffs[i] + r * bf[i-1] + s * bf[i-2];
+      return { r, s, rows, converged: true, iterations: iter, quotient: bf.slice(0, n - 1) };
+    }
+  }
+
+  /* No convergió — devolver quotient del último b */
+  const bf = new Array(n + 1).fill(0);
+  bf[0] = coeffs[0];
+  if (n > 0) bf[1] = coeffs[1] + r * bf[0];
+  for (let i = 2; i <= n; i++) bf[i] = coeffs[i] + r * bf[i-1] + s * bf[i-2];
+  return { r, s, rows, converged: false, iterations: maxIter, quotient: bf.slice(0, n - 1) };
+}
+
+/* Raíces de x² − r·x − s = 0 */
+function bsQuadRoots(r, s) {
+  const disc = r * r + 4 * s;
+  if (disc >= 0) {
+    const sq = Math.sqrt(disc);
+    return [{ re: (r + sq) / 2, im: 0 }, { re: (r - sq) / 2, im: 0 }];
+  }
+  const sq = Math.sqrt(-disc);
+  return [{ re: r / 2, im: sq / 2 }, { re: r / 2, im: -sq / 2 }];
+}
+
+/**
+ * bairstowAllRoots(coeffs, r0, s0, tol, maxIter)
+ *   Motor principal con deflación iterativa.
+ *   Retorna { roots, sessions }
+ */
+function bairstowAllRoots(coeffs, r0, s0, tol, maxIter) {
+  let curr = [...coeffs];
+  const roots = [], sessions = [];
+  const SEEDS = [[r0,s0],[0.5,-1],[1,1],[-1,-1],[0,-1],[2,-2],[-0.5,0.5],[1,-2],[-1,1],[0.1,-0.5]];
+
+  while (curr.length >= 3) {
+    const n = curr.length - 1;
+
+    /* Lineal: ax + b = 0 */
+    if (n === 1) {
+      const root = -curr[1] / curr[0];
+      roots.push({ re: root, im: 0, type: 'linear' });
+      sessions.push({ type: 'linear', root, rows: [], polyBefore: [...curr], polyAfter: [] });
+      break;
+    }
+
+    /* Cuadrática residual: fórmula directa */
+    if (n === 2) {
+      const [a, b, c] = curr;
+      const disc = b * b - 4 * a * c;
+      if (disc >= 0) {
+        roots.push({ re: (-b + Math.sqrt(disc)) / (2*a), im: 0, type: 'quadratic_direct' });
+        roots.push({ re: (-b - Math.sqrt(disc)) / (2*a), im: 0, type: 'quadratic_direct' });
+      } else {
+        roots.push({ re: -b/(2*a), im:  Math.sqrt(-disc)/(2*a), type: 'quadratic_direct' });
+        roots.push({ re: -b/(2*a), im: -Math.sqrt(-disc)/(2*a), type: 'quadratic_direct' });
+      }
+      sessions.push({ type: 'quadratic_direct', coeffs: [...curr], rows: [],
+                      polyBefore: [...curr], polyAfter: [] });
+      break;
+    }
+
+    /* Grado ≥ 3: Bairstow con semillas variadas */
+    let found = null;
+    for (const [sr, ss] of SEEDS) {
+      const res = bairstowStep(curr, sr, ss, tol, maxIter);
+      if (res.converged && isFinite(res.r) && isFinite(res.s)) { found = res; break; }
+    }
+    if (!found) break;
+
+    const qRoots = bsQuadRoots(found.r, found.s);
+    qRoots.forEach(z => roots.push({ ...z, type: 'bairstow' }));
+    sessions.push({ type: 'bairstow', r: found.r, s: found.s,
+                    rows: found.rows, roots: qRoots,
+                    quotient: found.quotient, iterations: found.iterations,
+                    polyBefore: [...curr], polyAfter: found.quotient });
+    curr = found.quotient;
+  }
+
+  return { roots, sessions };
+}
+
+/* ── Tabla iteraciones Bairstow ─────────────────────────────── */
+function buildBairstowTable(rows, tol, color) {
+  if (!rows || rows.length === 0)
+    return '<p style="font-family:var(--font-main);font-size:.82rem;color:var(--gray-400);padding:.5rem 0;">Sin iteraciones.</p>';
+
+  const thS = `padding:.6rem .875rem;font-family:var(--font-main);font-size:.7rem;font-weight:700;
+    color:#fff;background:${color};border-bottom:2px solid rgba(255,255,255,.2);white-space:nowrap;text-align:right;`;
+
+  let h = '<div style="overflow-x:auto;"><table class="muller-table" style="font-size:.8rem;"><thead><tr>';
+  ['Iter.','r','s','b_{n−1} (S)','b_n (R)','Δr','Δs','Eₐ(r)%','Eₐ(s)%'].forEach((hh, i) =>
+    h += `<th style="${thS}${i===0?'text-align:center;':''}">${hh}</th>`);
+  h += '</tr></thead><tbody>';
+
+  rows.forEach((row, i) => {
+    const bg = row.converged ? 'var(--success-light)' : i % 2 ? 'var(--gray-50)' : '#fff';
+    const fc = row.converged ? '#065f46' : 'var(--gray-700)';
+    const td = (v, dec=8, center=false) => {
+      const ts = `padding:.55rem .875rem;font-family:var(--font-mono);font-size:.78rem;
+        text-align:${center?'center':'right'};background:${bg};color:${fc};border-bottom:1px solid var(--border);`;
+      const txt = (v === null || v === undefined || !isFinite(v)) ? '—'
+                : typeof v === 'number' ? v.toFixed(dec) : v;
+      return `<td style="${ts}">${txt}</td>`;
+    };
+    h += '<tr>';
+    h += td(row.iter, 0, true);
+    h += td(row.r, 8);  h += td(row.s, 8);
+    h += td(row.S, 8);  h += td(row.R, 8);
+    h += td(row.dr, 8); h += td(row.ds, 8);
+    h += td(row.ea_r, 4); h += td(row.ea_s, 4);
+    h += '</tr>';
+  });
+  return h + '</tbody></table></div>';
+}
+
+/* ── Paso a paso Bairstow ────────────────────────────────────── */
+function buildBairstowSteps(rows, tol, color) {
+  if (!rows || rows.length === 0) return '';
+  return rows.map(row => {
+    const isConv = row.converged;
+    return `
+    <div class="muller-step-block" style="border-left:3px solid ${color};">
+      <div class="muller-step-header" style="background:${color}12;border-bottom:1px solid ${color}25;">
+        <div class="muller-step-num" style="background:${color};">${row.iter}</div>
+        <div class="muller-step-title">Iteración ${row.iter}${isConv?` — <span style="color:${color};">✓ Convergencia</span>`:''}</div>
+      </div>
+      <div class="muller-step-body">
+        <div class="muller-data-row">
+          <div class="muller-data-label">Semillas actuales</div>
+          <div class="muller-data-val">r = ${row.r.toFixed(8)}</div>
+          <div class="muller-data-val">s = ${row.s.toFixed(8)}</div>
+        </div>
+        <div class="muller-data-row">
+          <div class="muller-data-label">División sintética 1 → b</div>
+          ${row.b.map((v,i)=>`<div class="muller-data-val">b[${i}] = ${typeof v==='number'?v.toFixed(6):'?'}</div>`).join('')}
+        </div>
+        <div class="muller-data-row">
+          <div class="muller-data-label">División sintética 2 → c</div>
+          ${row.c.map((v,i)=>`<div class="muller-data-val">c[${i}] = ${typeof v==='number'?v.toFixed(6):'?'}</div>`).join('')}
+        </div>
+        <div class="muller-data-row" style="grid-column:1/-1;border-color:${color};background:${color}08;">
+          <div class="muller-data-label">Residuos y correcciones</div>
+          <div class="muller-data-val">R = b[n] = ${row.R.toFixed(8)}</div>
+          <div class="muller-data-val">S = b[n−1] = ${row.S.toFixed(8)}</div>
+          <div class="muller-data-val accent" style="color:${color};font-weight:700;">Δr = ${row.dr.toFixed(8)}</div>
+          <div class="muller-data-val accent" style="color:${color};font-weight:700;">Δs = ${row.ds.toFixed(8)}</div>
+          <div class="muller-data-val muted">Eₐ(r)% = ${row.ea_r.toFixed(4)} · Eₐ(s)% = ${row.ea_s.toFixed(4)}
+            ${isConv?`<span style="color:${color};font-weight:700;"> ✓ &lt; ${tol}</span>`:'  continuar'}
+          </div>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+/* ── Renderizar resultado Bairstow ───────────────────────────── */
+function renderBairstowResult(data, expr, tol) {
+  const container = document.getElementById('bsResult');
+  const { roots, sessions } = data;
+  const COLORS = ['#10b981','#6366f1','#f59e0b','#ec4899','#14b8a6','#8b5cf6','#ef4444'];
+  const realRoots = roots.filter(r => Math.abs(r.im) < 1e-6);
+  const cplxRoots = roots.filter(r => Math.abs(r.im) >= 1e-6);
+
+  let html = '';
+
+  /* ── 1. Resumen ── */
+  html += `<div class="card" style="margin-bottom:1.25rem;border-top:4px solid #10b981;">
+    <div class="card-header">
+      <div class="card-header-icon green">🎯</div>
+      <div>
+        <div class="card-title">Todas las Raíces — Bairstow + Deflación</div>
+        <div class="card-subtitle">f(x) = ${expr}  ·  tol = ${tol}  ·  ${sessions.length} sesión(es)</div>
+      </div>
+      <div style="margin-left:auto;display:flex;gap:.5rem;flex-wrap:wrap;">
+        ${realRoots.length?`<span style="background:var(--success-light);color:#065f46;font-family:var(--font-main);font-size:.72rem;font-weight:700;padding:.25rem .75rem;border-radius:999px;border:1px solid #6ee7b7;">${realRoots.length} real${realRoots.length>1?'es':''}</span>`:''}
+        ${cplxRoots.length?`<span style="background:var(--primary-light);color:var(--primary-dark);font-family:var(--font-main);font-size:.72rem;font-weight:700;padding:.25rem .75rem;border-radius:999px;border:1px solid #a5b4fc;">${cplxRoots.length} compleja${cplxRoots.length>1?'s':''}</span>`:''}
+      </div>
+    </div>`;
+
+  /* Tarjetas */
+  html += '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:.75rem;padding:0 1.5rem 1.25rem;">';
+  roots.forEach((r, i) => {
+    const col    = COLORS[i % COLORS.length];
+    const isReal = Math.abs(r.im) < 1e-6;
+    const val    = isReal ? r.re.toFixed(8)
+                 : `${r.re.toFixed(6)} ${r.im >= 0 ? '+' : '−'} ${Math.abs(r.im).toFixed(6)}i`;
+    html += `<div style="border-radius:var(--radius-sm);border:1.5px solid ${col}33;border-left:5px solid ${col};padding:.875rem 1rem;background:var(--gray-50);">
+      <div style="display:flex;align-items:center;gap:.4rem;margin-bottom:.5rem;">
+        <span style="background:${col};color:#fff;font-family:var(--font-main);font-size:.65rem;font-weight:700;padding:.15rem .55rem;border-radius:4px;">r${i+1}</span>
+        <span style="font-family:var(--font-main);font-size:.65rem;font-weight:600;color:${isReal?'#065f46':'#3730a3'};background:${isReal?'#f0fdf4':'#eef2ff'};padding:.1rem .45rem;border-radius:4px;">${isReal?'Real':'Compleja'}</span>
+      </div>
+      <div style="font-family:var(--font-mono);font-size:.95rem;font-weight:700;color:${col};margin-bottom:.3rem;word-break:break-all;">${val}</div>
+    </div>`;
+  });
+  html += '</div></div>';
+
+  /* ── 2. Sesiones paso a paso ── */
+  html += `<div class="card" style="margin-bottom:1.25rem;">
+    <div class="card-header">
+      <div class="card-header-icon green">🔍</div>
+      <div>
+        <div class="card-title">Proceso Completo — Sesiones de Bairstow</div>
+        <div class="card-subtitle">Cada sesión extrae un factor cuadrático (x² − r·x − s) por deflación</div>
+      </div>
+    </div>
+    <div style="padding:1.25rem 1.5rem;">`;
+
+  let rootIdx = 0;
+  sessions.forEach((sess, si) => {
+    const col = COLORS[si % COLORS.length];
+    html += `<div style="margin-bottom:1.75rem;">`;
+
+    /* Cabecera sesión */
+    html += `<div style="display:flex;align-items:center;gap:.75rem;margin-bottom:.75rem;padding:.75rem 1rem;
+      background:${col}0D;border-radius:var(--radius-sm);border:1.5px solid ${col}33;">
+      <span style="background:${col};color:#fff;font-family:var(--font-main);font-size:.75rem;font-weight:700;padding:.2rem .65rem;border-radius:5px;">
+        Sesión ${si+1}
+      </span>`;
+
+    if (sess.type === 'bairstow') {
+      html += `<div style="flex:1;">`;
+      sess.roots.forEach((z, zi) => {
+        const isR = Math.abs(z.im) < 1e-6;
+        const v   = isR ? z.re.toFixed(8) : `${z.re.toFixed(6)} ${z.im>=0?'+':'−'} ${Math.abs(z.im).toFixed(6)}i`;
+        html += `<div style="font-family:var(--font-mono);font-size:.88rem;font-weight:700;color:${col};">r${rootIdx+zi+1} = ${v}</div>`;
+      });
+      html += `<div style="font-family:var(--font-main);font-size:.72rem;color:var(--gray-500);margin-top:3px;">
+        Factor cuadrático: x² − (${sess.r.toFixed(6)})x − (${sess.s.toFixed(6)})
+        &nbsp;·&nbsp; ${sess.iterations} iteraciones
+      </div></div>`;
+      rootIdx += 2;
+    } else if (sess.type === 'linear') {
+      html += `<div style="font-family:var(--font-mono);font-size:.88rem;color:${col};font-weight:700;">
+        Ecuación lineal → x = ${sess.root.toFixed(8)}</div>`;
+      rootIdx++;
+    } else {
+      html += `<div style="font-family:var(--font-main);font-size:.82rem;color:var(--gray-600);">
+        Cuadrática residual — fórmula cuadrática directa</div>`;
+      rootIdx += 2;
+    }
+    html += `</div>`; /* cierre cabecera */
+
+    if (sess.type === 'bairstow' && sess.rows.length > 0) {
+      /* Tabla */
+      html += `<div style="margin-bottom:.75rem;">
+        <div style="font-family:var(--font-main);font-size:.72rem;font-weight:700;text-transform:uppercase;
+          letter-spacing:.4px;color:var(--gray-500);margin-bottom:.4rem;">Tabla de Iteraciones</div>
+        ${buildBairstowTable(sess.rows, tol, col)}
+      </div>`;
+
+      /* Paso a paso */
+      html += `<div>
+        <div style="font-family:var(--font-main);font-size:.72rem;font-weight:700;text-transform:uppercase;
+          letter-spacing:.4px;color:var(--gray-500);margin-bottom:.4rem;">Desarrollo Paso a Paso</div>
+        ${buildBairstowSteps(sess.rows, tol, col)}
+      </div>`;
+
+      /* Polinomio deflactado */
+      if (sess.polyAfter && sess.polyAfter.length > 1) {
+        html += `<div style="margin-top:.75rem;padding:.6rem 1rem;background:var(--gray-50);border-radius:5px;border:1px solid var(--border);">
+          <span style="font-family:var(--font-main);font-size:.72rem;color:var(--gray-500);">Polinomio deflactado (grado ${sess.polyAfter.length-1}):</span>
+          <span style="font-family:var(--font-mono);font-size:.82rem;font-weight:600;color:var(--gray-700);">
+            Q(x) = ${polyToString(sess.polyAfter.map(v => CX.make(v)))}
+          </span>
+        </div>`;
+      }
+    } else if (sess.type === 'quadratic_direct') {
+      /* Mostrar fórmula cuadrática */
+      const [a, b, c] = sess.coeffs;
+      const disc = b*b - 4*a*c;
+      html += `<div class="muller-step-block" style="border-left:3px solid ${col};">
+        <div class="muller-step-header" style="background:${col}12;border-bottom:1px solid ${col}25;">
+          <div class="muller-step-num" style="background:${col};font-size:.75rem;">Q</div>
+          <div class="muller-step-title">Cuadrática residual — fórmula directa</div>
+        </div>
+        <div class="muller-step-body">
+          <div class="muller-data-row">
+            <div class="muller-data-label">Coeficientes del cociente</div>
+            <div class="muller-data-val">a = ${a.toFixed(6)}</div>
+            <div class="muller-data-val">b = ${b.toFixed(6)}</div>
+            <div class="muller-data-val">c = ${c.toFixed(6)}</div>
+          </div>
+          <div class="muller-data-row" style="grid-column:1/-1;border-color:${col};background:${col}08;">
+            <div class="muller-data-label">Discriminante Δ = b²−4ac</div>
+            <div class="muller-data-val">Δ = ${disc.toFixed(6)} ${disc<0?'(raíces complejas)':'(raíces reales)'}</div>
+          </div>
+        </div>
+      </div>`;
+    }
+
+    html += `</div>`; /* cierre sesión */
+  });
+
+  html += '</div></div>'; /* cierre card */
+  container.innerHTML = html;
+
+  /* Guardar para export */
+  if (typeof state !== 'undefined') state.bsLast = { data, expr, tol };
+  setTimeout(() => {
+    const b = document.getElementById('bs-download-bar');
+    if (b) b.style.display = 'block';
+  }, 50);
+}
+
+/* ── Evento botón Bairstow ───────────────────────────────────── */
+document.addEventListener('DOMContentLoaded', () => {
+  const btn = document.getElementById('btnBairstow');
+  if (!btn) return;
+  btn.addEventListener('click', () => {
+    clearAlert('bsAlert');
+    document.getElementById('bsResult').innerHTML = '';
+    const expr = document.getElementById('bsFunc').value.trim();
+    const r0   = parseFloat(document.getElementById('bsR0').value);
+    const s0   = parseFloat(document.getElementById('bsS0').value);
+    const tol  = parseFloat(document.getElementById('bsTol').value);
+
+    if (!expr)                { showAlert('bsAlert','danger','Ingrese el polinomio.'); return; }
+    if (isNaN(r0)||isNaN(s0)) { showAlert('bsAlert','danger','r₀ y s₀ deben ser numéricos.'); return; }
+    if (isNaN(tol)||tol<=0)   { showAlert('bsAlert','danger','Tolerancia inválida.'); return; }
+
+    try {
+      const parsed = parsePolynomial(expr);
+      const data   = bairstowAllRoots(parsed.coeffs, r0, s0, tol, 200);
+      renderBairstowResult(data, expr, tol);
+      const nR = data.roots.filter(r => Math.abs(r.im) < 1e-6).length;
+      const nC = data.roots.length - nR;
+      const parts = [];
+      if (nR > 0) parts.push(nR + ' real' + (nR > 1 ? 'es' : ''));
+      if (nC > 0) parts.push(nC + ' compleja' + (nC > 1 ? 's' : ''));
+      showAlert('bsAlert', 'success',
+        `✓ ${data.roots.length} raíces encontradas (${parts.join(' + ')}) — ${data.sessions.length} sesión(es) de Bairstow`);
+    } catch(e) { showAlert('bsAlert', 'danger', 'Error: ' + e.message); }
+  });
+});
+
+/* ══════════════════════════════════════════════════════════════
+   MÉTODO DE HORNER
+   ─────────────────────────────────────────────────────────────
+   Evalúa P(c) mediante la recurrencia anidada:
+     bₙ = aₙ
+     bₙ₋₁ = aₙ₋₁ + c·bₙ
+     ...
+     b₀ = a₀ + c·b₁  →  b₀ = P(c)
+   El cociente Q(x) = P(x)/(x−c) tiene coeficientes b₁…bₙ.
+   Segunda aplicación sobre Q(x) en c da P′(c) = Q(c).
+══════════════════════════════════════════════════════════════ */
+
+/**
+ * hornerEval(coeffs, c)
+ *   coeffs = [aₙ, aₙ₋₁, …, a₁, a₀]
+ *   Retorna {
+ *     pc      : P(c) = b₀,
+ *     b       : array completo [bₙ, bₙ₋₁, …, b₀],
+ *     quotient: [bₙ, …, b₁]  (coeficientes de Q(x)),
+ *     steps   : array de pasos para mostrar
+ *   }
+ */
+function hornerEval(coeffs, c) {
+  const n = coeffs.length - 1;
+  const b = new Array(coeffs.length);
+  const steps = [];
+
+  // bₙ = aₙ
+  b[0] = coeffs[0];
+  steps.push({
+    k: n, ak: coeffs[0], cTimesPrev: null, bk: b[0],
+    formula: `b_{${n}} = a_{${n}} = ${coeffs[0]}`
+  });
+
+  // bₙ₋ₖ = aₙ₋ₖ + c · bₙ₋ₖ₊₁
+  for (let i = 1; i <= n; i++) {
+    b[i] = coeffs[i] + c * b[i-1];
+    const ki = n - i;
+    const cTimesPrev = c * b[i-1];
+    steps.push({
+      k: ki, ak: coeffs[i], cTimesPrev, bk: b[i],
+      formula: `b_{${ki}} = a_{${ki}} + c·b_{${ki+1}} = ${coeffs[i]} + (${c})(${b[i-1]}) = ${b[i]}`
+    });
+  }
+
+  return { pc: b[n], b, quotient: b.slice(0, n), steps, n };
+}
+
+/* ── Tabla Horner de la profesora: columnas aₖ | c·bₖ₊₁ | bₖ ─ */
+function buildHornerTable(steps, c, color) {
+  const thS = `padding:.6rem .875rem;font-family:var(--font-main);font-size:.7rem;font-weight:700;
+    color:#fff;background:${color};border-bottom:2px solid rgba(255,255,255,.2);white-space:nowrap;text-align:center;`;
+
+  let h = `<div style="overflow-x:auto;margin-bottom:.75rem;">
+    <table class="muller-table" style="font-size:.82rem;min-width:340px;">
+      <thead><tr>
+        <th style="${thS}">k</th>
+        <th style="${thS}">aₖ</th>
+        <th style="${thS}">c·b_{k+1}</th>
+        <th style="${thS}">bₖ = aₖ + c·b_{k+1}</th>
+      </tr></thead>
+      <tbody>`;
+
+  steps.forEach((step, i) => {
+    const isLast = i === steps.length - 1;
+    const bg = isLast ? `${color}20` : i % 2 ? 'var(--gray-50)' : '#fff';
+    const fc = isLast ? color : 'var(--gray-700)';
+    const fw = isLast ? '700' : '400';
+    const tdS = `padding:.55rem .875rem;font-family:var(--font-mono);font-size:.8rem;
+      text-align:center;background:${bg};color:${fc};font-weight:${fw};border-bottom:1px solid var(--border);`;
+    const fmt = v => (v === null || v === undefined) ? '—' : Number(v).toFixed(6);
+
+    h += `<tr>
+      <td style="${tdS}">${step.k}</td>
+      <td style="${tdS}">${fmt(step.ak)}</td>
+      <td style="${tdS}">${step.cTimesPrev === null ? '—' : fmt(step.cTimesPrev)}</td>
+      <td style="${tdS}${isLast?`border-left:2px solid ${color};`:''}">${fmt(step.bk)}</td>
+    </tr>`;
+  });
+
+  const last = steps[steps.length - 1];
+  h += `<tr style="background:${color}15;">
+    <td colspan="3" style="padding:.6rem .875rem;font-family:var(--font-main);font-size:.8rem;
+      text-align:right;font-weight:700;color:${color};border-top:2px solid ${color};">
+      P(c) = b₀ =
+    </td>
+    <td style="padding:.6rem .875rem;font-family:var(--font-mono);font-size:.9rem;
+      font-weight:700;color:${color};border-top:2px solid ${color};border-left:2px solid ${color};">
+      ${Number(last.bk).toFixed(8)}
+    </td>
+  </tr>`;
+
+  return h + '</tbody></table></div>';
+}
+
+/* ── Pasos escritos como en la pizarra de la profesora ─────── */
+function buildHornerSteps(steps, c, color) {
+  let h = `<div style="background:var(--gray-50);border:1px solid var(--border);
+    border-radius:var(--radius-sm);padding:1rem 1.25rem;font-family:var(--font-mono);
+    font-size:.85rem;line-height:2;">`;
+
+  steps.forEach((step, i) => {
+    const isLast = i === steps.length - 1;
+    const color2 = isLast ? color : 'var(--gray-700)';
+    const fw     = isLast ? '700' : '400';
+    if (step.cTimesPrev === null) {
+      h += `<div style="color:${color2};font-weight:${fw};">
+        b<sub>${step.k}</sub> = a<sub>${step.k}</sub> = <strong>${Number(step.ak).toFixed(6)}</strong>
+      </div>`;
+    } else {
+      h += `<div style="color:${color2};font-weight:${fw};">
+        b<sub>${step.k}</sub> = a<sub>${step.k}</sub> + c·b<sub>${step.k+1}</sub>
+        = ${Number(step.ak).toFixed(6)} + (${c})(${Number(steps[i-1].bk).toFixed(6)})
+        = <strong style="color:${color};">${Number(step.bk).toFixed(6)}</strong>
+      </div>`;
+    }
+  });
+
+  const last = steps[steps.length - 1];
+  h += `<div style="margin-top:.5rem;padding:.5rem .75rem;background:${color}15;
+    border-radius:5px;border-left:3px solid ${color};color:${color};font-weight:700;">
+    ∴ P(c) = b₀ = ${Number(last.bk).toFixed(8)}
+  </div>`;
+
+  return h + '</div>';
+}
+
+/**
+ * hornerFullEval(coeffs, c)
+ *   Aplica Horner DOS veces:
+ *   1ra → P(c) con cociente Q(x)
+ *   2da → Q(c) = P′(c)
+ */
+function hornerFullEval(coeffs, c) {
+  const first  = hornerEval(coeffs, c);            // P(c)
+  const second = hornerEval(first.quotient, c);    // Q(c) = P'(c)
+  return { first, second, pc: first.pc, dpc: second.pc };
+}
+
+/* ── Renderizar resultado Horner ─────────────────────────────── */
+function renderNHResult(data, expr, c) {
+  const container = document.getElementById('nhResult');
+  const { evals } = data;
+  const COLORS = ['#10b981','#6366f1','#f59e0b','#ec4899','#14b8a6','#8b5cf6','#ef4444'];
+  let html = '';
+
+  evals.forEach((ev, idx) => {
+    const col   = COLORS[idx % COLORS.length];
+    const { first, second, polyExpr, cVal } = ev;
+
+    /* ── Card por polinomio ── */
+    html += `<div class="card" style="margin-bottom:1.25rem;border-top:4px solid ${col};">
+      <div class="card-header">
+        <div class="card-header-icon green" style="background:${col}20;color:${col};">${idx === 0 ? 'P' : 'Q'}</div>
+        <div>
+          <div class="card-title">${idx === 0 ? 'Aplicación 1 — Evaluación de P(c)' : `Aplicación 2 — Evaluación de Q(c) = P′(c)`}</div>
+          <div class="card-subtitle">${polyExpr}  ·  c = ${cVal}</div>
+        </div>
+        <div style="margin-left:auto;background:${col}15;border:1.5px solid ${col}33;
+          border-radius:var(--radius-sm);padding:.5rem 1rem;text-align:center;">
+          <div style="font-family:var(--font-main);font-size:.65rem;color:var(--gray-500);">
+            ${idx === 0 ? 'P(c) =' : "P′(c) = Q(c) ="}
+          </div>
+          <div style="font-family:var(--font-mono);font-size:1.1rem;font-weight:700;color:${col};">
+            ${Number(first.pc).toFixed(8)}
+          </div>
+        </div>
+      </div>`;
+
+    /* Coeficientes del polinomio */
+    html += `<div style="padding:0 1.5rem .75rem;">
+      <div style="font-family:var(--font-main);font-size:.72rem;font-weight:700;text-transform:uppercase;
+        letter-spacing:.4px;color:var(--gray-500);margin-bottom:.5rem;">Coeficientes aₖ</div>
+      <div style="display:flex;flex-wrap:wrap;gap:.4rem;margin-bottom:1rem;">`;
+    const n = first.steps.length - 1;
+    first.steps.forEach(s => {
+      html += `<div style="padding:.35rem .65rem;background:var(--gray-100);border-radius:5px;
+        font-family:var(--font-mono);font-size:.8rem;border:1px solid var(--border);">
+        a<sub>${s.k}</sub> = ${Number(s.ak).toFixed(s.ak % 1 === 0 ? 0 : 4)}
+      </div>`;
+    });
+    html += `</div>`;
+
+    /* Tabla Horner */
+    html += `<div style="font-family:var(--font-main);font-size:.72rem;font-weight:700;text-transform:uppercase;
+      letter-spacing:.4px;color:var(--gray-500);margin-bottom:.4rem;">Tabla de Horner — P(c)</div>
+      ${buildHornerTable(first.steps, cVal, col)}`;
+
+    /* Pasos como en la pizarra */
+    html += `<div style="font-family:var(--font-main);font-size:.72rem;font-weight:700;text-transform:uppercase;
+      letter-spacing:.4px;color:var(--gray-500);margin:.75rem 0 .4rem;">Desarrollo paso a paso</div>
+      ${buildHornerSteps(first.steps, cVal, col)}`;
+
+    /* Cociente Q(x) */
+    if (first.quotient && first.quotient.length > 0) {
+      const qStr = polyToString(first.quotient.map(v => CX.make(v)));
+      html += `<div style="margin-top:.75rem;padding:.65rem 1rem;background:var(--gray-50);
+        border-radius:5px;border:1px solid var(--border);border-left:3px solid ${col};">
+        <span style="font-family:var(--font-main);font-size:.75rem;color:var(--gray-500);font-weight:600;">
+          Cociente Q(x) = P(x)/(x − ${cVal})
+        </span><br>
+        <span style="font-family:var(--font-mono);font-size:.88rem;font-weight:600;color:${col};">
+          Q(x) = ${qStr}
+        </span>
+        <span style="font-family:var(--font-main);font-size:.72rem;color:var(--gray-500);margin-left:.75rem;">
+          con residuo P(c) = ${Number(first.pc).toFixed(6)}
+        </span>
+      </div>`;
+    }
+
+    html += `</div></div>`; /* cierre card */
+  });
+
+  /* ── Panel de conclusión ── */
+  if (evals.length >= 2) {
+    const ev0 = evals[0], ev1 = evals[1];
+    const pc  = Number(ev0.first.pc);
+    const dpc = Number(ev1.first.pc);
+    html += `<div class="card" style="border-top:4px solid #10b981;margin-bottom:1.25rem;">
+      <div class="card-header">
+        <div class="card-header-icon green">✓</div>
+        <div><div class="card-title">Conclusión</div>
+        <div class="card-subtitle">Resultados de ambas aplicaciones de Horner</div></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;padding:0 1.5rem 1.25rem;">
+        <div style="padding:1rem;background:var(--success-light);border-radius:var(--radius-sm);border:1.5px solid #6ee7b7;text-align:center;">
+          <div style="font-family:var(--font-main);font-size:.75rem;color:#065f46;font-weight:600;margin-bottom:.25rem;">P(c)</div>
+          <div style="font-family:var(--font-mono);font-size:1.15rem;font-weight:700;color:#065f46;">${pc.toFixed(8)}</div>
+        </div>
+        <div style="padding:1rem;background:var(--primary-light);border-radius:var(--radius-sm);border:1.5px solid #a5b4fc;text-align:center;">
+          <div style="font-family:var(--font-main);font-size:.75rem;color:var(--primary-dark);font-weight:600;margin-bottom:.25rem;">P′(c) = Q(c)</div>
+          <div style="font-family:var(--font-mono);font-size:1.15rem;font-weight:700;color:var(--primary-dark);">${dpc.toFixed(8)}</div>
+        </div>
+      </div>
+    </div>`;
+  }
+
+  container.innerHTML = html;
+  if (typeof state !== 'undefined') state.nhLast = { data, expr, c };
+  setTimeout(() => {
+    const b = document.getElementById('nh-download-bar');
+    if (b) b.style.display = 'block';
+    if (window.innerWidth <= 768) {
+      const el = document.getElementById('nhResult');
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, 80);
+}
+
+/* ── Evento botón Newton-Horner ──────────────────────────────── */
+document.addEventListener('DOMContentLoaded', () => {
+  const btn = document.getElementById('btnNewtonHorner');
+  if (!btn) return;
+  btn.addEventListener('click', () => {
+    clearAlert('nhAlert');
+    document.getElementById('nhResult').innerHTML = '';
+
+    const expr = document.getElementById('nhFunc').value.trim();
+    const cVal = parseFloat(document.getElementById('nhX0').value);
+
+    if (!expr)         { showAlert('nhAlert','danger','Ingrese el polinomio.'); return; }
+    if (isNaN(cVal))   { showAlert('nhAlert','danger','El valor c debe ser numérico.'); return; }
+
+    try {
+      const parsed = parsePolynomial(expr);
+      const coeffs = parsed.coeffs;
+
+      /* 1ra aplicación: P(c) → cociente Q(x) */
+      const first  = hornerEval(coeffs, cVal);
+      const polyQStr = polyToString(first.quotient.map(v => CX.make(v)));
+
+      /* 2da aplicación: Q(c) = P'(c) */
+      const second = hornerEval(first.quotient, cVal);
+
+      const data = {
+        evals: [
+          { first, polyExpr: expr,      cVal, label: 'P(x)' },
+          { first: second, polyExpr: `Q(x) = ${polyQStr}`, cVal, label: 'Q(x)' }
+        ]
+      };
+
+      renderNHResult(data, expr, cVal);
+      showAlert('nhAlert', 'success',
+        `✓ P(${cVal}) = ${first.pc.toFixed(6)}  ·  P′(${cVal}) = ${second.pc.toFixed(6)}  ·  Q(x) = ${polyQStr}`);
+    } catch(e) { showAlert('nhAlert', 'danger', 'Error: ' + e.message); }
+  });
+});
+
+
+/* ══════════════════════════════════════════════════════════════
    MÜLLER — BÚSQUEDA POR SCAN (para gráfica y funciones generales)
    Scan denso 500pts → cambios de signo → Müller → deduplicar
 ══════════════════════════════════════════════════════════════ */

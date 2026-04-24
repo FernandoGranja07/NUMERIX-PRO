@@ -887,16 +887,16 @@
       <span class="badge badge-success" style="margin-left:auto;font-size:.62rem;padding:.15rem .45rem;">Activo</span>
     </a>
 
-    <!-- Bairstow — construcción -->
-    <a class="nav-item t3-method-nav" data-t3panel="t3-bairstow" style="opacity:.65;">
-      <span class="nav-icon">🔧</span> Bairstow
-      <span class="badge badge-warning" style="margin-left:auto;font-size:.62rem;padding:.15rem .45rem;">Próx.</span>
+    <!-- Bairstow — activo -->
+    <a class="nav-item t3-method-nav" data-t3panel="t3-bairstow">
+      <span class="nav-icon">🔢</span> Bairstow
+      <span class="badge badge-success" style="margin-left:auto;font-size:.62rem;padding:.15rem .45rem;">Activo</span>
     </a>
 
-    <!-- Newton + Horner — construcción -->
-    <a class="nav-item t3-method-nav" data-t3panel="t3-horner" style="opacity:.65;">
-      <span class="nav-icon">🔧</span> Newton-Horner
-      <span class="badge badge-warning" style="margin-left:auto;font-size:.62rem;padding:.15rem .45rem;">Próx.</span>
+    <!-- Newton + Horner — activo -->
+    <a class="nav-item t3-method-nav" data-t3panel="t3-horner">
+      <span class="nav-icon">⚡</span> Newton-Horner
+      <span class="badge badge-success" style="margin-left:auto;font-size:.62rem;padding:.15rem .45rem;">Activo</span>
     </a>
   </nav>
 
@@ -905,11 +905,11 @@
     <button class="mobile-inner-item t3-method-nav active" data-t3panel="t3-muller">
       <span class="mobile-inner-icon">📐</span>Müller
     </button>
-    <button class="mobile-inner-item t3-method-nav" data-t3panel="t3-bairstow" style="opacity:.65;">
-      <span class="mobile-inner-icon">🔧</span>Bairstow
+    <button class="mobile-inner-item t3-method-nav" data-t3panel="t3-bairstow">
+      <span class="mobile-inner-icon">🔢</span>Bairstow
     </button>
-    <button class="mobile-inner-item t3-method-nav" data-t3panel="t3-horner" style="opacity:.65;">
-      <span class="mobile-inner-icon">🔧</span>N-Horner
+    <button class="mobile-inner-item t3-method-nav" data-t3panel="t3-horner">
+      <span class="mobile-inner-icon">⚡</span>N-Horner
     </button>
   </div>
 
@@ -1067,45 +1067,150 @@
     </div><!-- /t3-muller -->
 
 
-    <!-- ══ PANEL BAIRSTOW — Placeholder ═════════════════════ -->
+    <!-- ══ PANEL BAIRSTOW ═══════════════════════════════════ -->
     <div id="t3-bairstow" class="t3-panel" style="display:none;">
       <div class="page-header">
         <h2>Método de Bairstow</h2>
-        <p>Extracción de factores cuadráticos para hallar raíces complejas conjugadas.</p>
+        <p>Extrae factores cuadráticos <em>(x² − r·x − s)</em> mediante deflación sintética doble. Encuentra todas las raíces reales <em>y complejas conjugadas</em> en una sola pasada.</p>
       </div>
-      <div class="t3-construccion-card">
-        <div class="t3cc-icon">🔧</div>
-        <div class="t3cc-title">Módulo en construcción</div>
-        <div class="t3cc-subtitle">Próximamente disponible</div>
-        <div class="t3cc-features">
-          <div class="t3cc-feat"><span>📋</span> Entrada de coeficientes aₙ, …, a₀</div>
-          <div class="t3cc-feat"><span>🔁</span> Iteración sobre factores cuadráticos (r, s)</div>
-          <div class="t3cc-feat"><span>🧮</span> División sintética doble con esquema de Horner</div>
-          <div class="t3cc-feat"><span>⚗️</span> Resolución de pares complejos conjugados</div>
-          <div class="t3cc-feat"><span>📊</span> Tabla de iteraciones con Δr, Δs y errores</div>
-          <div class="t3cc-feat"><span>🎯</span> Convergencia automática por tolerancia</div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-header-icon green">🔢</div>
+          <div>
+            <div class="card-title">Parámetros de Entrada</div>
+            <div class="card-subtitle">Ingresa el polinomio como expresión — se extraen los coeficientes automáticamente</div>
+          </div>
         </div>
+        <div class="form-group" style="margin-bottom:1rem;">
+          <label for="bsFunc">Polinomio P(x)</label>
+          <input type="text" id="bsFunc" class="mono" placeholder="Ej: x^3 - 6x^2 + 11x - 6  |  4x^3 + 2x^2 - 2x + 3  |  x^4 - 5x^2 + 4" />
+          <div class="hint">Soporta: xⁿ, coeficientes enteros y decimales, signos negativos</div>
+        </div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label for="bsR0">Semilla inicial r₀</label>
+            <input type="number" id="bsR0" placeholder="0.5" step="any" value="0.5" />
+          </div>
+          <div class="form-group">
+            <label for="bsS0">Semilla inicial s₀</label>
+            <input type="number" id="bsS0" placeholder="-1" step="any" value="-1" />
+            <div class="hint">El sistema prueba semillas alternativas automáticamente</div>
+          </div>
+          <div class="form-group">
+            <label for="bsTol">Tolerancia E<sub>a</sub></label>
+            <input type="number" id="bsTol" placeholder="0.0001" step="any" value="0.0001" />
+          </div>
+        </div>
+        <div id="bsAlert"></div>
+        <div class="btn-group">
+          <button id="btnBairstow" class="btn btn-primary" style="background:var(--success);box-shadow:0 1px 4px rgba(16,185,129,.35);">
+            ▶ Ejecutar Bairstow
+          </button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-header-icon green">📖</div>
+          <div><div class="card-title">Fundamento del Método</div></div>
+        </div>
+        <div class="taylor-ref-grid">
+          <div class="taylor-ref-box green">
+            <div class="trb-title">Factor cuadrático objetivo</div>
+            <div class="trb-formula">Busca (x² − r·x − s) que divide exactamente a P(x)</div>
+          </div>
+          <div class="taylor-ref-box amber">
+            <div class="trb-title">División sintética doble</div>
+            <div class="trb-formula">bᵢ = aᵢ + r·bᵢ₋₁ + s·bᵢ₋₂ → cᵢ = bᵢ + r·cᵢ₋₁ + s·cᵢ₋₂</div>
+          </div>
+          <div class="taylor-ref-box blue">
+            <div class="trb-title">Correcciones (Jacobiano)</div>
+            <div class="trb-formula">Δr = (−b_{n−1}·c_{n−2} + b_n·c_{n−3}) / det</div>
+          </div>
+          <div class="taylor-ref-box red">
+            <div class="trb-title">Raíces del factor</div>
+            <div class="trb-formula">x = ( r ± √(r² + 4s) ) / 2</div>
+          </div>
+        </div>
+      </div>
+
+      <div id="bsResult"></div>
+      <div id="bs-download-bar" style="display:none;margin-top:1rem;">
+        <button onclick="numerixExport.t3Bairstow()" class="btn-download-excel">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/></svg>
+          Descargar Excel — Bairstow
+        </button>
       </div>
     </div>
 
-    <!-- ══ PANEL NEWTON-HORNER — Placeholder ════════════════ -->
+    <!-- ══ PANEL NEWTON-HORNER ══════════════════════════════ -->
     <div id="t3-horner" class="t3-panel" style="display:none;">
       <div class="page-header">
-        <h2>Newton para Polinomios con Horner</h2>
-        <p>Evaluación eficiente de p(x) y p′(x) mediante división sintética. Deflación para raíces múltiples.</p>
+        <h2>Método de Horner</h2>
+        <p>Evalúa P(c) y P′(c) de forma eficiente. La secuencia anidada <em>bₙ = aₙ, bₖ = aₖ + c·bₖ₊₁</em> da <strong>b₀ = P(c)</strong>. Aplicado al cociente Q(x) da <strong>Q(c) = P′(c)</strong>.</p>
       </div>
-      <div class="t3-construccion-card">
-        <div class="t3cc-icon">🔧</div>
-        <div class="t3cc-title">Módulo en construcción</div>
-        <div class="t3cc-subtitle">Próximamente disponible</div>
-        <div class="t3cc-features">
-          <div class="t3cc-feat"><span>📋</span> Entrada de coeficientes del polinomio</div>
-          <div class="t3cc-feat"><span>⚡</span> Evaluación O(n) de p(x) y p′(x) con esquema de Horner</div>
-          <div class="t3cc-feat"><span>➗</span> Deflación sintética tras encontrar cada raíz</div>
-          <div class="t3cc-feat"><span>🔄</span> Iteración Newton-Raphson acelerada</div>
-          <div class="t3cc-feat"><span>📊</span> Tabla de iteraciones con Ea y Er%</div>
-          <div class="t3cc-feat"><span>🎯</span> Convergencia automática por tolerancia</div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-header-icon green">⚡</div>
+          <div>
+            <div class="card-title">Parámetros de Entrada</div>
+            <div class="card-subtitle">Ingresa el polinomio P(x) y el punto c donde evaluar</div>
+          </div>
         </div>
+        <div class="form-group" style="margin-bottom:1rem;">
+          <label for="nhFunc">Polinomio P(x)</label>
+          <input type="text" id="nhFunc" class="mono"
+            placeholder="Ej: 3x^3 - 4x^2 + 2x - 5  |  x^7 - 2x^5 + x^4 - x^2 + 5" />
+          <div class="hint">Los coeficientes se extraen automáticamente — soporta términos faltantes</div>
+        </div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label for="nhX0">Punto de evaluación c</label>
+            <input type="number" id="nhX0" placeholder="2" step="any" value="2" />
+            <div class="hint">Se calculará P(c) y P′(c) = Q(c)</div>
+          </div>
+        </div>
+        <div id="nhAlert"></div>
+        <div class="btn-group">
+          <button id="btnNewtonHorner" class="btn btn-primary" style="background:var(--success);box-shadow:0 1px 4px rgba(16,185,129,.35);">
+            ▶ Ejecutar Horner
+          </button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-header-icon green">📖</div>
+          <div><div class="card-title">Fundamento del Método</div></div>
+        </div>
+        <div class="taylor-ref-grid">
+          <div class="taylor-ref-box green">
+            <div class="trb-title">Inicio: bₙ = aₙ</div>
+            <div class="trb-formula">El primer valor es el coeficiente líder</div>
+          </div>
+          <div class="taylor-ref-box amber">
+            <div class="trb-title">Recurrencia</div>
+            <div class="trb-formula">bₖ = aₖ + c · bₖ₊₁  para k = n−1, …, 0</div>
+          </div>
+          <div class="taylor-ref-box blue">
+            <div class="trb-title">Resultado: b₀ = P(c)</div>
+            <div class="trb-formula">Cociente Q(x) tiene coefs b₁, b₂, …, bₙ</div>
+          </div>
+          <div class="taylor-ref-box red">
+            <div class="trb-title">P′(c) = Q(c)</div>
+            <div class="trb-formula">Segunda aplicación de Horner sobre Q(x) en c</div>
+          </div>
+        </div>
+      </div>
+
+      <div id="nhResult"></div>
+      <div id="nh-download-bar" style="display:none;margin-top:1rem;">
+        <button onclick="numerixExport.t3NewtonHorner()" class="btn-download-excel">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/></svg>
+          Descargar Excel — Horner
+        </button>
       </div>
     </div>
 
