@@ -1964,7 +1964,7 @@ tbody tr:hover { background: var(--gray-50); }
    WATERMARK en secciones (sutil, anti-plagio visual)
 ══════════════════════════════════════════════════════════════ */
 .app-main::after {
-  content: 'NUMERIX © 2025';
+  content: 'NUMERIX © 2026';
   position: fixed;
   bottom: 48px;
   right: 16px;

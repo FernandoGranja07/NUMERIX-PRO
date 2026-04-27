@@ -2,7 +2,7 @@
    NUMERIX — Plataforma de Métodos Numéricos
    script.js — Lógica completa
 
-   © 2025 Fernando Granja & Alejandra Tinoco
+   © 2026 Fernando Granja & Alejandra Tinoco
    Todos los derechos reservados.
 
    Este software fue desarrollado con fines académicos.
@@ -17,7 +17,7 @@ const NUMERIX = {
   name:      'NUMERIX',
   version:   '1.0.0',
   authors:   ['Fernando Granja', 'Alejandra Tinoco'],
-  year:      2025,
+  year:      2026,
   rights:    'Todos los derechos reservados',
   toString() { return this.name + ' v' + this.version + ' © ' + this.year + ' ' + this.authors.join(' & '); }
 };
@@ -1965,7 +1965,7 @@ function graphDraw() {
   ctx.fillStyle    = 'rgba(148,163,184,0.5)';
   ctx.textAlign    = 'right';
   ctx.textBaseline = 'bottom';
-  ctx.fillText('NUMERIX © 2025', W - 10, H - 8);
+  ctx.fillText('NUMERIX © 2026', W - 10, H - 8);
   ctx.restore();
 
   /* ── Panel de info ── */
@@ -3086,7 +3086,7 @@ function t1GraphDraw() {
     /* Watermark */
     ctx.save(); ctx.font='600 11px "Poppins",sans-serif'; ctx.fillStyle='rgba(148,163,184,0.5)';
     ctx.textAlign='right'; ctx.textBaseline='bottom';
-    ctx.fillText('NUMERIX © 2025', W-10, H-8); ctx.restore();
+    ctx.fillText('NUMERIX © 2026', W-10, H-8); ctx.restore();
     return;
   }
 
@@ -3266,7 +3266,7 @@ function t1GraphDraw() {
   /* Watermark */
   ctx.save(); ctx.font='600 11px "Poppins",sans-serif'; ctx.fillStyle='rgba(148,163,184,0.5)';
   ctx.textAlign='right'; ctx.textBaseline='bottom';
-  ctx.fillText('NUMERIX © 2025', W-10, H-8); ctx.restore();
+  ctx.fillText('NUMERIX © 2026', W-10, H-8); ctx.restore();
 }
 
 /** Actualizar datos del gráfico T1 y redibujar */
@@ -5413,7 +5413,7 @@ function t3GMakeEngine(cfg) {
     ctx.font='600 11px "Poppins",sans-serif';
     ctx.fillStyle=dark?'rgba(99,102,241,0.18)':'rgba(148,163,184,0.45)';
     ctx.textAlign='right'; ctx.textBaseline='bottom';
-    ctx.fillText('NUMERIX © 2025',W-10,H-8); ctx.restore();
+    ctx.fillText('NUMERIX © 2026',W-10,H-8); ctx.restore();
   }
 
   /* Curva f(x) */
@@ -5869,7 +5869,7 @@ document.addEventListener('DOMContentLoaded', () => {
 /* ══════════════════════════════════════════════════════════════
    NUMERIX EXPORT — Motor de exportación a Excel
    Genera archivos .xlsx profesionales con SheetJS
-   Marca de agua NUMERIX © 2025 en cada hoja
+   Marca de agua NUMERIX © 2026 en cada hoja
 ══════════════════════════════════════════════════════════════ */
 /* ══════════════════════════════════════════════════════════════
    VALIDACIÓN: aviso de X mayúscula
@@ -6223,7 +6223,7 @@ const numerixExport = (function () {
       [ cell('NUMERIX', {bg:'0F172A', color:'FBBF24', bold:true, sz:22, align:'center', border:false}) ],
       [ cell('Plataforma de Métodos Numéricos', {bg:'0F172A', color:'94A3B8', sz:11, align:'center', border:false}) ],
       [ cell('', {bg:'0F172A', border:false}) ],
-      [ cell('© 2025 Fernando Granja & Alejandra Tinoco', {bg:'0F172A', color:'6B7280', sz:9, align:'center', italic:true, border:false}) ],
+      [ cell('© 2026 Fernando Granja & Alejandra Tinoco', {bg:'0F172A', color:'6B7280', sz:9, align:'center', italic:true, border:false}) ],
       [ cell('Todos los derechos reservados · Uso académico', {bg:'0F172A', color:'6B7280', sz:9, align:'center', italic:true, border:false}) ],
       [ cell('', {bg:'0F172A', border:false}) ],
       [ cell('──────────────────────────────────────────', {bg:'0F172A', color:'1E40AF', sz:9, align:'center', border:false}) ],
@@ -6769,6 +6769,108 @@ const numerixExport = (function () {
     _download(wb, `NUMERIX_T3_Horner_${_slug(expr)}_c${c}.xlsx`);
   }
 
+  /* ── Export T4 Newton-Raphson Sistemas ──────────────────── */
+  function t4() {
+    if (typeof XLSX === 'undefined') { alert('SheetJS no disponible.'); return; }
+    const d = (typeof state !== 'undefined') ? state.t4Last : null;
+    if (!d) { alert('Ejecuta el sistema primero para generar datos.'); return; }
+    const { result, exprs, vars, tol } = d;
+    const { solution, iterations } = result;
+    const n    = vars.length;
+    const last = iterations.at(-1);
+    const conv = last?.converged;
+    const wb   = XLSX.utils.book_new();
+
+    /* ── Portada ── */
+    XLSX.utils.book_append_sheet(wb, makeCoverSheet(
+      'Tema 4 — Newton-Raphson Sistemas No Lineales',
+      'X^(k+1) = X^(k) − [J(X^(k))]⁻¹ · F(X^(k))',
+      exprs.map((e,i) => `f${i+1} = ${e}`).join('  |  '),
+      [
+        ['Variables:', vars.join(', ')],
+        ['Tolerancia ‖ΔX‖:', String(tol)],
+        ['Iteraciones:', String(iterations.length)],
+        ['Convergencia:', conv ? 'Sí ✓' : 'No (máx. iteraciones)'],
+        ...vars.map((v,i) => [`${v}* =`, solution[i].toFixed(10)]),
+      ]
+    ), 'Portada');
+
+    /* ── Hoja: Tabla de iteraciones ── */
+    const T4_HEAD = '0369A1';
+    const hdrs = ['Iter.', ...vars.map(v=>`${v}(k)`), ...exprs.map((_,i)=>`f${i+1}(X)`),
+                  ...vars.map(v=>`Δ${v}`), '‖ΔX‖', '‖F‖'];
+    const iterRows = [ makeHeader(hdrs, T4_HEAD) ];
+
+    iterations.forEach((it, i) => {
+      const bg = it.converged ? C.CONV_BG : i%2 ? C.ALT : 'FFFFFF';
+      const fc = it.converged ? C.CONV_FG : '1F2937';
+      const row = [
+        cell(it.k, { bg, color: T4_HEAD, bold:true, align:'center' }),
+        ...it.X.map(v   => cell(v,          { bg, color:fc, numFmt:'0.00000000', align:'right' })),
+        ...it.F.map(v   => cell(v,          { bg, color: Math.abs(v)<0.001?'065F46':'991B1B', numFmt:'0.00000000E+00', align:'right' })),
+        ...it.deltaX.map(v => cell(v,       { bg, color:fc, numFmt:'0.00000000', align:'right' })),
+        cell(it.normDx, { bg, color: it.converged?'065F46':fc, numFmt:'0.00000000E+00', align:'right', bold:it.converged }),
+        cell(it.normF,  { bg, color:fc, numFmt:'0.00000000E+00', align:'right' }),
+      ];
+      iterRows.push(row);
+    });
+
+    const ws0 = aoa2ws(iterRows);
+    ws0['!cols'] = [{wch:6}, ...vars.map(()=>({wch:16})), ...exprs.map(()=>({wch:16})),
+                   ...vars.map(()=>({wch:16})), {wch:16}, {wch:16}];
+    ws0['!rows'] = iterRows.map(()=>({hpt:18}));
+    XLSX.utils.book_append_sheet(wb, ws0, 'Iteraciones');
+
+    /* ── Hoja: Jacobiana por iteración ── */
+    const jacHdrs = ['Iter.', ...vars.map(v=>`x=(${v})`),
+                     ...vars.flatMap((vi,i) => vars.map((vj,j) => `∂f${i+1}/∂${vj}`))];
+    const jacRows = [ makeHeader(jacHdrs, T4_HEAD) ];
+    iterations.forEach((it, i) => {
+      const bg = it.converged ? C.CONV_BG : i%2 ? C.ALT : 'FFFFFF';
+      const fc = it.converged ? C.CONV_FG : '1F2937';
+      const flatJ = it.J.flat();
+      jacRows.push([
+        cell(it.k, { bg, color:T4_HEAD, bold:true, align:'center' }),
+        ...it.X.map(v => cell(v, { bg, color:fc, numFmt:'0.000000', align:'right' })),
+        ...flatJ.map(v => cell(v, { bg, color:fc, numFmt:'0.000000', align:'right' })),
+      ]);
+    });
+    const ws1 = aoa2ws(jacRows);
+    ws1['!cols'] = [{wch:6}, ...vars.map(()=>({wch:14})),
+                   ...vars.flatMap(()=>vars.map(()=>({wch:16})))];
+    ws1['!rows'] = jacRows.map(()=>({hpt:18}));
+    XLSX.utils.book_append_sheet(wb, ws1, 'Jacobianas');
+
+    /* ── Hoja: Solución y verificación ── */
+    const solRows = [
+      makeHeader(['Variable','Valor solución','f(X*) verificación','Estado'], T4_HEAD),
+    ];
+    vars.forEach((v, i) => {
+      let fv = NaN;
+      try { fv = (typeof t4EvalF === 'function') ? t4EvalF(exprs[i], vars, solution) : NaN; } catch{}
+      const ok = isFinite(fv) && Math.abs(fv) < 1e-3;
+      solRows.push([
+        cell(v+'*',          { color: T4_HEAD, bold:true }),
+        cell(solution[i],    { numFmt:'0.0000000000', color: T4_HEAD, bold:true }),
+        cell(isFinite(fv)?fv:NaN, { numFmt:'0.00000000E+00', color: ok?'065F46':'991B1B' }),
+        cell(ok?'✓ OK':'⚠ Revisar', { color: ok?'065F46':'991B1B', bold:true }),
+      ]);
+    });
+    solRows.push([cell(''),cell(''),cell(''),cell('')]);
+    solRows.push([
+      cell('Convergencia', {bold:true}),
+      cell(conv?'Sí':'No', {color:conv?'065F46':'991B1B',bold:true}),
+      cell('Iteraciones', {bold:true}),
+      cell(iterations.length, {align:'center'}),
+    ]);
+    const ws2 = aoa2ws(solRows);
+    ws2['!cols'] = [{wch:12},{wch:24},{wch:24},{wch:14}];
+    ws2['!rows'] = solRows.map(()=>({hpt:20}));
+    XLSX.utils.book_append_sheet(wb, ws2, 'Solución');
+
+    _download(wb, `NUMERIX_T4_NR_Sistemas_${vars.join('')}.xlsx`);
+  }
+
   /* Exponer botones de descarga cuando hay datos */
   function showT1Bar()  { const b = document.getElementById('t1-download-bar');  if (b) b.style.display='block'; }
   function showT2Bar()  { const b = document.getElementById('t2-download-bar');  if (b) b.style.display='block'; }
@@ -6776,7 +6878,7 @@ const numerixExport = (function () {
   function showBsBar()  { const b = document.getElementById('bs-download-bar');  if (b) b.style.display='block'; }
   function showNhBar()  { const b = document.getElementById('nh-download-bar');  if (b) b.style.display='block'; }
 
-  return { t1, t2, t3, t3Bairstow, t3NewtonHorner, showT1Bar, showT2Bar, showT3Bar, showBsBar, showNhBar };
+  return { t1, t2, t3, t3Bairstow, t3NewtonHorner, t4, showT1Bar, showT2Bar, showT3Bar, showBsBar, showNhBar };
 })();
 
 window.numerixExport = numerixExport;
@@ -7018,6 +7120,16 @@ function t4RenderResult(result, exprs, vars, tol) {
 
   html += '</div></div>';
   container.innerHTML = html;
+
+  /* Guardar estado para exportación */
+  if (typeof state !== 'undefined')
+    state.t4Last = { result, exprs, vars, tol };
+
+  /* Mostrar botón descarga */
+  setTimeout(() => {
+    const b = document.getElementById('t4-download-bar');
+    if (b) b.style.display = 'block';
+  }, 50);
 }
 
 /* ── UI dinámica: generar campos según n ────────────────────── */

@@ -11,7 +11,7 @@
   ║                        NUMERIX                           ║
   ║         Plataforma de Métodos Numéricos                  ║
   ╠══════════════════════════════════════════════════════════╣
-  ║  © 2025 Fernando Granja & Alejandra Tinoco               ║
+  ║  © 2026 Fernando Granja & Alejandra Tinoco               ║
   ║  Todos los derechos reservados.                          ║
   ║                                                          ║
   ║  Este software es de uso académico y personal.           ║
@@ -20,8 +20,6 @@
   ╚══════════════════════════════════════════════════════════╝
   -->
   <link rel="stylesheet" href="styles.css" />
-  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2231548296895140"
-     crossorigin="anonymous"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
 <body>
@@ -1594,6 +1592,14 @@
     <div id="t4GraphCoords" style="position:absolute;bottom:10px;left:10px;background:rgba(255,255,255,.88);backdrop-filter:blur(4px);border:1px solid #e2e8f0;border-radius:6px;padding:.2rem .55rem;font-family:'JetBrains Mono',monospace;font-size:.72rem;color:#64748b;">x = — &nbsp; y = —</div>
   </div>
 
+  <!-- Botón descarga T4 -->
+  <div id="t4-download-bar" style="display:none;margin-top:1rem;">
+    <button onclick="numerixExport.t4()" class="btn-download-excel">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/></svg>
+      Descargar Excel — Newton-Raphson Sistemas
+    </button>
+  </div>
+
 </div><!-- /app-main T4 -->
 </div><!-- /panel-t4 -->
 
@@ -1611,7 +1617,7 @@
       <span class="footer-tagline">Plataforma de Métodos Numéricos</span>
     </div>
     <div class="footer-copy">
-      <span>© 2025</span>
+      <span>© 2026</span>
       <strong>Fernando Granja &amp; Alejandra Tinoco</strong>
       <span class="footer-sep">·</span>
       <span>Todos los derechos reservados</span>
