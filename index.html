@@ -122,6 +122,10 @@
     <a class="nav-item t1-nav" data-t1="t1-conclusion">
       <span class="nav-icon">✅</span> 7. Conclusión
     </a>
+    <div class="nav-section-label">Visualización</div>
+    <a class="nav-item t1-nav" data-t1="t1-grafica">
+      <span class="nav-icon">📈</span> Gráfica Taylor
+    </a>
   </nav>
 
   <!-- Mobile nav T1 -->
@@ -149,6 +153,9 @@
     </button>
     <button class="mobile-inner-item t1-nav" data-t1="t1-conclusion">
       <span class="mobile-inner-icon">✅</span>Concl.
+    </button>
+    <button class="mobile-inner-item t1-nav" data-t1="t1-grafica">
+      <span class="mobile-inner-icon">📈</span>Gráfica
     </button>
   </div>
 
@@ -299,6 +306,71 @@
     <div id="t1-lagrange"      class="t1-sec" style="display:none;"></div>
     <div id="t1-conclusion"    class="t1-sec" style="display:none;"></div>
 
+    <!-- ── GRÁFICA TAYLOR ─────────────────────────────────── -->
+    <div id="t1-grafica" class="t1-sec" style="display:none;">
+      <div class="page-header">
+        <h2>Gráfica Interactiva — Taylor</h2>
+        <p>Visualiza f(x) vs P<sub>n</sub>(x). Arrastra · Zoom con rueda · Hover para valores exactos.</p>
+      </div>
+
+      <!-- Controles -->
+      <div class="card" style="padding:.75rem 1.25rem;margin-bottom:.875rem;">
+        <div style="display:flex;align-items:center;gap:.75rem;flex-wrap:wrap;">
+          <div style="flex:1;min-width:180px;font-family:var(--font-main);font-size:.82rem;color:var(--gray-600);">
+            <span id="t1g-expr-label">Ejecuta un cálculo de Taylor para ver la gráfica.</span>
+          </div>
+          <button id="btnT1GReset" class="btn btn-secondary" style="white-space:nowrap;flex-shrink:0;">⟳ Resetear vista</button>
+        </div>
+        <!-- Leyenda -->
+        <div style="display:flex;gap:1.25rem;margin-top:.625rem;flex-wrap:wrap;">
+          <div style="display:flex;align-items:center;gap:.4rem;">
+            <div style="width:22px;height:3px;background:#4f46e5;border-radius:2px;"></div>
+            <span style="font-family:var(--font-main);font-size:.75rem;color:var(--gray-600);">f(x) original</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:.4rem;">
+            <div style="width:22px;height:3px;background:#f59e0b;border-radius:2px;border-top:2px dashed #f59e0b;background:none;"></div>
+            <span style="font-family:var(--font-main);font-size:.75rem;color:var(--gray-600);">P<sub>n</sub>(x) Taylor</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:.4rem;">
+            <div style="width:10px;height:10px;border-radius:50%;background:#6366f1;"></div>
+            <span style="font-family:var(--font-main);font-size:.75rem;color:var(--gray-600);">Punto a (expansión)</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:.4rem;">
+            <div style="width:10px;height:10px;border-radius:50%;background:#ef4444;"></div>
+            <span style="font-family:var(--font-main);font-size:.75rem;color:var(--gray-600);">Punto x (evaluación)</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Canvas interactivo -->
+      <div class="card" style="padding:0;overflow:hidden;position:relative;">
+        <canvas id="t1GraphCanvas" style="display:block;width:100%;cursor:crosshair;touch-action:none;"></canvas>
+        <!-- Tooltip -->
+        <div id="t1GraphTooltip" style="
+          position:absolute;pointer-events:none;display:none;
+          background:#1e293b;color:#f8fafc;
+          font-family:'JetBrains Mono',monospace;font-size:.75rem;font-weight:500;
+          padding:.35rem .65rem;border-radius:6px;
+          box-shadow:0 4px 16px rgba(0,0,0,.25);
+          border:1px solid #334155;white-space:nowrap;z-index:10;line-height:1.6;">
+        </div>
+        <!-- Zoom buttons -->
+        <div style="position:absolute;bottom:12px;right:12px;display:flex;flex-direction:column;gap:4px;">
+          <button onclick="t1GraphZoom(0.75)" style="width:30px;height:30px;border:1px solid #e2e8f0;border-radius:6px;background:rgba(255,255,255,.92);backdrop-filter:blur(4px);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 6px rgba(0,0,0,.08);">+</button>
+          <button onclick="t1GraphZoom(1.35)" style="width:30px;height:30px;border:1px solid #e2e8f0;border-radius:6px;background:rgba(255,255,255,.92);backdrop-filter:blur(4px);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 6px rgba(0,0,0,.08);">−</button>
+        </div>
+        <!-- Coordenadas -->
+        <div id="t1GraphCoords" style="
+          position:absolute;bottom:12px;left:12px;
+          background:rgba(255,255,255,.88);backdrop-filter:blur(4px);
+          border:1px solid #e2e8f0;border-radius:6px;
+          padding:.25rem .6rem;font-family:'JetBrains Mono',monospace;
+          font-size:.72rem;color:#64748b;box-shadow:0 2px 6px rgba(0,0,0,.06);">
+          x = — &nbsp; y = —
+        </div>
+      </div>
+    </div>
+
     <!-- Botón descarga T1 -->
     <div id="t1-download-bar" style="display:none;margin:1rem 1.5rem;">
       <button onclick="numerixExport.t1()" class="btn-download-excel">
@@ -336,6 +408,10 @@
     <a class="nav-item" data-nav="graph">
       <span class="nav-icon">📈</span> Gráfica
     </a>
+    <div class="nav-section-label">Aplicaciones</div>
+    <a class="nav-item" data-nav="tir">
+      <span class="nav-icon">💰</span> Ing. Económica — TIR
+    </a>
   </nav>
 
   <!-- ── Mobile nav interno ────────────────────────────── -->
@@ -354,6 +430,9 @@
     </button>
     <button class="mobile-inner-item" data-nav="graph">
       <span class="mobile-inner-icon">📈</span>Gráfica
+    </button>
+    <button class="mobile-inner-item" data-nav="tir">
+      <span class="mobile-inner-icon">💰</span>TIR
     </button>
   </div>
 
@@ -807,65 +886,215 @@
     <!-- ══ GRÁFICA ════════════════════════════════════════ -->
     <section id="sec-graph" class="section">
       <div class="page-header">
-        <h2>Gráfica</h2>
-        <p>Visualización de f(x) con detección de cruces por cero y marcado de la raíz calculada.</p>
+        <h2>Gráfica Interactiva</h2>
+        <p>Arrastra para mover · Rueda del ratón para zoom · Hover para ver valores exactos</p>
       </div>
 
-      <div class="card">
-        <div class="card-header">
-          <div class="card-header-icon purple">📈</div>
-          <div>
-            <div class="card-title">Configuración del rango</div>
-            <div class="card-subtitle">Ajuste los ejes y la función a graficar</div>
+      <!-- Toolbar -->
+      <div class="card" style="padding:.75rem 1.25rem;">
+        <div style="display:flex;align-items:center;gap:.75rem;flex-wrap:wrap;">
+          <div class="form-group" style="flex:1;min-width:200px;margin:0;">
+            <input type="text" id="graph_func" class="mono"
+              placeholder="f(x) = … · se autocarga al calcular"
+              style="margin:0;" />
           </div>
-        </div>
-        <div class="form-group" style="margin-bottom:1rem;">
-          <label>Función f(x) a graficar</label>
-          <input type="text" id="graph_func" class="mono" placeholder="Se usa la función actual si está vacío" />
-        </div>
-        <div class="form-grid">
-          <div class="form-group"><label>x mínimo</label><input type="number" id="graph_xmin" value="-5" step="any" /></div>
-          <div class="form-group"><label>x máximo</label><input type="number" id="graph_xmax" value="5"  step="any" /></div>
-          <div class="form-group"><label>y mínimo</label><input type="number" id="graph_ymin" value="-5" step="any" /></div>
-          <div class="form-group"><label>y máximo</label><input type="number" id="graph_ymax" value="5"  step="any" /></div>
-        </div>
-        <div class="btn-group">
-          <button id="btnRenderGraph" class="btn btn-primary">📈 Renderizar</button>
-          <button class="btn btn-secondary" onclick="
+          <button id="btnRenderGraph" class="btn btn-primary" style="white-space:nowrap;flex-shrink:0;">
+            📈 Graficar
+          </button>
+          <button id="btnGraphReset" class="btn btn-secondary" style="white-space:nowrap;flex-shrink:0;">
+            ⟳ Resetear vista
+          </button>
+          <button class="btn btn-secondary" style="white-space:nowrap;flex-shrink:0;" onclick="
             const fi = document.getElementById('funcInput');
             const gf = document.getElementById('graph_func');
-            if (fi.value) gf.value = fi.value;
-            renderGraph();">Usar función verificada</button>
+            if (fi && fi.value) { gf.value = fi.value; renderGraph(); }">
+            Usar función verificada
+          </button>
         </div>
       </div>
 
-      <div class="card" style="padding:0;overflow:hidden;">
-        <div class="canvas-wrapper">
-          <canvas id="graphCanvas" width="800" height="480"></canvas>
+      <!-- Gráfica interactiva -->
+      <div class="card" style="padding:0;overflow:hidden;position:relative;">
+        <canvas id="graphCanvas"
+          style="display:block;width:100%;cursor:crosshair;touch-action:none;">
+        </canvas>
+        <!-- Tooltip flotante -->
+        <div id="graphTooltip" style="
+          position:absolute;pointer-events:none;display:none;
+          background:#1e293b;color:#f8fafc;
+          font-family:'JetBrains Mono',monospace;font-size:.75rem;font-weight:500;
+          padding:.35rem .65rem;border-radius:6px;
+          box-shadow:0 4px 16px rgba(0,0,0,.25);
+          border:1px solid #334155;white-space:nowrap;z-index:10;">
+        </div>
+        <!-- Badge de función activa -->
+        <div id="graphFuncBadge" style="
+          position:absolute;top:10px;left:12px;
+          background:rgba(255,255,255,.92);backdrop-filter:blur(4px);
+          border:1px solid #e2e8f0;border-radius:8px;
+          padding:.3rem .7rem;font-family:'JetBrains Mono',monospace;
+          font-size:.75rem;color:#4f46e5;font-weight:600;
+          box-shadow:0 2px 8px rgba(0,0,0,.08);display:none;">
+        </div>
+        <!-- Controles zoom -->
+        <div style="position:absolute;bottom:12px;right:12px;display:flex;flex-direction:column;gap:4px;">
+          <button id="btnZoomIn"  onclick="graphZoom(0.75)" style="
+            width:30px;height:30px;border:1px solid #e2e8f0;border-radius:6px;
+            background:rgba(255,255,255,.92);backdrop-filter:blur(4px);
+            font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;
+            box-shadow:0 2px 6px rgba(0,0,0,.08);">+</button>
+          <button id="btnZoomOut" onclick="graphZoom(1.35)" style="
+            width:30px;height:30px;border:1px solid #e2e8f0;border-radius:6px;
+            background:rgba(255,255,255,.92);backdrop-filter:blur(4px);
+            font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;
+            box-shadow:0 2px 6px rgba(0,0,0,.08);">−</button>
+        </div>
+        <!-- Coordenadas en tiempo real -->
+        <div id="graphCoords" style="
+          position:absolute;bottom:12px;left:12px;
+          background:rgba(255,255,255,.88);backdrop-filter:blur(4px);
+          border:1px solid #e2e8f0;border-radius:6px;
+          padding:.25rem .6rem;font-family:'JetBrains Mono',monospace;
+          font-size:.72rem;color:#64748b;
+          box-shadow:0 2px 6px rgba(0,0,0,.06);">
+          x = — &nbsp; y = —
         </div>
       </div>
 
+      <!-- Panel de info -->
       <div id="graphInfo" class="graph-info">
-        <h4>Información de la gráfica</h4>
-        <p>Configure y presione "Renderizar" para visualizar la función.</p>
+        <h4>Gráfica interactiva NUMERIX</h4>
+        <p>Ingresa una función y presiona <strong>Graficar</strong>. Arrastra el plano para mover la vista, usa la rueda del ratón para hacer zoom.</p>
+      </div>
+    </section>
+
+    <!-- ══ INGENIERÍA ECONÓMICA — TIR ════════════════════════════ -->
+    <section id="sec-tir" class="section">
+      <div class="page-header">
+        <h2>Ingeniería Económica — TIR</h2>
+        <p>Calcula la <strong>Tasa Interna de Retorno</strong> usando métodos numéricos. Ingresa flujos de caja o escribe la función VPN(x) directamente.</p>
       </div>
 
+      <!-- Card de entrada -->
       <div class="card">
-        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:.75rem;font-size:.82rem;">
-          <div style="display:flex;align-items:center;gap:.5rem;">
-            <div style="width:14px;height:3px;background:#4f46e5;border-radius:2px;flex-shrink:0;"></div>
-            <span style="color:var(--gray-600);">Curva f(x)</span>
+        <div class="card-header">
+          <div class="card-header-icon purple">💰</div>
+          <div>
+            <div class="card-title">Configuración del Proyecto</div>
+            <div class="card-subtitle">Elige el modo de entrada y el método numérico a usar</div>
           </div>
-          <div style="display:flex;align-items:center;gap:.5rem;">
-            <div style="width:12px;height:12px;border-radius:50%;background:#10b981;flex-shrink:0;"></div>
-            <span style="color:var(--gray-600);">Cruce por cero (aprox.)</span>
+        </div>
+
+        <!-- Modo de entrada -->
+        <div class="auto-mode-toggle" style="margin-bottom:1.1rem;">
+          <label class="auto-mode-opt">
+            <input type="radio" name="tir_mode" value="flujos" checked />
+            <span>📊 Flujos de Caja <small>(tabla de periodos)</small></span>
+          </label>
+          <label class="auto-mode-opt">
+            <input type="radio" name="tir_mode" value="funcion" />
+            <span>ƒ Función VPN(x) <small>(expresión directa)</small></span>
+          </label>
+        </div>
+
+        <!-- Campos: modo flujos -->
+        <div id="tir-flujos-fields">
+          <div class="auto-mode-hint" style="margin-bottom:.875rem;">
+            ℹ Ingresa los flujos de caja periodo a periodo. F₀ suele ser la inversión inicial (negativa). Se construye automáticamente VPN(x) = Σ Fₜ / (1+x)ᵗ.
           </div>
-          <div style="display:flex;align-items:center;gap:.5rem;">
-            <div style="width:12px;height:12px;border-radius:50%;background:#ef4444;flex-shrink:0;"></div>
-            <span style="color:var(--gray-600);">Raíz calculada</span>
+          <div class="form-grid" style="margin-bottom:.75rem;">
+            <div class="form-group">
+              <label>Nº de periodos n</label>
+              <input type="number" id="tir_n" value="4" min="1" max="50" />
+            </div>
+            <div class="form-group">
+              <label>Inversión inicial F₀</label>
+              <input type="number" id="tir_f0" value="-10000" step="any" />
+              <div class="hint">Normalmente negativa (egreso)</div>
+            </div>
+          </div>
+          <button id="btnTirGenTabla" class="btn" style="background:var(--gray-100);color:var(--gray-700);font-size:.82rem;padding:.45rem .875rem;margin-bottom:.75rem;">
+            🔄 Generar / Actualizar tabla
+          </button>
+          <div id="tir-flujos-tabla"></div>
+        </div>
+
+        <!-- Campos: modo función directa -->
+        <div id="tir-funcion-fields" style="display:none;">
+          <div class="auto-mode-hint" style="margin-bottom:.875rem;">
+            ℹ Escribe VPN como función de <strong>x</strong> (minúscula). Ejemplo: <code>-5000 + 2000/(1+x) + 3000/(1+x)^2 + 4000/(1+x)^3</code>
+          </div>
+          <div class="form-group">
+            <label for="tir_func">Función VPN(x)</label>
+            <input type="text" id="tir_func" class="mono"
+              placeholder="-5000 + 2000/(1+x) + 3000/(1+x)^2 + 4000/(1+x)^3" />
+            <div class="hint">Usa <strong>x</strong> minúscula como tasa de descuento</div>
+          </div>
+        </div>
+
+        <!-- Método y rango -->
+        <div style="border-top:1px solid var(--border);padding-top:1rem;margin-top:.75rem;">
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Método numérico</label>
+              <select id="tir_metodo" style="padding:.55rem .875rem;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-family:var(--font-main);font-size:.875rem;width:100%;background:var(--card);">
+                <option value="newton" selected>Newton-Raphson</option>
+                <option value="bisection">Bisección</option>
+                <option value="false">Regla Falsa</option>
+                <option value="secant">Secante</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Límite inferior i₀</label>
+              <input type="number" id="tir_i0" value="0" step="0.01" />
+              <div class="hint">0 = 0%</div>
+            </div>
+            <div class="form-group">
+              <label>Límite superior i₁</label>
+              <input type="number" id="tir_i1" value="1" step="0.01" />
+              <div class="hint">1 = 100%</div>
+            </div>
+            <div class="form-group">
+              <label>Tolerancia</label>
+              <input type="number" id="tir_tol" value="0.000001" step="any" />
+            </div>
+          </div>
+        </div>
+
+        <div id="tirAlert"></div>
+        <div class="btn-group">
+          <button id="btnCalcularTIR" class="btn btn-primary">▶ Calcular TIR</button>
+        </div>
+      </div>
+
+      <!-- Teoría rápida -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-header-icon purple">📖</div>
+          <div><div class="card-title">¿Qué es la TIR y por qué métodos numéricos?</div></div>
+        </div>
+        <div class="taylor-ref-grid">
+          <div class="taylor-ref-box green">
+            <div class="trb-title">Definición</div>
+            <div class="trb-formula">TIR = x* tal que VPN(x*) = 0</div>
+          </div>
+          <div class="taylor-ref-box amber">
+            <div class="trb-title">VPN con flujos discretos</div>
+            <div class="trb-formula">VPN(x) = Σ Fₜ / (1+x)ᵗ &nbsp; t=0…n</div>
+          </div>
+          <div class="taylor-ref-box blue">
+            <div class="trb-title">Criterio de decisión</div>
+            <div class="trb-formula">TIR &gt; TMAR → proyecto viable</div>
+          </div>
+          <div class="taylor-ref-box red">
+            <div class="trb-title">Por qué métodos numéricos</div>
+            <div class="trb-formula">VPN(x) no lineal → no tiene solución algebraica cerrada para n &gt; 4</div>
           </div>
         </div>
       </div>
+
+      <!-- Panel de resultado -->
+      <div id="tirResult"></div>
     </section>
 
   </div><!-- /app-main -->
@@ -1005,52 +1234,60 @@
       </div>
 
       <!-- Gráfica en vivo -->
-      <div id="m3GraphCard" class="card muller-graph-card" style="display:none;">
-        <div class="card-header">
-          <div class="card-header-icon green">📈</div>
-          <div>
-            <div class="card-title">Gráfica — Convergencia Visual</div>
-            <div class="card-subtitle">Curva f(x) · Parábola interpolante · Nodos x₀, x₁, x₂ · Raíz encontrada</div>
+      <div id="m3GraphCard" class="card" style="display:none;padding:0;overflow:hidden;position:relative;margin-bottom:1rem;">
+        <!-- Toolbar -->
+        <div style="display:flex;align-items:center;gap:.75rem;padding:.75rem 1rem;border-bottom:1px solid var(--border);flex-wrap:wrap;">
+          <div style="font-family:var(--font-main);font-size:.8rem;font-weight:600;color:var(--gray-600);">
+            <span id="m3GraphLabel">Convergencia visual de Müller</span>
           </div>
-          <!-- Controles de rango -->
-          <div class="muller-graph-controls">
-            <div class="mgc-group">
-              <label>x min</label>
-              <input type="number" id="m3Xmin" value="-5" step="0.5" />
+          <div style="margin-left:auto;display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;">
+            <!-- Slider iteraciones -->
+            <div style="display:flex;align-items:center;gap:.5rem;">
+              <span style="font-family:var(--font-main);font-size:.75rem;color:var(--gray-500);">Iter.</span>
+              <input type="range" id="m3IterSlider" min="1" value="1" step="1"
+                style="width:110px;accent-color:#10b981;" />
+              <span id="m3IterLabel" style="font-family:var(--font-mono);font-size:.75rem;font-weight:700;color:#10b981;min-width:20px;">1</span>
             </div>
-            <div class="mgc-group">
-              <label>x max</label>
-              <input type="number" id="m3Xmax" value="5"  step="0.5" />
-            </div>
-            <button id="btnM3Replot" class="btn btn-sm btn-secondary" style="align-self:flex-end;">↺ Redibujar</button>
+            <button id="btnM3Play" class="btn btn-sm" style="background:#10b981;color:#fff;padding:.3rem .75rem;font-size:.78rem;">▶ Animar</button>
+            <button id="btnM3GReset" class="btn btn-sm btn-secondary" style="padding:.3rem .75rem;font-size:.78rem;">⟳ Vista</button>
           </div>
         </div>
 
-        <!-- Canvas principal -->
-        <div class="muller-canvas-wrap">
-          <canvas id="m3Canvas"></canvas>
+        <!-- Canvas interactivo -->
+        <canvas id="m3Canvas" style="display:block;width:100%;cursor:crosshair;touch-action:none;"></canvas>
+
+        <!-- Tooltip -->
+        <div id="m3Tooltip" style="
+          position:absolute;pointer-events:none;display:none;
+          background:#1e293b;color:#f8fafc;
+          font-family:'JetBrains Mono',monospace;font-size:.75rem;font-weight:500;
+          padding:.35rem .65rem;border-radius:6px;
+          box-shadow:0 4px 16px rgba(0,0,0,.35);
+          border:1px solid #334155;white-space:nowrap;z-index:10;line-height:1.6;">
         </div>
 
-        <!-- Leyenda -->
-        <div class="muller-legend">
-          <div class="ml-item"><div class="ml-dot" style="background:#4f46e5;"></div><span>f(x)</span></div>
-          <div class="ml-item"><div class="ml-dot" style="background:#f59e0b;border-radius:2px;"></div><span>Parábola final</span></div>
-          <div class="ml-item"><div class="ml-dot" style="background:#6366f1;width:10px;height:10px;"></div><span>x₀</span></div>
-          <div class="ml-item"><div class="ml-dot" style="background:#8b5cf6;width:10px;height:10px;"></div><span>x₁</span></div>
-          <div class="ml-item"><div class="ml-dot" style="background:#a855f7;width:10px;height:10px;"></div><span>x₂</span></div>
-          <div class="ml-item"><div class="ml-dot" style="background:#10b981;width:14px;height:14px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 2px #10b981;"></div><span>Raíz</span></div>
+        <!-- Zoom buttons -->
+        <div style="position:absolute;bottom:12px;right:12px;display:flex;flex-direction:column;gap:4px;">
+          <button onclick="m3GZoom(0.75)" style="width:28px;height:28px;border:1px solid #334155;border-radius:6px;background:rgba(15,23,42,.7);backdrop-filter:blur(4px);color:#e2e8f0;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;">+</button>
+          <button onclick="m3GZoom(1.35)" style="width:28px;height:28px;border:1px solid #334155;border-radius:6px;background:rgba(15,23,42,.7);backdrop-filter:blur(4px);color:#e2e8f0;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;">−</button>
         </div>
 
-        <!-- Slider de animación por iteración -->
-        <div class="muller-anim-bar">
-          <span class="mab-label">Iteración:</span>
-          <input type="range" id="m3IterSlider" min="1" value="1" step="1" />
-          <span id="m3IterLabel" class="mab-cur">1</span>
-          <button id="btnM3Play" class="btn btn-sm" style="background:var(--success);color:#fff;padding:.35rem .85rem;">▶ Animar</button>
+        <!-- Coordenadas -->
+        <div id="m3GraphCoords" style="
+          position:absolute;bottom:12px;left:12px;
+          background:rgba(15,23,42,.75);backdrop-filter:blur(4px);
+          border:1px solid #334155;border-radius:6px;
+          padding:.25rem .6rem;font-family:'JetBrains Mono',monospace;
+          font-size:.72rem;color:#94a3b8;">
+          x = — &nbsp; y = —
         </div>
 
-        <!-- Info de iteración activa -->
-        <div id="m3GraphInfo" class="muller-graph-info"></div>
+        <!-- Info de iteración -->
+        <div id="m3GraphInfo" style="
+          padding:.5rem 1rem;border-top:1px solid var(--border);
+          font-family:var(--font-main);font-size:.8rem;color:var(--gray-600);
+          background:var(--gray-50);min-height:32px;">
+        </div>
       </div>
 
       <!-- Resultado (se rellena con JS) -->
@@ -1136,6 +1373,21 @@
       </div>
 
       <div id="bsResult"></div>
+
+      <!-- Gráfica Bairstow -->
+      <div id="bsGraphCard" class="card" style="display:none;padding:0;overflow:hidden;position:relative;margin-top:1rem;">
+        <div style="display:flex;align-items:center;gap:.75rem;padding:.75rem 1rem;border-bottom:1px solid var(--border);">
+          <span style="font-family:var(--font-main);font-size:.8rem;font-weight:600;color:var(--gray-600);">Gráfica — Bairstow · Raíces del polinomio</span>
+          <div style="margin-left:auto;display:flex;gap:.4rem;">
+            <button onclick="bsGZoom(0.75)" style="width:28px;height:28px;border:1px solid var(--border);border-radius:6px;background:var(--card);font-size:15px;cursor:pointer;">+</button>
+            <button onclick="bsGZoom(1.35)" style="width:28px;height:28px;border:1px solid var(--border);border-radius:6px;background:var(--card);font-size:15px;cursor:pointer;">−</button>
+            <button onclick="bsGReset()" style="padding:0 .6rem;height:28px;border:1px solid var(--border);border-radius:6px;background:var(--card);font-family:var(--font-main);font-size:.72rem;cursor:pointer;">⟳ Vista</button>
+          </div>
+        </div>
+        <canvas id="bsCanvas" style="display:block;width:100%;cursor:crosshair;touch-action:none;"></canvas>
+        <div id="bsTooltip" style="position:absolute;pointer-events:none;display:none;background:#1e293b;color:#f8fafc;font-family:'JetBrains Mono',monospace;font-size:.75rem;padding:.35rem .65rem;border-radius:6px;box-shadow:0 4px 16px rgba(0,0,0,.25);border:1px solid #334155;white-space:nowrap;z-index:10;"></div>
+        <div id="bsGraphCoords" style="position:absolute;bottom:10px;left:10px;background:rgba(255,255,255,.88);backdrop-filter:blur(4px);border:1px solid #e2e8f0;border-radius:6px;padding:.2rem .55rem;font-family:'JetBrains Mono',monospace;font-size:.72rem;color:#64748b;">x = — &nbsp; y = —</div>
+      </div>
       <div id="bs-download-bar" style="display:none;margin-top:1rem;">
         <button onclick="numerixExport.t3Bairstow()" class="btn-download-excel">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/></svg>
@@ -1206,6 +1458,21 @@
       </div>
 
       <div id="nhResult"></div>
+
+      <!-- Gráfica Horner -->
+      <div id="nhGraphCard" class="card" style="display:none;padding:0;overflow:hidden;position:relative;margin-top:1rem;">
+        <div style="display:flex;align-items:center;gap:.75rem;padding:.75rem 1rem;border-bottom:1px solid var(--border);">
+          <span style="font-family:var(--font-main);font-size:.8rem;font-weight:600;color:var(--gray-600);">Gráfica — Horner · P(c) y Q(x) = P(x)/(x−c)</span>
+          <div style="margin-left:auto;display:flex;gap:.4rem;">
+            <button onclick="nhGZoom(0.75)" style="width:28px;height:28px;border:1px solid var(--border);border-radius:6px;background:var(--card);font-size:15px;cursor:pointer;">+</button>
+            <button onclick="nhGZoom(1.35)" style="width:28px;height:28px;border:1px solid var(--border);border-radius:6px;background:var(--card);font-size:15px;cursor:pointer;">−</button>
+            <button onclick="nhGReset()" style="padding:0 .6rem;height:28px;border:1px solid var(--border);border-radius:6px;background:var(--card);font-family:var(--font-main);font-size:.72rem;cursor:pointer;">⟳ Vista</button>
+          </div>
+        </div>
+        <canvas id="nhCanvas" style="display:block;width:100%;cursor:crosshair;touch-action:none;"></canvas>
+        <div id="nhTooltip" style="position:absolute;pointer-events:none;display:none;background:#1e293b;color:#f8fafc;font-family:'JetBrains Mono',monospace;font-size:.75rem;padding:.35rem .65rem;border-radius:6px;box-shadow:0 4px 16px rgba(0,0,0,.25);border:1px solid #334155;white-space:nowrap;z-index:10;"></div>
+        <div id="nhGraphCoords" style="position:absolute;bottom:10px;left:10px;background:rgba(255,255,255,.88);backdrop-filter:blur(4px);border:1px solid #e2e8f0;border-radius:6px;padding:.2rem .55rem;font-family:'JetBrains Mono',monospace;font-size:.72rem;color:#64748b;">x = — &nbsp; y = —</div>
+      </div>
       <div id="nh-download-bar" style="display:none;margin-top:1rem;">
         <button onclick="numerixExport.t3NewtonHorner()" class="btn-download-excel">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/></svg>
