@@ -1486,76 +1486,114 @@
 
 
 <!-- ════════════════════════════════════════════════════════
-     TEMA 4 — Newton-Raphson Sistemas No Lineales (Placeholder)
+     TEMA 4 — Newton-Raphson para Sistemas No Lineales
 ════════════════════════════════════════════════════════ -->
 <div id="panel-t4" class="theme-panel no-sidebar">
-  <div class="placeholder-hero">
+<div class="app-main" style="max-width:960px;margin:0 auto;">
 
-    <div class="placeholder-icon" style="background:var(--t4-light);">🔗</div>
-    <h2>Newton-Raphson para Sistemas No Lineales</h2>
-    <p class="subtitle">
-      Extensión multivariable del método de Newton. Resuelve sistemas de <em>n</em> ecuaciones no lineales
-      con <em>n</em> incógnitas mediante la Jacobiana calculada numéricamente.
+  <!-- ══ ENCABEZADO ══════════════════════════════════════════ -->
+  <div class="page-header">
+    <h2>Newton-Raphson — Sistemas No Lineales</h2>
+    <p>Resuelve sistemas de <em>n</em> ecuaciones no lineales con <em>n</em> incógnitas.<br>
+    X<sup>(k+1)</sup> = X<sup>(k)</sup> − [J(X<sup>(k)</sup>)]<sup>−1</sup> · F(X<sup>(k)</sup>)
     </p>
-    <span class="coming-soon-badge" style="background:var(--t4-light);color:var(--t4-dark);">
-      🔧 &nbsp;Módulo en construcción
-    </span>
-
-    <div class="placeholder-features">
-      <div class="feature-card">
-        <div class="fc-icon">📋</div>
-        <h4>Sistema de ecuaciones</h4>
-        <p>Ingreso de múltiples ecuaciones f₁(x,y,…), f₂(x,y,…), …, fₙ con <em>n</em> variables.</p>
-      </div>
-      <div class="feature-card">
-        <div class="fc-icon">∂</div>
-        <h4>Jacobiana automática</h4>
-        <p>Construcción y evaluación automática de la matriz Jacobiana J(x) mediante diferencias finitas numéricas.</p>
-      </div>
-      <div class="feature-card">
-        <div class="fc-icon">📍</div>
-        <h4>Vector inicial x₀</h4>
-        <p>Ingreso del vector de valores iniciales (x₀, y₀, …) para inicializar las iteraciones.</p>
-      </div>
-      <div class="feature-card">
-        <div class="fc-icon">✓</div>
-        <h4>Criterio de convergencia</h4>
-        <p>Norma del vector residual ‖f(x)‖ y norma de la corrección ‖Δx‖. Tabla de iteraciones completa.</p>
-      </div>
-    </div>
-
-    <!-- Vista previa de inputs futuros -->
-    <div class="card" style="max-width:520px;margin:0 auto;text-align:left;opacity:.6;pointer-events:none;">
-      <div class="card-header">
-        <div class="card-header-icon blue">🔗</div>
-        <div>
-          <div class="card-title">Vista previa del módulo</div>
-          <div class="card-subtitle">Interfaz planificada (no funcional)</div>
-        </div>
-      </div>
-      <div class="form-group" style="margin-bottom:.75rem;">
-        <label>Ecuación f₁(x, y)</label>
-        <input type="text" class="mono" placeholder="Ej: x^2 + y^2 - 4" disabled />
-      </div>
-      <div class="form-group" style="margin-bottom:.75rem;">
-        <label>Ecuación f₂(x, y)</label>
-        <input type="text" class="mono" placeholder="Ej: x^2 - y - 1" disabled />
-      </div>
-      <div class="form-grid">
-        <div class="form-group"><label>x₀ inicial</label><input type="number" placeholder="1" disabled /></div>
-        <div class="form-group"><label>y₀ inicial</label><input type="number" placeholder="1" disabled /></div>
-      </div>
-      <div class="form-grid" style="margin-top:.75rem;">
-        <div class="form-group"><label>Tolerancia</label><input type="number" placeholder="0.0001" disabled /></div>
-        <div class="form-group"><label>Máx. iteraciones</label><input type="number" placeholder="50" disabled /></div>
-      </div>
-      <div class="btn-group">
-        <button class="btn btn-primary" disabled>▶ Resolver Sistema</button>
-      </div>
-    </div>
-
   </div>
-</div>
+
+  <!-- ══ CONFIGURACIÓN DEL SISTEMA ══════════════════════════ -->
+  <div class="card" style="margin-bottom:1.25rem;">
+    <div class="card-header">
+      <div class="card-header-icon blue">🔗</div>
+      <div>
+        <div class="card-title">Sistema de Ecuaciones</div>
+        <div class="card-subtitle">Ingresa cada ecuación en la forma f(x,y,…) = 0 · Variables: x, y, z, w (minúsculas)</div>
+      </div>
+      <div style="margin-left:auto;display:flex;align-items:center;gap:.5rem;">
+        <label style="font-family:var(--font-main);font-size:.8rem;color:var(--gray-600);">N° de ecuaciones:</label>
+        <select id="t4_n" style="padding:.35rem .65rem;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-family:var(--font-main);font-size:.875rem;background:var(--card);">
+          <option value="2" selected>2 × 2</option>
+          <option value="3">3 × 3</option>
+          <option value="4">4 × 4</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Ecuaciones dinámicas -->
+    <div id="t4-eqs-container" style="margin-bottom:1rem;"></div>
+
+    <!-- Vector inicial -->
+    <div style="border-top:1px solid var(--border);padding-top:1rem;">
+      <div style="font-family:var(--font-main);font-size:.82rem;font-weight:700;color:var(--gray-600);margin-bottom:.625rem;text-transform:uppercase;letter-spacing:.4px;">
+        Vector inicial X⁰
+      </div>
+      <div id="t4-x0-container" style="display:flex;gap:.625rem;flex-wrap:wrap;"></div>
+    </div>
+
+    <!-- Parámetros -->
+    <div class="form-grid" style="margin-top:1rem;">
+      <div class="form-group">
+        <label for="t4_tol">Tolerancia ‖Δx‖</label>
+        <input type="number" id="t4_tol" value="0.0001" step="any" />
+      </div>
+      <div class="form-group">
+        <label for="t4_maxiter">Máx. iteraciones</label>
+        <input type="number" id="t4_maxiter" value="50" min="1" max="200" />
+      </div>
+    </div>
+
+    <div id="t4Alert"></div>
+    <div class="btn-group">
+      <button id="btnT4Resolver" class="btn btn-primary" style="background:var(--t4-dark,#0369a1);">
+        ▶ Resolver Sistema
+      </button>
+    </div>
+  </div>
+
+  <!-- ══ FUNDAMENTO TEÓRICO ══════════════════════════════════ -->
+  <div class="card" style="margin-bottom:1.25rem;">
+    <div class="card-header">
+      <div class="card-header-icon blue">📖</div>
+      <div><div class="card-title">Fundamento del Método</div></div>
+    </div>
+    <div class="taylor-ref-grid">
+      <div class="taylor-ref-box blue">
+        <div class="trb-title">Sistema F(X) = 0</div>
+        <div class="trb-formula">f₁(x,y,…)=0, f₂(x,y,…)=0, …, fₙ=0</div>
+      </div>
+      <div class="taylor-ref-box green">
+        <div class="trb-title">Jacobiana J(X)</div>
+        <div class="trb-formula">J<sub>ij</sub> = ∂fᵢ/∂xⱼ (diferencias centrales)</div>
+      </div>
+      <div class="taylor-ref-box amber">
+        <div class="trb-title">Corrección ΔX</div>
+        <div class="trb-formula">J(X<sup>(k)</sup>) · ΔX = −F(X<sup>(k)</sup>)</div>
+      </div>
+      <div class="taylor-ref-box red">
+        <div class="trb-title">Actualización</div>
+        <div class="trb-formula">X<sup>(k+1)</sup> = X<sup>(k)</sup> + ΔX</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ RESULTADO ══════════════════════════════════════════ -->
+  <div id="t4Result"></div>
+
+  <!-- ══ GRÁFICA (solo para sistemas 2×2) ══════════════════ -->
+  <div id="t4GraphCard" class="card" style="display:none;padding:0;overflow:hidden;position:relative;margin-top:1.25rem;">
+    <div style="display:flex;align-items:center;gap:.75rem;padding:.75rem 1rem;border-bottom:1px solid var(--border);flex-wrap:wrap;">
+      <span style="font-family:var(--font-main);font-size:.8rem;font-weight:600;color:var(--gray-600);">Gráfica — Curvas de nivel f₁=0 y f₂=0 · La intersección es la solución</span>
+      <div style="margin-left:auto;display:flex;gap:.4rem;">
+        <button onclick="t4GZoom(0.75)" style="width:28px;height:28px;border:1px solid var(--border);border-radius:6px;background:var(--card);font-size:15px;cursor:pointer;">+</button>
+        <button onclick="t4GZoom(1.35)" style="width:28px;height:28px;border:1px solid var(--border);border-radius:6px;background:var(--card);font-size:15px;cursor:pointer;">−</button>
+        <button onclick="t4GReset()" style="padding:0 .6rem;height:28px;border:1px solid var(--border);border-radius:6px;background:var(--card);font-family:var(--font-main);font-size:.72rem;cursor:pointer;">⟳ Vista</button>
+      </div>
+    </div>
+    <canvas id="t4Canvas" style="display:block;width:100%;cursor:crosshair;touch-action:none;"></canvas>
+    <div id="t4Tooltip" style="position:absolute;pointer-events:none;display:none;background:#1e293b;color:#f8fafc;font-family:'JetBrains Mono',monospace;font-size:.75rem;padding:.35rem .65rem;border-radius:6px;box-shadow:0 4px 16px rgba(0,0,0,.25);border:1px solid #334155;white-space:nowrap;z-index:10;line-height:1.6;"></div>
+    <div id="t4GraphCoords" style="position:absolute;bottom:10px;left:10px;background:rgba(255,255,255,.88);backdrop-filter:blur(4px);border:1px solid #e2e8f0;border-radius:6px;padding:.2rem .55rem;font-family:'JetBrains Mono',monospace;font-size:.72rem;color:#64748b;">x = — &nbsp; y = —</div>
+  </div>
+
+</div><!-- /app-main T4 -->
+</div><!-- /panel-t4 -->
 
 
 </div><!-- /app-layout -->

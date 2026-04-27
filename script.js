@@ -6780,3 +6780,488 @@ const numerixExport = (function () {
 })();
 
 window.numerixExport = numerixExport;
+
+/* ══════════════════════════════════════════════════════════════
+   TEMA 4 — NEWTON-RAPHSON PARA SISTEMAS NO LINEALES
+   X^(k+1) = X^(k) - [J(X^(k))]^(-1) · F(X^(k))
+   Jacobiana por diferencias centrales numéricas
+══════════════════════════════════════════════════════════════ */
+
+const T4_VARS = ['x','y','z','w'];
+
+/* ── Evaluar función multivariable segura ──────────────────── */
+function t4EvalF(exprRaw, vars, vals) {
+  let e = exprRaw;
+  /* Reemplazar variables de mayor longitud primero */
+  vars.forEach((v, i) => {
+    e = e.replace(new RegExp('\\b' + v + '\\b', 'g'), '(' + vals[i] + ')');
+  });
+  e = e.replace(/\^/g, '**')
+       .replace(/\bsin\b/g,'Math.sin').replace(/\bcos\b/g,'Math.cos')
+       .replace(/\btan\b/g,'Math.tan').replace(/\bexp\b/g,'Math.exp')
+       .replace(/\bln\b/g,'Math.log').replace(/\bsqrt\b/g,'Math.sqrt')
+       .replace(/\babs\b/g,'Math.abs').replace(/\bpi\b/g,'Math.PI')
+       .replace(/\be\b/g,'Math.E');
+  return Function('"use strict"; return (' + e + ')')();
+}
+
+/* ── Derivada parcial numérica ─────────────────────────────── */
+function t4Partial(expr, vars, vals, i, h=1e-7) {
+  const v1 = [...vals], v2 = [...vals];
+  v1[i] += h; v2[i] -= h;
+  return (t4EvalF(expr, vars, v1) - t4EvalF(expr, vars, v2)) / (2*h);
+}
+
+/* ── Resolver sistema lineal Ax=b por eliminación Gaussiana ── */
+function t4GaussElim(A, b) {
+  const n = b.length;
+  /* Clonar */
+  const M = A.map((row,i) => [...row, b[i]]);
+
+  for (let col = 0; col < n; col++) {
+    /* Pivoteo parcial */
+    let maxRow = col;
+    for (let row = col+1; row < n; row++)
+      if (Math.abs(M[row][col]) > Math.abs(M[maxRow][col])) maxRow = row;
+    [M[col], M[maxRow]] = [M[maxRow], M[col]];
+
+    if (Math.abs(M[col][col]) < 1e-15) return null; /* singular */
+
+    for (let row = col+1; row < n; row++) {
+      const f = M[row][col] / M[col][col];
+      for (let k = col; k <= n; k++) M[row][k] -= f * M[col][k];
+    }
+  }
+
+  /* Sustitución regresiva */
+  const x = new Array(n).fill(0);
+  for (let i = n-1; i >= 0; i--) {
+    x[i] = M[i][n];
+    for (let j = i+1; j < n; j++) x[i] -= M[i][j] * x[j];
+    x[i] /= M[i][i];
+  }
+  return x;
+}
+
+/* ── Motor principal Newton-Raphson Sistemas ────────────────── */
+function t4NewtonSystems(exprs, vars, x0, tol, maxIter) {
+  let X = [...x0];
+  const n = exprs.length;
+  const iterations = [];
+
+  for (let k = 0; k < maxIter; k++) {
+    /* Evaluar F(X) */
+    let F;
+    try {
+      F = exprs.map(expr => t4EvalF(expr, vars, X));
+    } catch(e) { throw new Error('Error evaluando ecuaciones en X=(' + X.map(v=>v.toFixed(4)).join(', ') + '): ' + e.message); }
+
+    if (F.some(v => !isFinite(v)))
+      throw new Error('F(X) contiene valores no finitos. Revisa las ecuaciones o el punto inicial.');
+
+    /* Construir Jacobiana J(X) */
+    const J = [];
+    for (let i = 0; i < n; i++) {
+      J.push([]);
+      for (let j = 0; j < n; j++)
+        J[i].push(t4Partial(exprs[i], vars, X, j));
+    }
+
+    /* Resolver J·ΔX = -F */
+    const negF = F.map(v => -v);
+    const deltaX = t4GaussElim(J, negF);
+    if (!deltaX)
+      throw new Error('Jacobiana singular en la iteración ' + (k+1) + '. Intenta con un punto inicial diferente.');
+
+    const normF  = Math.sqrt(F.reduce((s,v)=>s+v*v, 0));
+    const normDx = Math.sqrt(deltaX.reduce((s,v)=>s+v*v, 0));
+
+    /* Calcular Ea relativo por componente */
+    const ea = deltaX.map((dx, i) => Math.abs(X[i]) > 1e-14 ? Math.abs(dx/X[i])*100 : Math.abs(dx)*100);
+
+    iterations.push({
+      k: k+1,
+      X:      [...X],
+      F:      [...F],
+      J:      J.map(row=>[...row]),
+      deltaX: [...deltaX],
+      normF, normDx, ea,
+      converged: normDx < tol
+    });
+
+    X = X.map((xi, i) => xi + deltaX[i]);
+
+    if (normDx < tol) break;
+  }
+
+  return { solution: X, iterations };
+}
+
+/* ── Renderizar resultado T4 ────────────────────────────────── */
+function t4RenderResult(result, exprs, vars, tol) {
+  const container = document.getElementById('t4Result');
+  const { solution, iterations } = result;
+  const n = vars.length;
+  const last = iterations.at(-1);
+  const converged = last?.converged || false;
+  const COLORS = ['#4f46e5','#10b981','#f59e0b','#ef4444'];
+
+  let html = '';
+
+  /* ── Tarjeta de solución ── */
+  html += `<div class="card" style="margin-bottom:1.25rem;border-top:4px solid ${converged?'#10b981':'#f59e0b'};">
+    <div class="card-header">
+      <div class="card-header-icon ${converged?'green':'amber'}">${converged?'✅':'⚠️'}</div>
+      <div>
+        <div class="card-title">Solución del Sistema</div>
+        <div class="card-subtitle">${iterations.length} iteraciones · ${converged?'✓ Convergió (‖ΔX‖ < '+tol+')':'⚠ Máximo de iteraciones alcanzado'}</div>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:.75rem;padding:0 1.5rem 1.25rem;">`;
+
+  vars.forEach((v, i) => {
+    const col = COLORS[i % COLORS.length];
+    let fval = '?';
+    try { fval = t4EvalF(exprs[i], vars, solution).toExponential(4); } catch{}
+    html += `<div style="border-radius:var(--radius-sm);border:1.5px solid ${col}33;border-left:5px solid ${col};padding:.875rem 1rem;background:var(--gray-50);">
+      <div style="font-family:var(--font-main);font-size:.72rem;font-weight:700;color:${col};text-transform:uppercase;margin-bottom:.3rem;">${v}*</div>
+      <div style="font-family:var(--font-mono);font-size:1.05rem;font-weight:700;color:${col};">${solution[i].toFixed(10)}</div>
+    </div>`;
+  });
+  html += '</div>';
+
+  /* Verificación */
+  html += `<div style="padding:0 1.5rem 1.25rem;display:flex;flex-wrap:wrap;gap:.5rem;">`;
+  exprs.forEach((expr, i) => {
+    let fv = NaN;
+    try { fv = t4EvalF(expr, vars, solution); } catch{}
+    const ok = isFinite(fv) && Math.abs(fv) < 1e-3;
+    html += `<span style="font-family:var(--font-mono);font-size:.78rem;background:${ok?'var(--success-light)':'#fee2e2'};color:${ok?'#065f46':'#991b1b'};padding:.25rem .65rem;border-radius:4px;border:1px solid ${ok?'#6ee7b7':'#fca5a5'};">
+      f${i+1}(X*) = ${isFinite(fv)?fv.toExponential(4):'?'} ${ok?'✓':'⚠'}
+    </span>`;
+  });
+  html += '</div></div>';
+
+  /* ── Tabla de iteraciones ── */
+  html += `<div class="card" style="padding:0;overflow:hidden;margin-bottom:1.25rem;">
+    <div style="padding:1rem 1.5rem .75rem;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:.75rem;">
+      <div class="card-header-icon blue">📋</div>
+      <div><div class="card-title">Tabla de Iteraciones</div>
+      <div class="card-subtitle">X<sup>(k+1)</sup> = X<sup>(k)</sup> − [J(X<sup>(k)</sup>)]<sup>−1</sup> · F(X<sup>(k)</sup>)</div></div>
+    </div>
+    <div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:.8rem;">
+      <thead><tr style="background:var(--primary-light);">`;
+
+  const thS = 'padding:.6rem .875rem;font-family:var(--font-main);font-size:.7rem;font-weight:700;color:var(--primary-dark);border-bottom:2px solid #a5b4fc;white-space:nowrap;text-align:right;';
+  html += `<th style="${thS}text-align:center;">Iter.</th>`;
+  vars.forEach(v => { html += `<th style="${thS}">${v}<sup>(k)</sup></th>`; });
+  exprs.forEach((_,i) => { html += `<th style="${thS}">f${i+1}(X)</th>`; });
+  vars.forEach(v => { html += `<th style="${thS}">Δ${v}</th>`; });
+  html += `<th style="${thS}">‖ΔX‖</th><th style="${thS}">‖F‖</th></tr></thead><tbody>`;
+
+  iterations.forEach((it, i) => {
+    const bg  = it.converged ? 'var(--success-light)' : i%2 ? 'var(--gray-50)' : '#fff';
+    const fc  = it.converged ? '#065f46' : 'var(--gray-700)';
+    const tdS = `padding:.55rem .875rem;font-family:var(--font-mono);font-size:.78rem;text-align:right;background:${bg};color:${fc};border-bottom:1px solid var(--border);`;
+    html += '<tr>';
+    html += `<td style="${tdS}text-align:center;font-weight:700;color:var(--primary-dark);">${it.k}</td>`;
+    it.X.forEach(v => { html += `<td style="${tdS}">${v.toFixed(8)}</td>`; });
+    it.F.forEach(v => { html += `<td style="${tdS}color:${Math.abs(v)<0.001?'#065f46':'#991b1b'};">${v.toExponential(4)}</td>`; });
+    it.deltaX.forEach(v => { html += `<td style="${tdS}">${v.toFixed(8)}</td>`; });
+    html += `<td style="${tdS}font-weight:${it.converged?'700':'400'};color:${it.converged?'#065f46':fc};">${it.normDx.toExponential(4)}</td>`;
+    html += `<td style="${tdS}">${it.normF.toExponential(4)}</td>`;
+    html += '</tr>';
+  });
+  html += '</tbody></table></div></div>';
+
+  /* ── Desarrollo paso a paso ── */
+  html += `<div class="card" style="margin-bottom:1.25rem;">
+    <div class="card-header"><div class="card-header-icon blue">🔍</div>
+    <div><div class="card-title">Desarrollo Paso a Paso</div>
+    <div class="card-subtitle">Jacobiana, vector F y corrección ΔX en cada iteración</div></div></div>
+    <div style="padding:1.25rem 1.5rem;">`;
+
+  iterations.forEach((it, idx) => {
+    const col = it.converged ? '#10b981' : '#4f46e5';
+    html += `<div class="muller-step-block" style="border-left:3px solid ${col};margin-bottom:1rem;">
+      <div class="muller-step-header" style="background:${col}12;border-bottom:1px solid ${col}25;">
+        <div class="muller-step-num" style="background:${col};">${it.k}</div>
+        <div class="muller-step-title">Iteración ${it.k} — X<sup>(${it.k-1})</sup> = (${it.X.map(v=>v.toFixed(6)).join(', ')})${it.converged?' &nbsp;<span style="color:'+col+';font-weight:700;">✓ Convergencia</span>':''}</div>
+      </div>
+      <div class="muller-step-body">`;
+
+    /* F(X) */
+    html += `<div class="muller-data-row"><div class="muller-data-label">Vector F(X<sup>(k)</sup>)</div>`;
+    it.F.forEach((v,i) => { html += `<div class="muller-data-val">f${i+1} = ${v.toFixed(10)}</div>`; });
+    html += `</div>`;
+
+    /* Jacobiana */
+    html += `<div class="muller-data-row"><div class="muller-data-label">Jacobiana J(X<sup>(k)</sup>)</div>`;
+    it.J.forEach((row, i) => {
+      const rowStr = row.map((v,j)=>` ∂f${i+1}/∂${vars[j]} = ${v.toFixed(6)}`).join(' │ ');
+      html += `<div class="muller-data-val" style="font-size:.78rem;">Fila ${i+1}: ${rowStr}</div>`;
+    });
+    html += `</div>`;
+
+    /* ΔX y X nuevo */
+    const Xnew = it.X.map((xi, i) => xi + it.deltaX[i]);
+    html += `<div class="muller-data-row" style="grid-column:1/-1;border-color:${col};background:${col}08;">
+      <div class="muller-data-label">Corrección ΔX y X<sup>(k+1)</sup></div>`;
+    it.deltaX.forEach((v,i) => { html += `<div class="muller-data-val">Δ${vars[i]} = ${v.toFixed(10)}</div>`; });
+    Xnew.forEach((v,i) => { html += `<div class="muller-data-val accent" style="color:${col};font-weight:700;">${vars[i]}* = ${v.toFixed(10)}</div>`; });
+    html += `<div class="muller-data-val muted">‖ΔX‖ = ${it.normDx.toExponential(6)} &nbsp; ‖F‖ = ${it.normF.toExponential(6)}
+      ${it.converged?'<span style="color:'+col+';font-weight:700;"> ✓ &lt; '+tol+'</span>':''}
+    </div></div>`;
+
+    html += `</div></div>`;
+  });
+
+  html += '</div></div>';
+  container.innerHTML = html;
+}
+
+/* ── UI dinámica: generar campos según n ────────────────────── */
+function t4BuildUI() {
+  const n      = parseInt(document.getElementById('t4_n')?.value) || 2;
+  const vars   = T4_VARS.slice(0, n);
+
+  /* Ecuaciones */
+  const eqCont = document.getElementById('t4-eqs-container');
+  if (!eqCont) return;
+  eqCont.innerHTML = '';
+  const defaults2 = ['x^2 + x*y - 10', 'y + 3*x*y^2 - 57'];
+  const defaults3 = ['x + y + z - 3', 'x^2 + y^2 - 2', 'x*z - 1'];
+  const defaults4 = ['x + y + z + w - 4', 'x^2 + y^2 - 2', 'z^2 + w^2 - 2', 'x*y*z*w - 1'];
+  const defs = n===2 ? defaults2 : n===3 ? defaults3 : defaults4;
+
+  vars.forEach((v, i) => {
+    const div = document.createElement('div');
+    div.className = 'form-group';
+    div.style.marginBottom = '.75rem';
+    div.innerHTML = `
+      <label for="t4_eq_${i}">
+        Ecuación f<sub>${i+1}</sub>(${vars.join(', ')}) = 0
+      </label>
+      <input type="text" id="t4_eq_${i}" class="mono"
+        value="${defs[i] || ''}"
+        placeholder="Ej: ${defs[i] || 'x^2 + y - 1'}" />
+      <div class="hint">Variables disponibles: ${vars.join(', ')} · Usa ^ para potencias</div>`;
+    eqCont.appendChild(div);
+  });
+
+  /* Vector inicial */
+  const x0Cont = document.getElementById('t4-x0-container');
+  if (!x0Cont) return;
+  x0Cont.innerHTML = '';
+  const defX0_2=[1.5,3.5], defX0_3=[1,1,1], defX0_4=[1,1,1,1];
+  const defX0 = n===2 ? defX0_2 : n===3 ? defX0_3 : defX0_4;
+  vars.forEach((v, i) => {
+    const div = document.createElement('div');
+    div.className = 'form-group';
+    div.style.flex = '1';
+    div.style.minWidth = '100px';
+    div.innerHTML = `<label for="t4_x0_${i}">${v}<sub>₀</sub></label>
+      <input type="number" id="t4_x0_${i}" value="${defX0[i]}" step="any" />`;
+    x0Cont.appendChild(div);
+  });
+}
+
+/* ── Gráfica interactiva para sistemas 2×2 ──────────────────── */
+const t4Eng = t3GMakeEngine({ canvasId:'t4Canvas', tooltipId:'t4Tooltip', coordsId:'t4GraphCoords', bgDark:false });
+const t4GState = { exprs:[], vars:[], solution:[], iterations:[] };
+
+function t4GraphDraw() {
+  const {eng, drawBase, drawCrosshair, drawWatermark, drawRootLabel} = t4Eng;
+  if (!eng.canvas) return;
+  const {exprs, vars, solution, iterations} = t4GState;
+  const {toC, W, H} = drawBase();
+  const ctx = eng.ctx;
+  const {xMin, xMax, yMin, yMax} = eng;
+
+  if (!exprs.length) {
+    ctx.fillStyle='#94a3b8'; ctx.font='13px "Poppins",sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText('Resuelve el sistema para ver la gráfica', W/2, H/2); ctx.textBaseline='alphabetic';
+    drawWatermark(W,H,false); return;
+  }
+
+  /* Dibujar curvas de nivel f1=0 y f2=0 usando marching squares simplificado */
+  const CURVE_COLORS = ['#4f46e5','#10b981'];
+  const CURVE_NAMES  = ['f₁(x,y) = 0','f₂(x,y) = 0'];
+  const STEPS = 120;
+  const dx = (xMax - xMin) / STEPS, dy = (yMax - yMin) / STEPS;
+
+  exprs.slice(0,2).forEach((expr, ci) => {
+    ctx.strokeStyle = CURVE_COLORS[ci]; ctx.lineWidth = 2.5;
+    /* Precompute grid */
+    const grid = [];
+    for (let j = 0; j <= STEPS; j++) {
+      grid.push([]);
+      for (let i = 0; i <= STEPS; i++) {
+        const wx = xMin + i * dx, wy = yMin + j * dy;
+        let v = NaN;
+        try { v = t4EvalF(expr, vars, [wx, wy]); } catch {}
+        grid[j].push(isFinite(v) ? v : NaN);
+      }
+    }
+    /* Draw contour f=0 by linear interpolation on cell edges */
+    for (let j = 0; j < STEPS; j++) {
+      for (let i = 0; i < STEPS; i++) {
+        const v00=grid[j][i], v10=grid[j][i+1], v01=grid[j+1][i], v11=grid[j+1][i+1];
+        if ([v00,v10,v01,v11].some(v=>isNaN(v))) continue;
+        const pts = [];
+        const interp = (v0,v1,t0,t1) => t0 + (t1-t0)*(-v0)/(v1-v0);
+        if (v00*v10<0) pts.push({x:interp(v00,v10,xMin+i*dx,xMin+(i+1)*dx), y:yMin+j*dy});
+        if (v10*v11<0) pts.push({x:xMin+(i+1)*dx, y:interp(v10,v11,yMin+j*dy,yMin+(j+1)*dy)});
+        if (v01*v11<0) pts.push({x:interp(v01,v11,xMin+i*dx,xMin+(i+1)*dx), y:yMin+(j+1)*dy});
+        if (v00*v01<0) pts.push({x:xMin+i*dx, y:interp(v00,v01,yMin+j*dy,yMin+(j+1)*dy)});
+        if (pts.length >= 2) {
+          const {x:px0,y:py0}=toC(pts[0].x,pts[0].y), {x:px1,y:py1}=toC(pts[1].x,pts[1].y);
+          ctx.beginPath(); ctx.moveTo(px0,py0); ctx.lineTo(px1,py1); ctx.stroke();
+        }
+      }
+    }
+  });
+
+  /* Trayectoria de iteraciones */
+  if (iterations.length > 0) {
+    ctx.save(); ctx.setLineDash([4,3]); ctx.strokeStyle='#f59e0b'; ctx.lineWidth=1.5; ctx.globalAlpha=0.7;
+    ctx.beginPath();
+    iterations.forEach((it, i) => {
+      const {x:px,y:py}=toC(it.X[0],it.X[1]);
+      if(i===0) ctx.moveTo(px,py); else ctx.lineTo(px,py);
+    });
+    const last=iterations.at(-1);
+    const Xfin=[last.X[0]+last.deltaX[0], last.X[1]+last.deltaX[1]];
+    const{x:pxf,y:pyf}=toC(Xfin[0],Xfin[1]);
+    ctx.lineTo(pxf,pyf);
+    ctx.stroke(); ctx.restore();
+
+    /* Puntos de iteraciones */
+    iterations.forEach((it, i) => {
+      const {x:px,y:py}=toC(it.X[0],it.X[1]);
+      ctx.beginPath(); ctx.arc(px,py,4,0,Math.PI*2);
+      ctx.fillStyle='#f59e0b'; ctx.strokeStyle='#fff'; ctx.lineWidth=1.5; ctx.fill(); ctx.stroke();
+      if (i===0 || i===iterations.length-1) {
+        ctx.font='700 10px "Poppins",sans-serif'; ctx.fillStyle='#92400e';
+        ctx.textAlign='left'; ctx.textBaseline='bottom';
+        ctx.fillText(i===0?'X⁰':'X⁽'+i+'⁾', px+6, py-4);
+        ctx.textBaseline='alphabetic';
+      }
+    });
+  }
+
+  /* Punto solución */
+  if (solution.length >= 2 && isFinite(solution[0]) && isFinite(solution[1])) {
+    const {x:px,y:py}=toC(solution[0],solution[1]);
+    if (px>=0&&px<=W&&py>=0&&py<=H) {
+      ctx.save(); ctx.globalAlpha=0.15; ctx.beginPath(); ctx.arc(px,py,16,0,Math.PI*2);
+      ctx.fillStyle='#ef4444'; ctx.fill(); ctx.restore();
+      ctx.beginPath(); ctx.arc(px,py,7,0,Math.PI*2);
+      ctx.fillStyle='#ef4444'; ctx.strokeStyle='#fff'; ctx.lineWidth=2.5; ctx.fill(); ctx.stroke();
+      drawRootLabel(ctx,'#ef4444',`(${solution[0].toFixed(4)}, ${solution[1].toFixed(4)})`,px,py-8,W,false);
+    }
+  }
+
+  /* Leyenda */
+  CURVE_COLORS.forEach((col, i) => {
+    ctx.fillStyle=col; ctx.fillRect(10,12+i*18,18,3);
+    ctx.fillStyle='#374151'; ctx.font='600 10px "Poppins",sans-serif';
+    ctx.textAlign='left'; ctx.textBaseline='middle'; ctx.fillText(CURVE_NAMES[i],32,12+i*18+1.5);
+  });
+  ctx.fillStyle='#f59e0b'; ctx.fillRect(10,12+2*18,18,3);
+  ctx.fillStyle='#374151'; ctx.fillText('Trayectoria iteraciones',32,12+2*18+1.5);
+  ctx.textBaseline='alphabetic';
+
+  /* Tooltip hover */
+  if (eng.hoverOn && exprs.length >= 2) {
+    const tip=document.getElementById('t4Tooltip');
+    if (tip) {
+      const wx=eng.mouseWorld.x, wy=eng.mouseWorld.y;
+      let f1=NaN,f2=NaN;
+      try{f1=t4EvalF(exprs[0],vars,[wx,wy]);}catch{}
+      try{f2=t4EvalF(exprs[1],vars,[wx,wy]);}catch{}
+      if (isFinite(f1)||isFinite(f2)) {
+        const parts = [];
+        if (isFinite(f1)) parts.push(`f₁(${t3GFmt(wx)},${t3GFmt(wy)}) = ${t3GFmt(f1)}`);
+        if (isFinite(f2)) parts.push(`f₂(${t3GFmt(wx)},${t3GFmt(wy)}) = ${t3GFmt(f2)}`);
+        tip.innerHTML=parts.join('<br>');
+        const {x:pxm,y:pym}=toC(wx,wy);
+        const rect=eng.canvas.getBoundingClientRect(),scale=rect.width/eng.canvas.width;
+        tip.style.display='block'; tip.style.left=(pxm*scale+14)+'px'; tip.style.top=(Math.max(0,pym*scale-60))+'px';
+      } else { tip.style.display='none'; }
+    }
+  }
+
+  drawCrosshair(toC,W,H);
+  drawWatermark(W,H,false);
+}
+
+function t4GraphInit(exprs, vars, solution, iterations) {
+  Object.assign(t4GState, { exprs, vars, solution, iterations });
+  const e = t4Eng.eng;
+  /* Vista centrada en la solución */
+  if (solution.length >= 2 && isFinite(solution[0])) {
+    const cx=solution[0], cy=solution[1], span=Math.max(3,Math.abs(cx)*1.5+2,Math.abs(cy)*1.5+2);
+    e.xMin=cx-span; e.xMax=cx+span; e.yMin=cy-span; e.yMax=cy+span;
+  } else { e.xMin=-6; e.xMax=6; e.yMin=-6; e.yMax=6; }
+  if (!e.canvas) { t4Eng.init(); t4Eng.eng.drawFn=t4GraphDraw; }
+  document.getElementById('t4GraphCard').style.display='block';
+  t4GraphDraw();
+}
+function t4GZoom(f){ t4Eng.zoom(f); }
+function t4GReset(){ const e=t4Eng.eng;e.xMin=-6;e.xMax=6;e.yMin=-6;e.yMax=6;t4GraphDraw(); }
+window.t4GZoom=t4GZoom; window.t4GReset=t4GReset;
+
+/* ── DOMContentLoaded ────────────────────────────────────── */
+document.addEventListener('DOMContentLoaded', () => {
+  /* Inicializar gráfica T4 */
+  t4Eng.init(); t4Eng.eng.drawFn=t4GraphDraw;
+
+  /* Construir UI inicial */
+  t4BuildUI();
+
+  /* Cambio de n ecuaciones */
+  document.getElementById('t4_n')?.addEventListener('change', t4BuildUI);
+
+  /* Botón resolver */
+  document.getElementById('btnT4Resolver')?.addEventListener('click', () => {
+    clearAlert('t4Alert');
+    document.getElementById('t4Result').innerHTML = '';
+    document.getElementById('t4GraphCard').style.display = 'none';
+
+    const n   = parseInt(document.getElementById('t4_n').value) || 2;
+    const vars = T4_VARS.slice(0, n);
+    const tol  = parseFloat(document.getElementById('t4_tol').value) || 1e-4;
+    const maxI = parseInt(document.getElementById('t4_maxiter').value) || 50;
+
+    /* Leer ecuaciones */
+    const exprs = [];
+    for (let i = 0; i < n; i++) {
+      const v = document.getElementById(`t4_eq_${i}`)?.value?.trim();
+      if (!v) { showAlert('t4Alert','danger',`Ecuación f${i+1} vacía.`); return; }
+      if (checkUpperX(v,'t4Alert')) return;
+      exprs.push(v);
+    }
+
+    /* Leer vector inicial */
+    const x0 = [];
+    for (let i = 0; i < n; i++) {
+      const v = parseFloat(document.getElementById(`t4_x0_${i}`)?.value);
+      if (isNaN(v)) { showAlert('t4Alert','danger',`Valor inicial ${vars[i]}₀ inválido.`); return; }
+      x0.push(v);
+    }
+
+    try {
+      const result = t4NewtonSystems(exprs, vars, x0, tol, maxI);
+      t4RenderResult(result, exprs, vars, tol);
+      const last = result.iterations.at(-1);
+      const conv = last?.converged;
+      showAlert('t4Alert', conv?'success':'warning',
+        `${conv?'✓ Convergencia':'⚠ Máx. iteraciones'} en ${result.iterations.length} iteraciones. Solución: (${result.solution.map(v=>v.toFixed(6)).join(', ')})`);
+      /* Gráfica solo para 2×2 */
+      if (n === 2) t4GraphInit(exprs, vars, result.solution, result.iterations);
+    } catch(e) {
+      showAlert('t4Alert', 'danger', 'Error: ' + e.message);
+    }
+  });
+});
