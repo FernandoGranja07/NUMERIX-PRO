@@ -20,8 +20,7 @@
   ╚══════════════════════════════════════════════════════════╝
   -->
   <link rel="stylesheet" href="styles.css" />
-  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2231548296895140"
-     crossorigin="anonymous"></script>
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2231548296895140" crossorigin="anonymous"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
 <body>
@@ -37,9 +36,18 @@
       <p>Plataforma de Métodos Numéricos</p>
     </div>
   </div>
-  <div class="header-authors">
-    <div class="header-authors-label">Desarrollado por</div>
-    <div class="header-authors-names">Fernando Granja &amp; Alejandra Tinoco</div>
+  <div style="display:flex;align-items:center;gap:1rem;margin-left:auto;">
+    <button id="btnDarkMode" aria-label="Cambiar tema" title="Modo oscuro / claro"
+      style="width:38px;height:38px;border-radius:50%;border:2px solid rgba(255,255,255,0.3);
+             background:rgba(255,255,255,0.15);cursor:pointer;font-size:1.1rem;
+             display:flex;align-items:center;justify-content:center;
+             transition:background .2s,border-color .2s;flex-shrink:0;">
+      🌙
+    </button>
+    <div class="header-authors">
+      <div class="header-authors-label">Desarrollado por</div>
+      <div class="header-authors-names">Fernando Granja &amp; Alejandra Tinoco</div>
+    </div>
   </div>
 </header>
 
@@ -81,7 +89,7 @@
       Newton-Raphson Sistemas
       <span class="tab-sublabel">Ecuaciones no lineales múltiples</span>
     </span>
-    <span class="tab-soon">Próx.</span>
+    <span class="tab-badge" title="Módulo activo"></span>
   </button>
 
 </nav>
@@ -1490,8 +1498,8 @@
 <!-- ════════════════════════════════════════════════════════
      TEMA 4 — Newton-Raphson para Sistemas No Lineales
 ════════════════════════════════════════════════════════ -->
-<div id="panel-t4" class="theme-panel no-sidebar">
-<div class="app-main" style="max-width:960px;margin:0 auto;">
+<div id="panel-t4" class="theme-panel with-sidebar">
+<div class="app-main">
 
   <!-- ══ ENCABEZADO ══════════════════════════════════════════ -->
   <div class="page-header">

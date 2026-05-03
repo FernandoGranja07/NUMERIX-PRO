@@ -614,8 +614,10 @@ const fmtSci = (v, d = 4) => (v === null || v === undefined) ? "—" : Number(v)
  */
 function calcStepInfo(A, B, stepUsuario) {
   const rango    = B - A;
-  const stepAuto = rango / 100;                     // paso recomendado
-  const stepFinal = Math.min(stepUsuario, stepAuto); // nunca más grande que el auto
+  /* Paso automático más fino: rango/500 para no perder raíces cercanas.
+     Máximo 0.05 para rangos grandes, mínimo 1e-4 para rangos pequeños. */
+  const stepAuto  = Math.max(1e-4, Math.min(rango / 500, 0.05));
+  const stepFinal = Math.min(stepUsuario, stepAuto);
   const warnings  = [];
 
   if (stepUsuario > stepAuto) {
@@ -637,58 +639,66 @@ function calcStepInfo(A, B, stepUsuario) {
 /**
  * scanRoots(expr, A, B, step)
  *   Escanea [A, B] con tamaño de paso `step`.
- *   Clasifica cada hallazgo con tipo:
- *     "exacta"       → |f(xi)| < 1e-12 (raíz exacta en el punto de muestreo)
- *     "cambio_signo" → f(xi)·f(xi+1) < 0 (Teorema de Bolzano)
- *     "posible"      → |f(xi)| < 1e-6 (muy cercano a cero pero no exacto)
- *
- *   Retorna { intervals, exactZeros, posibles }
- *   - intervals  : [{ a, b, fa, fb, tipo:'cambio_signo' }]
- *   - exactZeros : valores x donde f(x) ≈ 0 exacto
- *   - posibles   : [{ x, fx, tipo:'posible' }] — candidatos que no cambiaron signo
+ *   — Doble pasada: paso normal + paso/2 desplazado para no perder raíces
+ *   — Corrige el else-if que podía saltar cambios de signo
  */
 function scanRoots(expr, A, B, step) {
-  const intervals  = [];   // cambios de signo confirmados
-  const exactZeros = [];   // raíces exactas del muestreo
-  const posibles   = [];   // candidatos |f(x)| < 1e-6 sin cambio de signo
-  let xi = A;
+  const intervals  = [];
+  const exactZeros = [];
+  const posibles   = [];
 
-  while (xi < B) {
-    const xi1 = Math.min(xi + step, B);
-    let fi, fi1;
-    try { fi  = evalF(expr, xi);  } catch(e) { xi = xi1; continue; }
-    try { fi1 = evalF(expr, xi1); } catch(e) { xi = xi1; continue; }
-    if (!isFinite(fi) || !isFinite(fi1)) { xi = xi1; continue; }
+  /* Función auxiliar: añadir intervalo si no es duplicado */
+  function addInterval(a, b, fa, fb) {
+    const isDup = intervals.some(iv =>
+      Math.abs(iv.a - a) < step * 0.5 && Math.abs(iv.b - b) < step * 0.5
+    );
+    if (!isDup) intervals.push({ a, b, fa, fb, tipo: 'cambio_signo' });
+  }
 
-    /* ── Tipo "exacta": |f(xi)| < 1e-12 ── */
-    if (Math.abs(fi) < 1e-12) {
-      const isDup = exactZeros.some(z => Math.abs(z - xi) < step * 0.5);
-      if (!isDup) exactZeros.push(xi);
-    }
-    if (Math.abs(fi1) < 1e-12) {
-      const isDup = exactZeros.some(z => Math.abs(z - xi1) < step * 0.5);
-      if (!isDup) exactZeros.push(xi1);
-    }
-    /* ── Tipo "cambio_signo": f(xi)·f(xi+1) < 0 ── */
-    else if (fi * fi1 < 0) {
-      intervals.push({ a: xi, b: xi1, fa: fi, fb: fi1, tipo: 'cambio_signo' });
-    }
-    /* ── Tipo "posible": |f(xi)| < 1e-6 sin cambio de signo ── */
-    else {
-      if (Math.abs(fi) < 1e-6) {
+  /* Función auxiliar: escanear con un offset dado */
+  function scan(offset) {
+    let xi = A + offset;
+    while (xi < B) {
+      const xi1 = Math.min(xi + step, B);
+      let fi, fi1;
+      try { fi  = evalF(expr, xi);  } catch(e) { xi = xi1; continue; }
+      try { fi1 = evalF(expr, xi1); } catch(e) { xi = xi1; continue; }
+      if (!isFinite(fi) || !isFinite(fi1)) { xi = xi1; continue; }
+
+      /* Raíz exacta en xi */
+      if (Math.abs(fi) < 1e-11) {
+        const isDup = exactZeros.some(z => Math.abs(z - xi) < step * 0.5);
+        if (!isDup) exactZeros.push(xi);
+      }
+      /* Raíz exacta en xi1 */
+      if (Math.abs(fi1) < 1e-11) {
+        const isDup = exactZeros.some(z => Math.abs(z - xi1) < step * 0.5);
+        if (!isDup) exactZeros.push(xi1);
+      }
+
+      /* Cambio de signo — SIEMPRE verificar, independiente de raíces exactas */
+      if (fi * fi1 < 0) {
+        addInterval(xi, xi1, fi, fi1);
+      }
+
+      /* Posible raíz: valor muy pequeño pero sin cambio de signo */
+      if (fi  * fi1 >= 0 && Math.abs(fi)  < 1e-6) {
         const isDup = posibles.some(p => Math.abs(p.x - xi) < step * 0.5)
                    || exactZeros.some(z => Math.abs(z - xi) < step * 0.5);
         if (!isDup) posibles.push({ x: xi, fx: fi, tipo: 'posible' });
       }
-      if (Math.abs(fi1) < 1e-6) {
+      if (fi  * fi1 >= 0 && Math.abs(fi1) < 1e-6) {
         const isDup = posibles.some(p => Math.abs(p.x - xi1) < step * 0.5)
                    || exactZeros.some(z => Math.abs(z - xi1) < step * 0.5);
         if (!isDup) posibles.push({ x: xi1, fx: fi1, tipo: 'posible' });
       }
-    }
 
-    xi = xi1;
+      xi = xi1;
+    }
   }
+
+  /* Pasada única — el paso fino (rango/500) es suficiente para detectar todos los cambios de signo */
+  scan(0);
 
   return { intervals, exactZeros, posibles };
 }
@@ -709,9 +719,28 @@ function autoAllRoots(expr, A, B, stepUsuario, tol, maxIter, methodName) {
   const { intervals, exactZeros, posibles } = scanRoots(expr, A, B, step);
   const found = [];
 
-  /* Raíces exactas → tipo "exacta" */
+  /* Umbral de deduplicación: al menos 2 veces el paso para evitar duplicados
+     del doble-scan, pero no tan grande que fusione raíces reales cercanas */
+  const dedupThr = Math.max(step * 1.5, tol * 10);
+
+  /* Deduplicar intervalos ANTES de correr los métodos
+     (el scanner puede generar [a,b] y [a,b+ε] para la misma raíz) */
+  const uniqueIntervals = [];
+  intervals.forEach(iv => {
+    const center = (iv.a + iv.b) / 2;
+    const already = uniqueIntervals.some(u => Math.abs((u.a + u.b)/2 - center) < step);
+    if (!already) uniqueIntervals.push(iv);
+  });
+
+  /* Raíces exactas → tipo "exacta"
+     Solo si NO hay ya un intervalo que cubra esa raíz
+     (para evitar contarla dos veces) */
+  const coveredByInterval = (x) =>
+    uniqueIntervals.some(iv => x >= iv.a - step && x <= iv.b + step);
+
   exactZeros.forEach(x => {
-    const isDup = found.some(f => Math.abs(f.root - x) < tol * 100);
+    if (coveredByInterval(x)) return; // ya se maneja via intervalo
+    const isDup = found.some(f => Math.abs(f.root - x) < dedupThr);
     if (!isDup) found.push({
       root: x, interval: { a: x, b: x },
       tipo: 'exacta', exact: true, result: null
@@ -719,7 +748,7 @@ function autoAllRoots(expr, A, B, stepUsuario, tol, maxIter, methodName) {
   });
 
   /* Cambio de signo → tipo "cambio_signo" */
-  intervals.forEach(({ a, b }) => {
+  uniqueIntervals.forEach(({ a, b }) => {
     try {
       let res;
       if      (methodName === 'bisection') res = bisection(expr, a, b, tol, maxIter);
@@ -729,7 +758,7 @@ function autoAllRoots(expr, A, B, stepUsuario, tol, maxIter, methodName) {
       else return;
 
       if (!isFinite(res.root)) return;
-      const isDup = found.some(f => Math.abs(f.root - res.root) < 1e-5);
+      const isDup = found.some(f => Math.abs(f.root - res.root) < dedupThr);
       if (!isDup) found.push({
         root: res.root, interval: { a, b },
         tipo: 'cambio_signo', exact: false, result: res
@@ -739,7 +768,7 @@ function autoAllRoots(expr, A, B, stepUsuario, tol, maxIter, methodName) {
 
   /* Posibles → tipo "posible" (solo si no ya están como raíz confirmada) */
   posibles.forEach(({ x, fx }) => {
-    const isDup = found.some(f => Math.abs(f.root - x) < tol * 100);
+    const isDup = found.some(f => Math.abs(f.root - x) < dedupThr);
     if (!isDup) found.push({
       root: x, interval: { a: x, b: x },
       tipo: 'posible', exact: false, result: null,
@@ -752,7 +781,7 @@ function autoAllRoots(expr, A, B, stepUsuario, tol, maxIter, methodName) {
 
   return {
     roots:              found,
-    intervalsDetected:  intervals,
+    intervalsDetected:  uniqueIntervals,
     exactZeros,
     posibles,
     stepInfo,
@@ -835,9 +864,16 @@ function renderMultiRootsResult(data, expr, methodLabel, buildTableFn, A, B, ste
       let fVal = '?';
       try { fVal = evalF(expr, r.root).toExponential(3); } catch(e) {}
 
+      /* Determinar si es raíz exacta real */
+      const isExact = r.tipo === 'exacta';
+      const typeLabel = isExact
+        ? '<span style="background:#f0fdf4;color:#065f46;font-family:var(--font-main);font-size:.62rem;font-weight:700;padding:.1rem .45rem;border-radius:4px;border:1px solid #6ee7b7;">✓ Real exacta</span>'
+        : '<span style="background:#eff6ff;color:#1d4ed8;font-family:var(--font-main);font-size:.62rem;font-weight:700;padding:.1rem .45rem;border-radius:4px;border:1px solid #93c5fd;">✓ Real</span>';
+
       html += '<div style="border-radius:var(--radius-sm);border:1.5px solid ' + col + '33;border-left:5px solid ' + col + ';padding:.875rem 1rem;background:var(--gray-50);">';
       html += '<div style="display:flex;align-items:center;gap:.4rem;margin-bottom:.5rem;flex-wrap:wrap;">';
       html += '<span style="background:' + col + ';color:#fff;font-family:var(--font-main);font-size:.65rem;font-weight:700;padding:.15rem .55rem;border-radius:4px;">r' + r.rootNum + '</span>';
+      html += typeLabel;
       html += '<span style="background:' + meta.bg + ';color:' + meta.color + ';font-family:var(--font-main);font-size:.62rem;font-weight:600;padding:.1rem .45rem;border-radius:4px;border:1px solid ' + meta.border + ';">' + meta.badge + '</span>';
       if (r.result) html += '<span style="font-family:var(--font-main);font-size:.62rem;color:var(--gray-400);margin-left:auto;">' + r.result.iterations + ' iter.</span>';
       html += '</div>';
@@ -846,6 +882,12 @@ function renderMultiRootsResult(data, expr, methodLabel, buildTableFn, A, B, ste
       html += '<div style="font-family:var(--font-main);font-size:.7rem;color:var(--gray-400);margin-top:.2rem;">[' + r.interval.a.toFixed(4) + ', ' + r.interval.b.toFixed(4) + ']</div>';
       html += '</div>';
     });
+    html += '</div>';
+
+    /* Nota sobre raíces complejas */
+    html += '<div style="padding:.5rem 1.5rem 1rem;font-family:var(--font-main);font-size:.78rem;color:var(--gray-500);">';
+    html += '💡 Solo se muestran raíces <strong>reales</strong>. Los métodos numéricos de esta sección operan en ℝ. ';
+    html += 'Si el polinomio tiene raíces complejas (no cruzarán el eje x), usa <strong>Tema 3 → Bairstow o Müller</strong> para encontrarlas.';
     html += '</div>';
   } else {
     html += '<div style="padding:1rem 1.5rem;font-family:var(--font-main);font-size:.88rem;color:var(--gray-500);">No se detectaron raíces confirmadas. Pruebe un rango más amplio o un paso más pequeño.</div>';
@@ -891,7 +933,12 @@ function renderMultiRootsResult(data, expr, methodLabel, buildTableFn, A, B, ste
     });
     html += '</tr></thead><tbody>';
     intervalsDetected.forEach(({ a, b, fa, fb }, i) => {
-      const matchingRoot = roots.find(r => r.interval.a === a && r.interval.b === b);
+      /* Buscar la raíz que corresponde a este intervalo (comparación aproximada) */
+      const matchingRoot = roots.find(r =>
+        r.interval && Math.abs(r.interval.a - a) < 1e-9 && Math.abs(r.interval.b - b) < 1e-9
+      ) || roots.find(r =>
+        r.interval && r.root >= a - 1e-6 && r.root <= b + 1e-6
+      );
       const rootVal = matchingRoot ? matchingRoot.root.toFixed(8) : '—';
       const col = COLORS[(matchingRoot ? matchingRoot.rootNum - 1 : i) % COLORS.length];
       const tdS = 'padding:.55rem 1rem;border-bottom:1px solid var(--primary-light);font-family:var(--font-mono);font-size:.8rem;';
@@ -7003,133 +7050,125 @@ function t4NewtonSystems(exprs, vars, x0, tol, maxIter) {
 function t4RenderResult(result, exprs, vars, tol) {
   const container = document.getElementById('t4Result');
   const { solution, iterations } = result;
-  const n = vars.length;
-  const last = iterations.at(-1);
-  const converged = last?.converged || false;
+  const converged = iterations.at(-1)?.converged || false;
   const COLORS = ['#4f46e5','#10b981','#f59e0b','#ef4444'];
-
   let html = '';
 
-  /* ── Tarjeta de solución ── */
-  html += `<div class="card" style="margin-bottom:1.25rem;border-top:4px solid ${converged?'#10b981':'#f59e0b'};">
+  /* ══ 1. SOLUCIÓN ══ */
+  html += `
+  <div class="card t4r-card" style="border-top:4px solid ${converged?'#10b981':'#f59e0b'}">
     <div class="card-header">
       <div class="card-header-icon ${converged?'green':'amber'}">${converged?'✅':'⚠️'}</div>
       <div>
         <div class="card-title">Solución del Sistema</div>
-        <div class="card-subtitle">${iterations.length} iteraciones · ${converged?'✓ Convergió (‖ΔX‖ < '+tol+')':'⚠ Máximo de iteraciones alcanzado'}</div>
+        <div class="card-subtitle">${iterations.length} iter. · ${converged?'✓ Convergió':'⚠ Máx. iteraciones'}</div>
       </div>
     </div>
-    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:.75rem;padding:0 1.5rem 1.25rem;">`;
+    <div class="t4r-sol-grid">
+      ${vars.map((v,i)=>{
+        const col=COLORS[i%COLORS.length];
+        return `<div class="t4r-sol-card" style="border-left-color:${col}">
+          <div class="t4r-sol-lbl" style="color:${col}">${v}*</div>
+          <div class="t4r-sol-val" style="color:${col}">${solution[i].toFixed(10)}</div>
+        </div>`;
+      }).join('')}
+    </div>
+    <div class="t4r-chips">
+      ${exprs.map((expr,i)=>{
+        let fv=NaN; try{fv=t4EvalF(expr,vars,solution);}catch{}
+        const ok=isFinite(fv)&&Math.abs(fv)<1e-3;
+        return `<span class="t4r-chip ${ok?'t4r-chip-ok':'t4r-chip-err'}">f${i+1}(X*)=${isFinite(fv)?fv.toExponential(3):'?'} ${ok?'✓':'⚠'}</span>`;
+      }).join('')}
+    </div>
+  </div>`;
 
-  vars.forEach((v, i) => {
-    const col = COLORS[i % COLORS.length];
-    let fval = '?';
-    try { fval = t4EvalF(exprs[i], vars, solution).toExponential(4); } catch{}
-    html += `<div style="border-radius:var(--radius-sm);border:1.5px solid ${col}33;border-left:5px solid ${col};padding:.875rem 1rem;background:var(--gray-50);">
-      <div style="font-family:var(--font-main);font-size:.72rem;font-weight:700;color:${col};text-transform:uppercase;margin-bottom:.3rem;">${v}*</div>
-      <div style="font-family:var(--font-mono);font-size:1.05rem;font-weight:700;color:${col};">${solution[i].toFixed(10)}</div>
-    </div>`;
-  });
-  html += '</div>';
-
-  /* Verificación */
-  html += `<div style="padding:0 1.5rem 1.25rem;display:flex;flex-wrap:wrap;gap:.5rem;">`;
-  exprs.forEach((expr, i) => {
-    let fv = NaN;
-    try { fv = t4EvalF(expr, vars, solution); } catch{}
-    const ok = isFinite(fv) && Math.abs(fv) < 1e-3;
-    html += `<span style="font-family:var(--font-mono);font-size:.78rem;background:${ok?'var(--success-light)':'#fee2e2'};color:${ok?'#065f46':'#991b1b'};padding:.25rem .65rem;border-radius:4px;border:1px solid ${ok?'#6ee7b7':'#fca5a5'};">
-      f${i+1}(X*) = ${isFinite(fv)?fv.toExponential(4):'?'} ${ok?'✓':'⚠'}
-    </span>`;
-  });
-  html += '</div></div>';
-
-  /* ── Tabla de iteraciones ── */
-  html += `<div class="card" style="padding:0;overflow:hidden;margin-bottom:1.25rem;">
-    <div style="padding:1rem 1.5rem .75rem;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:.75rem;">
+  /* ══ 2. TABLA ══ */
+  html += `
+  <div class="card t4r-card" style="padding:0">
+    <div class="t4r-card-hdr">
       <div class="card-header-icon blue">📋</div>
-      <div><div class="card-title">Tabla de Iteraciones</div>
-      <div class="card-subtitle">X<sup>(k+1)</sup> = X<sup>(k)</sup> − [J(X<sup>(k)</sup>)]<sup>−1</sup> · F(X<sup>(k)</sup>)</div></div>
-    </div>
-    <div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:.8rem;">
-      <thead><tr style="background:var(--primary-light);">`;
-
-  const thS = 'padding:.6rem .875rem;font-family:var(--font-main);font-size:.7rem;font-weight:700;color:var(--primary-dark);border-bottom:2px solid #a5b4fc;white-space:nowrap;text-align:right;';
-  html += `<th style="${thS}text-align:center;">Iter.</th>`;
-  vars.forEach(v => { html += `<th style="${thS}">${v}<sup>(k)</sup></th>`; });
-  exprs.forEach((_,i) => { html += `<th style="${thS}">f${i+1}(X)</th>`; });
-  vars.forEach(v => { html += `<th style="${thS}">Δ${v}</th>`; });
-  html += `<th style="${thS}">‖ΔX‖</th><th style="${thS}">‖F‖</th></tr></thead><tbody>`;
-
-  iterations.forEach((it, i) => {
-    const bg  = it.converged ? 'var(--success-light)' : i%2 ? 'var(--gray-50)' : '#fff';
-    const fc  = it.converged ? '#065f46' : 'var(--gray-700)';
-    const tdS = `padding:.55rem .875rem;font-family:var(--font-mono);font-size:.78rem;text-align:right;background:${bg};color:${fc};border-bottom:1px solid var(--border);`;
-    html += '<tr>';
-    html += `<td style="${tdS}text-align:center;font-weight:700;color:var(--primary-dark);">${it.k}</td>`;
-    it.X.forEach(v => { html += `<td style="${tdS}">${v.toFixed(8)}</td>`; });
-    it.F.forEach(v => { html += `<td style="${tdS}color:${Math.abs(v)<0.001?'#065f46':'#991b1b'};">${v.toExponential(4)}</td>`; });
-    it.deltaX.forEach(v => { html += `<td style="${tdS}">${v.toFixed(8)}</td>`; });
-    html += `<td style="${tdS}font-weight:${it.converged?'700':'400'};color:${it.converged?'#065f46':fc};">${it.normDx.toExponential(4)}</td>`;
-    html += `<td style="${tdS}">${it.normF.toExponential(4)}</td>`;
-    html += '</tr>';
-  });
-  html += '</tbody></table></div></div>';
-
-  /* ── Desarrollo paso a paso ── */
-  html += `<div class="card" style="margin-bottom:1.25rem;">
-    <div class="card-header"><div class="card-header-icon blue">🔍</div>
-    <div><div class="card-title">Desarrollo Paso a Paso</div>
-    <div class="card-subtitle">Jacobiana, vector F y corrección ΔX en cada iteración</div></div></div>
-    <div style="padding:1.25rem 1.5rem;">`;
-
-  iterations.forEach((it, idx) => {
-    const col = it.converged ? '#10b981' : '#4f46e5';
-    html += `<div class="muller-step-block" style="border-left:3px solid ${col};margin-bottom:1rem;">
-      <div class="muller-step-header" style="background:${col}12;border-bottom:1px solid ${col}25;">
-        <div class="muller-step-num" style="background:${col};">${it.k}</div>
-        <div class="muller-step-title">Iteración ${it.k} — X<sup>(${it.k-1})</sup> = (${it.X.map(v=>v.toFixed(6)).join(', ')})${it.converged?' &nbsp;<span style="color:'+col+';font-weight:700;">✓ Convergencia</span>':''}</div>
+      <div>
+        <div class="card-title">Tabla de Iteraciones</div>
+        <div class="card-subtitle">X<sup>(k+1)</sup> = X<sup>(k)</sup> − [J]<sup>−1</sup>·F</div>
       </div>
-      <div class="muller-step-body">`;
+    </div>
+    <div class="t4r-tbl-wrap">
+      <table class="t4r-tbl">
+        <thead><tr>
+          <th class="t4r-th" style="text-align:center">k</th>
+          ${vars.map(v=>`<th class="t4r-th">${v}<sup>(k)</sup></th>`).join('')}
+          ${exprs.map((_,i)=>`<th class="t4r-th">f${i+1}</th>`).join('')}
+          ${vars.map(v=>`<th class="t4r-th">Δ${v}</th>`).join('')}
+          <th class="t4r-th">‖ΔX‖</th>
+          <th class="t4r-th">‖F‖</th>
+        </tr></thead>
+        <tbody>
+          ${iterations.map((it,i)=>{
+            const bg=it.converged?'var(--success-light)':i%2?'var(--gray-50)':'#fff';
+            const fc=it.converged?'#065f46':'var(--gray-700)';
+            const td=(val,extra='')=>`<td class="t4r-td" style="background:${bg};color:${fc};${extra}">${val}</td>`;
+            return `<tr>
+              ${td(it.k,'text-align:center;font-weight:700;color:var(--primary-dark)')}
+              ${it.X.map(v=>td(v.toFixed(6))).join('')}
+              ${it.F.map(v=>td(v.toExponential(3),`color:${Math.abs(v)<0.001?'#065f46':'#991b1b'}`)).join('')}
+              ${it.deltaX.map(v=>td(v.toFixed(6))).join('')}
+              ${td(it.normDx.toExponential(3),`font-weight:${it.converged?700:400};color:${it.converged?'#065f46':fc}`)}
+              ${td(it.normF.toExponential(3))}
+            </tr>`;
+          }).join('')}
+        </tbody>
+      </table>
+    </div>
+  </div>`;
 
-    /* F(X) */
-    html += `<div class="muller-data-row"><div class="muller-data-label">Vector F(X<sup>(k)</sup>)</div>`;
-    it.F.forEach((v,i) => { html += `<div class="muller-data-val">f${i+1} = ${v.toFixed(10)}</div>`; });
-    html += `</div>`;
+  /* ══ 3. PASO A PASO ══ */
+  html += `
+  <div class="card t4r-card">
+    <div class="card-header">
+      <div class="card-header-icon blue">🔍</div>
+      <div>
+        <div class="card-title">Desarrollo Paso a Paso</div>
+        <div class="card-subtitle">F(X), Jacobiana y ΔX por iteración</div>
+      </div>
+    </div>
+    <div class="t4r-steps">
+      ${iterations.map(it=>{
+        const col=it.converged?'#10b981':'#4f46e5';
+        const Xnew=it.X.map((xi,i)=>xi+it.deltaX[i]);
+        return `
+        <div class="muller-step-block t4r-step" style="border-left-color:${col}">
+          <div class="muller-step-header" style="background:${col}14;border-bottom-color:${col}30">
+            <div class="muller-step-num" style="background:${col};flex-shrink:0">${it.k}</div>
+            <div class="t4r-step-ttl">Iter.${it.k} — (${it.X.map(v=>v.toFixed(3)).join(', ')})${it.converged?` <span style="color:${col}">✓</span>`:''}</div>
+          </div>
+          <div class="muller-step-body t4r-step-body">
 
-    /* Jacobiana */
-    html += `<div class="muller-data-row"><div class="muller-data-label">Jacobiana J(X<sup>(k)</sup>)</div>`;
-    it.J.forEach((row, i) => {
-      const rowStr = row.map((v,j)=>` ∂f${i+1}/∂${vars[j]} = ${v.toFixed(6)}`).join(' │ ');
-      html += `<div class="muller-data-val" style="font-size:.78rem;">Fila ${i+1}: ${rowStr}</div>`;
-    });
-    html += `</div>`;
+            <div class="muller-data-row">
+              <div class="muller-data-label">F(X<sup>(k)</sup>)</div>
+              ${it.F.map((v,i)=>`<div class="muller-data-val">f${i+1} = ${v.toFixed(8)}</div>`).join('')}
+            </div>
 
-    /* ΔX y X nuevo */
-    const Xnew = it.X.map((xi, i) => xi + it.deltaX[i]);
-    html += `<div class="muller-data-row" style="grid-column:1/-1;border-color:${col};background:${col}08;">
-      <div class="muller-data-label">Corrección ΔX y X<sup>(k+1)</sup></div>`;
-    it.deltaX.forEach((v,i) => { html += `<div class="muller-data-val">Δ${vars[i]} = ${v.toFixed(10)}</div>`; });
-    Xnew.forEach((v,i) => { html += `<div class="muller-data-val accent" style="color:${col};font-weight:700;">${vars[i]}* = ${v.toFixed(10)}</div>`; });
-    html += `<div class="muller-data-val muted">‖ΔX‖ = ${it.normDx.toExponential(6)} &nbsp; ‖F‖ = ${it.normF.toExponential(6)}
-      ${it.converged?'<span style="color:'+col+';font-weight:700;"> ✓ &lt; '+tol+'</span>':''}
-    </div></div>`;
+            <div class="muller-data-row">
+              <div class="muller-data-label">Jacobiana J</div>
+              ${it.J.map((row,i)=>row.map((v,j)=>`<div class="muller-data-val t4r-jac">∂f${i+1}/∂${vars[j]}=${v.toFixed(5)}</div>`).join('')).join('')}
+            </div>
 
-    html += `</div></div>`;
-  });
+            <div class="muller-data-row t4r-delta" style="grid-column:1/-1;border-color:${col};background:${col}08">
+              <div class="muller-data-label">ΔX → X<sup>(k+1)</sup></div>
+              ${it.deltaX.map((v,i)=>`<div class="muller-data-val">Δ${vars[i]}=${v.toFixed(8)}</div>`).join('')}
+              ${Xnew.map((v,i)=>`<div class="muller-data-val" style="color:${col};font-weight:700">${vars[i]}*=${v.toFixed(8)}</div>`).join('')}
+              <div class="muller-data-val muted">‖ΔX‖=${it.normDx.toExponential(4)} ‖F‖=${it.normF.toExponential(4)}${it.converged?` <span style="color:${col};font-weight:700">✓&lt;${tol}</span>`:''}</div>
+            </div>
 
-  html += '</div></div>';
+          </div>
+        </div>`;
+      }).join('')}
+    </div>
+  </div>`;
+
   container.innerHTML = html;
-
-  /* Guardar estado para exportación */
-  if (typeof state !== 'undefined')
-    state.t4Last = { result, exprs, vars, tol };
-
-  /* Mostrar botón descarga */
-  setTimeout(() => {
-    const b = document.getElementById('t4-download-bar');
-    if (b) b.style.display = 'block';
-  }, 50);
+  if (typeof state !== 'undefined') state.t4Last = { result, exprs, vars, tol };
+  setTimeout(()=>{ const b=document.getElementById('t4-download-bar'); if(b) b.style.display='block'; }, 50);
 }
 
 /* ── UI dinámica: generar campos según n ────────────────────── */
@@ -7376,4 +7415,40 @@ document.addEventListener('DOMContentLoaded', () => {
       showAlert('t4Alert', 'danger', 'Error: ' + e.message);
     }
   });
+});
+
+/* ══════════════════════════════════════════════════════════════
+   MODO OSCURO — Dark Mode
+   Botón 🌙/☀️ en el header. Persiste en localStorage.
+══════════════════════════════════════════════════════════════ */
+document.addEventListener('DOMContentLoaded', () => {
+  const btn  = document.getElementById('btnDarkMode');
+  const body = document.body;
+
+  function applyTheme(dark) {
+    if (dark) {
+      body.classList.add('dark-mode');
+      if (btn) { btn.textContent = '☀️'; btn.title = 'Cambiar a modo claro'; }
+    } else {
+      body.classList.remove('dark-mode');
+      if (btn) { btn.textContent = '🌙'; btn.title = 'Cambiar a modo oscuro'; }
+    }
+    /* Redibujar gráficas */
+    try { if (typeof graphDraw   === 'function') graphDraw();   } catch(e) {}
+    try { if (typeof t1GraphDraw === 'function') t1GraphDraw(); } catch(e) {}
+  }
+
+  /* Cargar preferencia guardada */
+  const saved = localStorage.getItem('numerix-dark');
+  if (saved === 'true') applyTheme(true);
+  else applyTheme(false);
+
+  /* Toggle al hacer clic */
+  if (btn) {
+    btn.addEventListener('click', () => {
+      const isDark = body.classList.contains('dark-mode');
+      applyTheme(!isDark);
+      localStorage.setItem('numerix-dark', String(!isDark));
+    });
+  }
 });
