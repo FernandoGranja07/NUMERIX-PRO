@@ -1,0 +1,1443 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>NUMERIX — Plataforma de Métodos Numéricos</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;0,700;1,300;1,400&family=DM+Mono:wght@300;400;500&family=Bebas+Neue&display=swap" rel="stylesheet"/>
+<style>
+:root {
+  --bg:       #06070f;
+  --bg2:      #0a0c1a;
+  --surface:  #0e1020;
+  --gold:     #c9a84c;
+  --gold2:    #e8c97a;
+  --teal:     #00e5c3;
+  --blue:     #4a7fff;
+  --text:     #dde1f0;
+  --muted:    #5a5f7a;
+  --border:   rgba(201,168,76,0.18);
+  --border2:  rgba(255,255,255,0.06);
+  --font-display: 'Bebas Neue', sans-serif;
+  --font-serif:   'Cormorant Garamond', serif;
+  --font-mono:    'DM Mono', monospace;
+}
+
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{
+  background:var(--bg);
+  color:var(--text);
+  font-family:var(--font-serif);
+  overflow-x:hidden;
+  cursor:none;
+}
+
+/* ═══════════════════════════════════════
+   CURSOR
+═══════════════════════════════════════ */
+#cur{
+  width:8px;height:8px;border-radius:50%;
+  background:var(--gold);
+  position:fixed;top:0;left:0;z-index:9999;
+  pointer-events:none;
+  transition:transform .08s;
+  mix-blend-mode:screen;
+}
+#cur-ring{
+  width:32px;height:32px;border-radius:50%;
+  border:1px solid rgba(201,168,76,.5);
+  position:fixed;top:0;left:0;z-index:9998;
+  pointer-events:none;
+  transition:width .2s,height .2s,border-color .2s;
+}
+#cur-ring.hover{width:48px;height:48px;border-color:var(--gold);}
+
+/* ═══════════════════════════════════════
+   CANVAS
+═══════════════════════════════════════ */
+#bgc{
+  position:fixed;inset:0;z-index:0;
+  opacity:.4;pointer-events:none;
+}
+
+/* ═══════════════════════════════════════
+   NAV
+═══════════════════════════════════════ */
+nav{
+  position:fixed;top:0;left:0;right:0;z-index:200;
+  display:flex;align-items:center;
+  padding:1.5rem 5rem;
+  transition:background .4s,backdrop-filter .4s,border-color .4s;
+  border-bottom:1px solid transparent;
+}
+nav.scrolled{
+  background:rgba(6,7,15,.88);
+  backdrop-filter:blur(20px);
+  border-color:var(--border);
+}
+.nav-logo{
+  font-family:var(--font-display);
+  font-size:1.5rem;
+  letter-spacing:.18em;
+  color:var(--gold);
+  text-decoration:none;
+}
+.nav-logo sup{font-size:.5em;letter-spacing:.05em;color:var(--muted);}
+.nav-links{
+  display:flex;gap:2.5rem;margin:0 auto;
+}
+.nav-links a{
+  font-family:var(--font-mono);
+  font-size:.68rem;
+  letter-spacing:.14em;
+  color:var(--muted);
+  text-decoration:none;
+  text-transform:uppercase;
+  transition:color .2s;
+}
+.nav-links a:hover{color:var(--gold);}
+.nav-btn{
+  font-family:var(--font-mono);
+  font-size:.68rem;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  text-decoration:none;
+  color:var(--bg);
+  background:var(--gold);
+  padding:.55rem 1.5rem;
+  border-radius:1px;
+  transition:background .2s,transform .2s,box-shadow .2s;
+}
+.nav-btn:hover{background:var(--gold2);transform:translateY(-1px);box-shadow:0 8px 24px rgba(201,168,76,.25);}
+
+/* ═══════════════════════════════════════
+   HERO
+═══════════════════════════════════════ */
+.hero{
+  min-height:100vh;
+  display:flex;flex-direction:column;
+  justify-content:center;
+  padding:0 5rem;
+  position:relative;z-index:2;
+}
+.hero-eyebrow{
+  font-family:var(--font-mono);
+  font-size:.68rem;letter-spacing:.3em;
+  color:var(--gold);text-transform:uppercase;
+  display:flex;align-items:center;gap:1rem;
+  margin-bottom:2rem;
+  opacity:0;animation:fadeUp .8s ease .3s forwards;
+}
+.hero-eyebrow::before{content:'';width:3rem;height:1px;background:var(--gold);}
+.hero-h1{
+  font-family:var(--font-display);
+  font-size:clamp(5rem,14vw,14rem);
+  line-height:.88;letter-spacing:.04em;
+  margin-bottom:1rem;
+  opacity:0;animation:fadeUp .9s ease .45s forwards;
+}
+.hero-h1 .stroke{
+  -webkit-text-stroke:1.5px var(--gold);
+  color:transparent;
+}
+.hero-h1 .dim{opacity:.12;}
+.hero-rule{
+  width:100%;height:1px;
+  background:linear-gradient(90deg,var(--gold),transparent 60%);
+  margin:2rem 0;
+  opacity:0;animation:fadeIn .8s ease .7s forwards;
+  transform-origin:left;
+}
+.hero-bottom{
+  display:flex;align-items:flex-end;justify-content:space-between;gap:3rem;
+  flex-wrap:wrap;
+  opacity:0;animation:fadeUp .9s ease .85s forwards;
+}
+.hero-desc{
+  font-size:1.2rem;font-weight:300;font-style:italic;
+  color:rgba(221,225,240,.65);
+  max-width:480px;line-height:1.7;
+}
+.hero-desc strong{font-style:normal;color:var(--gold2);font-weight:600;}
+.hero-actions{display:flex;gap:1rem;align-items:center;flex-shrink:0;}
+.btn-gold{
+  text-decoration:none;
+  font-family:var(--font-mono);font-size:.75rem;
+  letter-spacing:.12em;text-transform:uppercase;
+  color:var(--bg);background:var(--gold);
+  padding:.85rem 2.2rem;border-radius:1px;
+  transition:background .2s,transform .2s,box-shadow .2s;
+  position:relative;overflow:hidden;
+}
+.btn-gold::after{
+  content:'';position:absolute;inset:0;
+  background:rgba(255,255,255,.18);
+  transform:translateX(-110%);
+  transition:transform .35s ease;
+}
+.btn-gold:hover::after{transform:translateX(0);}
+.btn-gold:hover{transform:translateY(-2px);box-shadow:0 12px 32px rgba(201,168,76,.3);}
+.btn-outline{
+  text-decoration:none;
+  font-family:var(--font-mono);font-size:.75rem;
+  letter-spacing:.12em;text-transform:uppercase;
+  color:var(--text);
+  border:1px solid var(--border);
+  padding:.85rem 2.2rem;border-radius:1px;
+  transition:border-color .2s,color .2s;
+}
+.btn-outline:hover{border-color:var(--gold);color:var(--gold);}
+
+/* scroll line */
+.hero-scroll{
+  position:absolute;bottom:3rem;left:5rem;
+  display:flex;flex-direction:column;align-items:center;gap:.5rem;
+  font-family:var(--font-mono);font-size:.6rem;letter-spacing:.2em;
+  color:var(--muted);text-transform:uppercase;
+  opacity:0;animation:fadeIn 1s ease 1.4s forwards;
+}
+.scroll-bar{width:1px;height:4rem;background:linear-gradient(var(--gold),transparent);animation:scrollPulse 2s ease-in-out infinite;}
+
+/* floating formulas */
+.hero-float{
+  position:absolute;right:5rem;top:50%;transform:translateY(-50%);
+  display:flex;flex-direction:column;gap:1.25rem;
+  opacity:0;animation:fadeIn 1.2s ease 1.1s forwards;
+}
+.fml{
+  font-family:var(--font-mono);font-size:.78rem;
+  color:rgba(201,168,76,.35);
+  padding:.75rem 1.25rem;
+  border:1px solid rgba(201,168,76,.1);
+  border-radius:2px;
+  background:rgba(14,16,32,.6);
+  backdrop-filter:blur(8px);
+  transition:color .3s,border-color .3s;
+}
+.fml:hover{color:rgba(201,168,76,.8);border-color:rgba(201,168,76,.35);}
+
+/* ═══════════════════════════════════════
+   SHARED SECTION STYLE
+═══════════════════════════════════════ */
+.section{position:relative;z-index:2;}
+.section-inner{max-width:1300px;margin:0 auto;padding:0 5rem;}
+
+.eyebrow{
+  font-family:var(--font-mono);font-size:.65rem;
+  letter-spacing:.3em;color:var(--gold);
+  text-transform:uppercase;margin-bottom:1rem;
+  display:flex;align-items:center;gap:.75rem;
+}
+.eyebrow::before{content:'';width:2rem;height:1px;background:var(--gold);}
+
+h2.title{
+  font-family:var(--font-display);
+  font-size:clamp(3rem,6vw,6rem);
+  letter-spacing:.04em;line-height:.92;
+  margin-bottom:2.5rem;
+}
+h2.title em{
+  font-family:var(--font-serif);
+  font-style:italic;font-size:.7em;
+  color:rgba(221,225,240,.4);
+}
+
+/* divider */
+.divider{
+  height:1px;
+  background:linear-gradient(90deg,transparent,var(--border),transparent);
+  margin:0;
+}
+
+/* ═══════════════════════════════════════
+   PLANTEAMIENTO
+═══════════════════════════════════════ */
+.planteamiento{padding:9rem 0;}
+.plan-grid{
+  display:grid;grid-template-columns:1fr 1fr;gap:5rem;align-items:start;
+}
+.plan-text p{
+  font-size:1.15rem;font-weight:300;line-height:1.85;
+  color:rgba(221,225,240,.72);margin-bottom:1.5rem;
+}
+.plan-text p strong{color:var(--gold2);font-weight:600;}
+.plan-text blockquote{
+  border-left:2px solid var(--gold);
+  padding:1.25rem 1.5rem;
+  margin:2rem 0;
+  background:rgba(201,168,76,.04);
+  border-radius:0 2px 2px 0;
+}
+.plan-text blockquote p{
+  font-style:italic;font-size:1.2rem;
+  color:rgba(221,225,240,.85);margin:0;
+}
+.plan-cards{display:flex;flex-direction:column;gap:1.5px;background:var(--border2);}
+.plan-card{
+  background:var(--surface);
+  padding:2rem 2.5rem;
+  position:relative;overflow:hidden;
+  transition:background .3s;
+}
+.plan-card:hover{background:#121428;}
+.plan-card::before{
+  content:'';position:absolute;left:0;top:0;bottom:0;
+  width:2px;background:var(--card-c,var(--gold));
+  transform:scaleY(0);transform-origin:top;
+  transition:transform .4s ease;
+}
+.plan-card:hover::before{transform:scaleY(1);}
+.plan-card-num{
+  font-family:var(--font-display);font-size:2.5rem;
+  color:rgba(201,168,76,.12);line-height:1;margin-bottom:.5rem;
+}
+.plan-card h3{
+  font-family:var(--font-display);font-size:1.2rem;
+  letter-spacing:.08em;color:var(--gold2);margin-bottom:.6rem;
+}
+.plan-card p{
+  font-family:var(--font-mono);font-size:.72rem;
+  color:var(--muted);line-height:1.7;
+}
+
+/* ═══════════════════════════════════════
+   MISIÓN / VISIÓN
+═══════════════════════════════════════ */
+.mv-section{padding:9rem 0;background:var(--bg2);}
+.mv-grid{
+  display:grid;grid-template-columns:1fr 1fr;gap:1.5px;
+  background:var(--border2);
+  border:1px solid var(--border2);
+}
+.mv-block{
+  background:var(--bg2);
+  padding:4rem;position:relative;overflow:hidden;
+}
+.mv-block::after{
+  content:'';position:absolute;inset:0;
+  background:radial-gradient(circle at 80% 20%, rgba(201,168,76,.05),transparent 60%);
+  pointer-events:none;
+}
+.mv-icon{
+  font-size:3rem;margin-bottom:1.5rem;display:block;
+  filter:drop-shadow(0 0 16px rgba(201,168,76,.4));
+}
+.mv-label{
+  font-family:var(--font-display);font-size:1rem;
+  letter-spacing:.2em;color:var(--muted);
+  text-transform:uppercase;margin-bottom:.25rem;
+}
+.mv-title{
+  font-family:var(--font-display);font-size:3.5rem;
+  letter-spacing:.06em;line-height:1;
+  color:var(--gold);margin-bottom:1.5rem;
+}
+.mv-text{
+  font-size:1.1rem;font-weight:300;
+  line-height:1.85;color:rgba(221,225,240,.68);
+}
+.mv-text strong{color:var(--gold2);font-weight:600;}
+
+/* ═══════════════════════════════════════
+   MÓDULOS
+═══════════════════════════════════════ */
+.modulos-section{padding:9rem 0;}
+.mod-header{
+  display:flex;align-items:flex-end;justify-content:space-between;
+  margin-bottom:4rem;flex-wrap:wrap;gap:2rem;
+}
+.mod-big-num{
+  font-family:var(--font-display);font-size:8rem;
+  color:transparent;
+  -webkit-text-stroke:1px rgba(255,255,255,.06);
+  line-height:1;
+}
+.modules-stack{display:flex;flex-direction:column;gap:1.5px;background:var(--border2);}
+.mod-row{
+  background:var(--surface);
+  display:grid;grid-template-columns:4rem 1fr auto;
+  align-items:center;gap:2rem;
+  padding:2.5rem 3rem;
+  border-left:2px solid transparent;
+  transition:background .3s,border-color .3s;
+  cursor:default;
+  position:relative;overflow:hidden;
+}
+.mod-row::after{
+  content:'';position:absolute;inset:0;
+  background:radial-gradient(circle at 0% 50%, var(--row-c,.05) 0%, transparent 50%);
+  opacity:0;transition:opacity .4s;
+}
+.mod-row:hover::after{opacity:1;}
+.mod-row:hover{background:#0e1122;border-left-color:var(--row-border,var(--gold));}
+.mod-row:nth-child(1){--row-border:#c9a84c;--row-c:rgba(201,168,76,.04);}
+.mod-row:nth-child(2){--row-border:#4a7fff;--row-c:rgba(74,127,255,.04);}
+.mod-row:nth-child(3){--row-border:#00e5c3;--row-c:rgba(0,229,195,.04);}
+.mod-row:nth-child(4){--row-border:#ff6b6b;--row-c:rgba(255,107,107,.04);}
+
+.mod-row-num{
+  font-family:var(--font-display);font-size:2.5rem;
+  color:rgba(255,255,255,.08);line-height:1;
+  transition:color .3s;
+}
+.mod-row:hover .mod-row-num{color:rgba(255,255,255,.2);}
+.mod-row-body{}
+.mod-row-title{
+  font-family:var(--font-display);font-size:1.6rem;
+  letter-spacing:.06em;margin-bottom:.4rem;
+  transition:color .3s;
+}
+.mod-row:nth-child(1):hover .mod-row-title{color:#e8c97a;}
+.mod-row:nth-child(2):hover .mod-row-title{color:#7aa8ff;}
+.mod-row:nth-child(3):hover .mod-row-title{color:#00e5c3;}
+.mod-row:nth-child(4):hover .mod-row-title{color:#ff8f8f;}
+.mod-row-sub{
+  font-family:var(--font-mono);font-size:.7rem;
+  color:var(--muted);margin-bottom:.75rem;letter-spacing:.06em;
+}
+.mod-tags{display:flex;flex-wrap:wrap;gap:.4rem;}
+.tag{
+  font-family:var(--font-mono);font-size:.62rem;
+  padding:.22rem .6rem;border:1px solid var(--border2);
+  border-radius:1px;color:var(--muted);letter-spacing:.04em;
+  transition:border-color .2s,color .2s;
+}
+.mod-row:hover .tag{border-color:rgba(255,255,255,.12);color:rgba(221,225,240,.7);}
+.mod-row-arrow{
+  font-size:1.2rem;color:var(--muted);
+  transition:transform .3s,color .3s;flex-shrink:0;
+}
+.mod-row:hover .mod-row-arrow{transform:translateX(6px);color:var(--gold);}
+
+/* ═══════════════════════════════════════
+   QUIÉNES SOMOS
+═══════════════════════════════════════ */
+.nosotros{padding:9rem 0;background:var(--bg2);}
+.nos-intro{
+  font-size:1.25rem;font-weight:300;font-style:italic;
+  color:rgba(221,225,240,.6);line-height:1.8;
+  max-width:680px;margin-bottom:4rem;
+}
+.nos-intro strong{color:var(--gold2);font-style:normal;font-weight:600;}
+
+/* Dev cards */
+.devs-grid{
+  display:grid;grid-template-columns:1fr 1fr;gap:1.5px;
+  background:var(--border2);margin-bottom:5rem;
+}
+.dev-card{
+  background:var(--surface);
+  padding:3rem;
+  position:relative;overflow:hidden;
+  transition:background .3s;
+}
+.dev-card:hover{background:#0e1020;}
+.dev-card::before{
+  content:'';position:absolute;
+  top:0;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,var(--dev-c,var(--gold)),transparent);
+  transform:scaleX(0);transform-origin:left;
+  transition:transform .5s ease;
+}
+.dev-card:hover::before{transform:scaleX(1);}
+.dev-card:nth-child(1){--dev-c:var(--gold);}
+.dev-card:nth-child(2){--dev-c:var(--teal);}
+
+.dev-card-top{
+  display:flex;align-items:center;gap:1.5rem;
+  margin-bottom:1.75rem;
+}
+.dev-avatar{
+  width:72px;height:72px;border-radius:2px;flex-shrink:0;
+  background:var(--bg);border:1px solid var(--border);
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--font-display);font-size:1.6rem;
+  color:var(--gold);
+  position:relative;overflow:hidden;
+}
+.dev-avatar::after{
+  content:'';position:absolute;inset:0;
+  background:radial-gradient(circle at 30% 30%,rgba(201,168,76,.15),transparent 60%);
+}
+.dev-header-text{}
+.dev-name{
+  font-family:var(--font-display);font-size:1.6rem;
+  letter-spacing:.06em;color:var(--text);line-height:1;
+  margin-bottom:.3rem;
+}
+.dev-role{
+  font-family:var(--font-mono);font-size:.62rem;
+  letter-spacing:.14em;color:var(--gold);
+  text-transform:uppercase;
+}
+.dev-divider{
+  height:1px;
+  background:linear-gradient(90deg,var(--gold),transparent);
+  margin-bottom:1.5rem;opacity:.25;
+}
+.dev-bio{
+  font-size:.98rem;font-weight:300;line-height:1.82;
+  color:rgba(221,225,240,.62);margin-bottom:1.75rem;
+}
+.dev-bio strong{color:var(--gold2);font-weight:600;}
+.dev-contrib-label{
+  font-family:var(--font-mono);font-size:.6rem;
+  letter-spacing:.22em;color:var(--gold);
+  text-transform:uppercase;margin-bottom:.85rem;
+}
+.dev-contribs{
+  display:flex;flex-direction:column;gap:.55rem;
+  margin-bottom:1.75rem;
+}
+.dev-contrib-item{
+  display:flex;align-items:flex-start;gap:.75rem;
+  font-family:var(--font-mono);font-size:.69rem;
+  color:rgba(221,225,240,.55);line-height:1.5;
+}
+.contrib-dot{
+  width:5px;height:5px;border-radius:50%;
+  flex-shrink:0;margin-top:.35rem;
+}
+.dev-skills{display:flex;flex-wrap:wrap;gap:.45rem;}
+.dev-skill{
+  font-family:var(--font-mono);font-size:.6rem;
+  padding:.25rem .65rem;
+  border:1px solid var(--border2);
+  border-radius:1px;color:var(--muted);
+  letter-spacing:.04em;
+  transition:border-color .2s,color .2s;
+}
+.dev-card:hover .dev-skill{border-color:rgba(255,255,255,.1);color:rgba(221,225,240,.6);}
+
+/* ── CRONOGRAMA ── */
+.crono-wrapper{
+  border:1px solid var(--border);
+  border-radius:2px;
+  overflow:hidden;
+  background:var(--surface);
+}
+.crono-header{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:1.5rem 2rem;
+  border-bottom:1px solid var(--border);
+  background:rgba(201,168,76,.04);
+  flex-wrap:wrap;gap:1rem;
+}
+.crono-period{
+  font-family:var(--font-mono);font-size:.65rem;
+  letter-spacing:.12em;color:var(--muted);
+}
+.crono-table{display:flex;flex-direction:column;}
+.crono-head{
+  display:grid;
+  grid-template-columns:5rem 1fr 1fr 1fr;
+  gap:0;
+  background:rgba(255,255,255,.03);
+  border-bottom:1px solid var(--border2);
+}
+.crono-head > div{
+  padding:.9rem 1.25rem;
+  font-family:var(--font-mono);font-size:.6rem;
+  letter-spacing:.18em;color:var(--muted);text-transform:uppercase;
+  border-right:1px solid var(--border2);
+}
+.crono-head > div:last-child{border-right:none;}
+.crono-dev-tag{
+  display:inline-block;
+  font-family:var(--font-display);font-size:.75rem;
+  padding:.1rem .4rem;border-radius:1px;
+  margin-right:.4rem;
+}
+.crono-dev-tag.fg{background:rgba(201,168,76,.15);color:var(--gold);}
+.crono-dev-tag.at{background:rgba(0,229,195,.12);color:var(--teal);}
+
+.crono-row{
+  display:grid;
+  grid-template-columns:5rem 1fr 1fr 1fr;
+  border-bottom:1px solid var(--border2);
+  transition:background .2s;
+}
+.crono-row:last-child{border-bottom:none;}
+.crono-row:hover{background:rgba(201,168,76,.025);}
+.crono-row-alt{background:rgba(255,255,255,.015);}
+.crono-row-final{background:rgba(201,168,76,.03);}
+.crono-row-final:hover{background:rgba(201,168,76,.06);}
+
+.crono-row > div{
+  padding:1rem 1.25rem;
+  font-family:var(--font-mono);font-size:.67rem;
+  color:rgba(221,225,240,.58);
+  line-height:1.6;
+  border-right:1px solid var(--border2);
+  vertical-align:top;
+}
+.crono-row > div:last-child{border-right:none;}
+.crono-col-sem{
+  display:flex;flex-direction:column;align-items:center;
+  justify-content:center;gap:.3rem;
+  border-right:1px solid var(--border2);
+}
+.sem-badge{
+  font-family:var(--font-display);font-size:1.1rem;
+  color:var(--gold);letter-spacing:.06em;
+  line-height:1;
+}
+.sem-date{
+  font-family:var(--font-mono);font-size:.55rem;
+  color:var(--muted);letter-spacing:.08em;
+}
+.crono-col-act{
+  color:rgba(221,225,240,.78) !important;
+  font-weight:500;
+}
+.crono-empty{color:var(--muted) !important;text-align:center;}
+
+
+/* ═══════════════════════════════════════
+   FEATURES / POR QUÉ
+═══════════════════════════════════════ */
+.why-section{padding:9rem 0;}
+.why-grid{
+  display:grid;grid-template-columns:repeat(3,1fr);
+  gap:1.5px;background:var(--border2);
+}
+.why-card{
+  background:var(--surface);
+  padding:3rem 2.5rem;
+  position:relative;overflow:hidden;
+  transition:background .3s;
+}
+.why-card:hover{background:#0e1122;}
+.why-card-icon{
+  font-size:2.2rem;margin-bottom:1.5rem;display:block;
+}
+.why-card-title{
+  font-family:var(--font-display);font-size:1.4rem;
+  letter-spacing:.06em;margin-bottom:.75rem;
+  color:var(--gold2);
+}
+.why-card-text{
+  font-family:var(--font-mono);font-size:.72rem;
+  color:var(--muted);line-height:1.75;
+}
+.why-card::after{
+  content:'';position:absolute;
+  bottom:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,var(--gold),transparent);
+  opacity:0;transition:opacity .4s;
+}
+.why-card:hover::after{opacity:1;}
+
+/* ═══════════════════════════════════════
+   STATS BAND
+═══════════════════════════════════════ */
+.stats-band{
+  padding:5rem 0;
+  border-top:1px solid var(--border2);
+  border-bottom:1px solid var(--border2);
+}
+.stats-row{
+  display:grid;grid-template-columns:repeat(4,1fr);
+  gap:1.5px;background:var(--border2);
+}
+.stat-cell{
+  background:var(--bg2);
+  padding:3rem 3.5rem;
+  text-align:center;
+}
+.stat-n{
+  font-family:var(--font-display);font-size:4rem;
+  color:var(--gold);line-height:1;margin-bottom:.5rem;
+}
+.stat-l{
+  font-family:var(--font-mono);font-size:.65rem;
+  letter-spacing:.18em;color:var(--muted);
+  text-transform:uppercase;
+}
+
+/* ═══════════════════════════════════════
+   CTA FINAL
+═══════════════════════════════════════ */
+.cta-final{
+  padding:12rem 0 10rem;
+  text-align:center;
+  position:relative;
+}
+.cta-final::before{
+  content:'NUMERIX';
+  position:absolute;
+  top:50%;left:50%;transform:translate(-50%,-50%);
+  font-family:var(--font-display);
+  font-size:clamp(8rem,22vw,20rem);
+  letter-spacing:.06em;
+  color:transparent;
+  -webkit-text-stroke:1px rgba(201,168,76,.04);
+  pointer-events:none;white-space:nowrap;
+  line-height:1;
+}
+.cta-final .eyebrow{justify-content:center;margin-bottom:1.5rem;}
+.cta-final .eyebrow::before{display:none;}
+.cta-h{
+  font-family:var(--font-display);
+  font-size:clamp(3.5rem,8vw,8rem);
+  letter-spacing:.04em;line-height:.9;
+  margin-bottom:1.5rem;
+}
+.cta-h .gold{color:var(--gold);}
+.cta-h .stroke{
+  -webkit-text-stroke:1.5px var(--gold);
+  color:transparent;
+}
+.cta-sub{
+  font-family:var(--font-serif);font-size:1.15rem;font-weight:300;font-style:italic;
+  color:rgba(221,225,240,.5);max-width:420px;margin:0 auto 3rem;
+  line-height:1.7;
+}
+.cta-big-btn{
+  display:inline-flex;align-items:center;gap:1rem;
+  text-decoration:none;
+  font-family:var(--font-display);font-size:1.1rem;
+  letter-spacing:.18em;
+  color:var(--bg);background:var(--gold);
+  padding:1.2rem 3.5rem;border-radius:1px;
+  transition:background .2s,transform .25s,box-shadow .25s;
+  position:relative;overflow:hidden;
+}
+.cta-big-btn::before{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(120deg,transparent 30%,rgba(255,255,255,.2),transparent 70%);
+  transform:translateX(-100%);
+  transition:transform .5s ease;
+}
+.cta-big-btn:hover::before{transform:translateX(100%);}
+.cta-big-btn:hover{
+  background:var(--gold2);
+  transform:translateY(-4px);
+  box-shadow:0 20px 50px rgba(201,168,76,.3);
+}
+.cta-big-btn .arr{transition:transform .3s;}
+.cta-big-btn:hover .arr{transform:translateX(6px);}
+
+/* ═══════════════════════════════════════
+   FOOTER
+═══════════════════════════════════════ */
+footer{
+  padding:3rem 5rem;
+  border-top:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;
+  flex-wrap:wrap;gap:1.5rem;
+  position:relative;z-index:2;
+}
+.footer-brand{
+  display:flex;flex-direction:column;gap:.3rem;
+}
+.footer-logo{
+  font-family:var(--font-display);font-size:1.1rem;
+  letter-spacing:.2em;color:var(--gold);
+}
+.footer-tag{
+  font-family:var(--font-mono);font-size:.62rem;
+  letter-spacing:.12em;color:var(--muted);
+}
+.footer-mid{
+  font-family:var(--font-mono);font-size:.65rem;
+  letter-spacing:.1em;color:var(--muted);
+  text-align:center;
+  line-height:1.9;
+}
+.footer-mid strong{color:rgba(221,225,240,.6);font-weight:500;}
+.footer-right{
+  font-family:var(--font-mono);font-size:.6rem;
+  letter-spacing:.08em;color:var(--muted);
+  text-align:right;line-height:2;
+}
+
+/* ═══════════════════════════════════════
+   ANIMATIONS & REVEAL
+═══════════════════════════════════════ */
+@keyframes fadeUp{from{opacity:0;transform:translateY(28px);}to{opacity:1;transform:none;}}
+@keyframes fadeIn{from{opacity:0;}to{opacity:1;}}
+@keyframes scrollPulse{0%,100%{opacity:.2;transform:scaleY(.5);}50%{opacity:1;transform:scaleY(1);}}
+@keyframes shimmer{0%{background-position:-200% 0;}100%{background-position:200% 0;}}
+
+.reveal{opacity:0;transform:translateY(36px);transition:opacity .8s ease,transform .8s ease;}
+.reveal.visible{opacity:1;transform:none;}
+.reveal-delay-1{transition-delay:.1s;}
+.reveal-delay-2{transition-delay:.2s;}
+.reveal-delay-3{transition-delay:.3s;}
+.reveal-delay-4{transition-delay:.4s;}
+
+/* ═══════════════════════════════════════
+   RESPONSIVE
+═══════════════════════════════════════ */
+@media(max-width:960px){
+  nav{padding:1.25rem 2rem;}
+  .nav-links{display:none;}
+  .hero{padding:0 2rem;}
+  .hero-float{display:none;}
+  .hero-scroll{left:2rem;}
+  .section-inner{padding:0 2rem;}
+  .plan-grid,.mv-grid,.devs-grid,.why-grid,.stats-row{grid-template-columns:1fr;}
+  .mod-row{grid-template-columns:3rem 1fr;}
+  .mod-row-arrow{display:none;}
+  .cta-final{padding:7rem 0 6rem;}
+  footer{padding:2.5rem 2rem;flex-direction:column;text-align:center;}
+  .footer-right{text-align:center;}
+  .crono-head,.crono-row{grid-template-columns:3.5rem 1fr;}
+  .crono-head>div:nth-child(3),.crono-head>div:nth-child(4),
+  .crono-row>div:nth-child(3),.crono-row>div:nth-child(4){display:none;}
+  .dev-card-top{flex-direction:column;align-items:flex-start;}
+}
+</style>
+</head>
+<body>
+
+<div id="cur"></div>
+<div id="cur-ring"></div>
+<canvas id="bgc"></canvas>
+
+<!-- ═══ NAV ══════════════════════════════════ -->
+<nav id="nav">
+  <a href="#" class="nav-logo">NUMERIX<sup>®</sup></a>
+  <div class="nav-links">
+    <a href="#planteamiento">Planteamiento</a>
+    <a href="#modulos">Módulos</a>
+    <a href="#nosotros">Nosotros</a>
+    <a href="#mision">Misión</a>
+  </div>
+  <a href="index.html" class="nav-btn">Abrir App →</a>
+</nav>
+
+<!-- ═══ HERO ══════════════════════════════════ -->
+<section class="hero section">
+  <div class="hero-eyebrow">Plataforma Académica · 2026 · UNI</div>
+  <h1 class="hero-h1">
+    <span class="dim">PLATAFORMA</span><br>
+    NUMER<span class="stroke">IX</span>
+  </h1>
+  <div class="hero-rule"></div>
+  <div class="hero-bottom">
+    <p class="hero-desc">
+      Una plataforma construida para que los <strong>métodos numéricos</strong>
+      dejen de ser intimidantes — donde cada iteración es visible,
+      cada error comprensible, y cada solución, elegante.
+    </p>
+    <div class="hero-actions">
+      <a href="index.html" class="btn-gold">Ingresar a la App</a>
+      <a href="#planteamiento" class="btn-outline">Conocer más</a>
+    </div>
+  </div>
+
+  <div class="hero-float">
+    <div class="fml">x<sub>n+1</sub> = x<sub>n</sub> − f(x<sub>n</sub>) / f′(x<sub>n</sub>)</div>
+    <div class="fml">P(x) = (x² − rx − s)·Q(x) + Rx + S</div>
+    <div class="fml">T<sub>n</sub>(x) = Σ f<sup>(k)</sup>(a)/k! · (x−a)<sup>k</sup></div>
+    <div class="fml">J(X)·ΔX = −F(X)</div>
+  </div>
+
+  <div class="hero-scroll">
+    <div class="scroll-bar"></div>
+    Scroll
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ═══ PLANTEAMIENTO ═════════════════════════ -->
+<section class="section planteamiento" id="planteamiento">
+  <div class="section-inner">
+    <div class="reveal">
+      <div class="eyebrow">01 · Planteamiento del problema</div>
+      <h2 class="title">¿Por qué<br><em>esto existe?</em></h2>
+    </div>
+    <div class="plan-grid reveal">
+      <div class="plan-text">
+        <p>
+          Los <strong>métodos numéricos</strong> son el puente entre las matemáticas
+          abstractas y la ingeniería del mundo real. Sin embargo, la mayoría de los
+          estudiantes los aprende como una secuencia de fórmulas sin contexto,
+          ejecutadas a mano en hojas que acumulan errores de redondeo.
+        </p>
+        <p>
+          Las herramientas disponibles suelen ser cajas negras: ingresas un valor,
+          obtienes un resultado. <strong>Nunca ves qué ocurre entre iteración e iteración.</strong>
+          Nunca entiendes por qué el método converge, o por qué diverge.
+        </p>
+        <blockquote>
+          <p>"No basta con llegar a la respuesta. Hay que entender el camino que te llevó ahí."</p>
+        </blockquote>
+        <p>
+          NUMERIX nació para resolver exactamente eso: una plataforma donde
+          cada paso es visible, cada método tiene contexto teórico, y los
+          resultados se pueden exportar y presentar con confianza.
+        </p>
+      </div>
+      <div class="plan-cards">
+        <div class="plan-card" style="--card-c:var(--gold);">
+          <div class="plan-card-num">01</div>
+          <h3>EL PROBLEMA</h3>
+          <p>Los estudiantes de ingeniería carecen de herramientas que muestren el proceso iterativo completo de los métodos numéricos, no solo el resultado final.</p>
+        </div>
+        <div class="plan-card" style="--card-c:var(--blue);">
+          <div class="plan-card-num">02</div>
+          <h3>LA CAUSA</h3>
+          <p>Las calculadoras disponibles omiten las tablas de iteración, los errores relativos y las representaciones gráficas que consolidan el aprendizaje.</p>
+        </div>
+        <div class="plan-card" style="--card-c:var(--teal);">
+          <div class="plan-card-num">03</div>
+          <h3>NUESTRA SOLUCIÓN</h3>
+          <p>NUMERIX integra todos los métodos en un solo lugar, con iteraciones paso a paso, gráficas interactivas y exportación directa a Excel.</p>
+        </div>
+        <div class="plan-card" style="--card-c:#ff6b6b;">
+          <div class="plan-card-num">04</div>
+          <h3>EL ALCANCE</h3>
+          <p>Estudiantes de Análisis Numérico, Cálculo Numérico y carreras de ingeniería que necesiten resolver, visualizar y documentar métodos iterativos.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ═══ MISIÓN / VISIÓN ═══════════════════════ -->
+<section class="section mv-section" id="mision">
+  <div class="section-inner">
+    <div class="reveal">
+      <div class="eyebrow">02 · Filosofía</div>
+      <h2 class="title">Misión &<br><em>Visión</em></h2>
+    </div>
+    <div class="mv-grid reveal">
+      <div class="mv-block">
+        <span class="mv-icon">◎</span>
+        <div class="mv-label">Misión</div>
+        <div class="mv-title">LO QUE HACEMOS</div>
+        <p class="mv-text">
+          Proveer a estudiantes y docentes de ingeniería una <strong>plataforma interactiva y gratuita</strong>
+          que permita resolver, visualizar y comprender los principales métodos numéricos — desde series
+          de Taylor hasta sistemas de ecuaciones no lineales — con total transparencia en cada iteración
+          y la posibilidad de documentar los resultados para uso académico.
+        </p>
+      </div>
+      <div class="mv-block" style="--gold:var(--teal);">
+        <span class="mv-icon">◈</span>
+        <div class="mv-label" style="color:var(--teal);">Visión</div>
+        <div class="mv-title" style="color:var(--teal);">HACIA DÓNDE VAMOS</div>
+        <p class="mv-text">
+          Convertirnos en la referencia latinoamericana para el estudio y práctica de métodos numéricos,
+          expandiendo continuamente los módulos disponibles, incorporando <strong>visualizaciones 3D</strong>,
+          soporte para sistemas de mayor dimensión y materiales didácticos integrados — siempre con el
+          compromiso de hacer el análisis numérico accesible para todos.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ═══ MÓDULOS ═══════════════════════════════ -->
+<section class="section modulos-section" id="modulos">
+  <div class="section-inner">
+    <div class="mod-header reveal">
+      <div>
+        <div class="eyebrow">03 · Contenido</div>
+        <h2 class="title">Módulos de<br><em>la plataforma</em></h2>
+      </div>
+      <div class="mod-big-num">04</div>
+    </div>
+    <div class="modules-stack reveal">
+      <div class="mod-row">
+        <div class="mod-row-num">01</div>
+        <div class="mod-row-body">
+          <div class="mod-row-title">SERIES DE TAYLOR</div>
+          <div class="mod-row-sub">Aproximaciones · Error de truncamiento · Lagrange</div>
+          <div class="mod-tags">
+            <span class="tag">Taylor orden n</span>
+            <span class="tag">Polinomio de Lagrange</span>
+            <span class="tag">Error relativo</span>
+            <span class="tag">Gráfica comparativa</span>
+            <span class="tag">Tabla iterativa</span>
+          </div>
+        </div>
+        <div class="mod-row-arrow">→</div>
+      </div>
+      <div class="mod-row">
+        <div class="mod-row-num">02</div>
+        <div class="mod-row-body">
+          <div class="mod-row-title">RESOLUCIÓN DE RAÍCES</div>
+          <div class="mod-row-sub">Métodos cerrados y abiertos para ecuaciones no lineales</div>
+          <div class="mod-tags">
+            <span class="tag">Bisección</span>
+            <span class="tag">Regla falsa</span>
+            <span class="tag">Newton-Raphson</span>
+            <span class="tag">Secante</span>
+            <span class="tag">Punto fijo</span>
+            <span class="tag">Gráfica interactiva</span>
+          </div>
+        </div>
+        <div class="mod-row-arrow">→</div>
+      </div>
+      <div class="mod-row">
+        <div class="mod-row-num">03</div>
+        <div class="mod-row-body">
+          <div class="mod-row-title">RAÍCES DE POLINOMIOS</div>
+          <div class="mod-row-sub">Extracción completa incluyendo raíces complejas conjugadas</div>
+          <div class="mod-tags">
+            <span class="tag">Método de Müller</span>
+            <span class="tag">Método de Bairstow</span>
+            <span class="tag">Newton-Horner</span>
+            <span class="tag">Deflación automática</span>
+            <span class="tag">Raíces complejas</span>
+          </div>
+        </div>
+        <div class="mod-row-arrow">→</div>
+      </div>
+      <div class="mod-row">
+        <div class="mod-row-num">04</div>
+        <div class="mod-row-body">
+          <div class="mod-row-title">NEWTON-RAPHSON SISTEMAS</div>
+          <div class="mod-row-sub">Sistemas de n ecuaciones no lineales con n incógnitas</div>
+          <div class="mod-tags">
+            <span class="tag">Sistema 2×2</span>
+            <span class="tag">Sistema 3×3</span>
+            <span class="tag">Sistema 4×4</span>
+            <span class="tag">Jacobiana numérica</span>
+            <span class="tag">Gráfica de curvas de nivel</span>
+          </div>
+        </div>
+        <div class="mod-row-arrow">→</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ═══ QUIÉNES SOMOS ═════════════════════════ -->
+<section class="section nosotros" id="nosotros">
+  <div class="section-inner">
+
+    <!-- Header -->
+    <div class="reveal">
+      <div class="eyebrow">04 · El equipo</div>
+      <h2 class="title">Quiénes<br><em>somos</em></h2>
+      <p class="nos-intro">
+        NUMERIX es el resultado de <strong>10 semanas de desarrollo colaborativo</strong> entre
+        dos estudiantes de Ingeniería que decidieron que entender los métodos numéricos
+        no debería ser un privilegio — debería ser el estándar.
+      </p>
+    </div>
+
+    <!-- Dev cards mejoradas -->
+    <div class="devs-grid reveal">
+
+      <!-- Fernando -->
+      <div class="dev-card">
+        <div class="dev-card-top">
+          <div class="dev-avatar">FG</div>
+          <div class="dev-header-text">
+            <div class="dev-name">FERNANDO GRANJA</div>
+            <div class="dev-role">Desarrollador Back-End · Co-fundador</div>
+          </div>
+        </div>
+        <div class="dev-divider"></div>
+        <p class="dev-bio">
+          Estudiante de Ingeniería con pasión por la programación y las matemáticas aplicadas.
+          Responsable de la <strong>arquitectura técnica completa</strong> de NUMERIX: el evaluador
+          de expresiones, los algoritmos numéricos, el motor de gráficas en Canvas y el sistema
+          de exportación a Excel. Cree que el código bien escrito es, en sí mismo, una forma
+          de comunicación matemática.
+        </p>
+        <div class="dev-contrib-label">CONTRIBUCIONES CLAVE</div>
+        <div class="dev-contribs">
+          <div class="dev-contrib-item">
+            <span class="contrib-dot" style="background:var(--gold);"></span>
+            <span>Estructura JS y evaluador de expresiones</span>
+          </div>
+          <div class="dev-contrib-item">
+            <span class="contrib-dot" style="background:var(--gold);"></span>
+            <span>Algoritmos: Taylor, bisección, N-R, secante, punto fijo</span>
+          </div>
+          <div class="dev-contrib-item">
+            <span class="contrib-dot" style="background:var(--gold);"></span>
+            <span>Müller, Bairstow, Horner — implementación completa</span>
+          </div>
+          <div class="dev-contrib-item">
+            <span class="contrib-dot" style="background:var(--gold);"></span>
+            <span>Jacobiana numérica · Motor SheetJS 4 hojas</span>
+          </div>
+          <div class="dev-contrib-item">
+            <span class="contrib-dot" style="background:var(--gold);"></span>
+            <span>Deploy en Vercel · Documentación técnica</span>
+          </div>
+        </div>
+        <div class="dev-skills">
+          <span class="dev-skill">JavaScript</span>
+          <span class="dev-skill">HTML / CSS</span>
+          <span class="dev-skill">Canvas API</span>
+          <span class="dev-skill">SheetJS / XLSX</span>
+          <span class="dev-skill">Algoritmos numéricos</span>
+          <span class="dev-skill">Vercel</span>
+        </div>
+      </div>
+
+      <!-- Alejandra -->
+      <div class="dev-card">
+        <div class="dev-card-top">
+          <div class="dev-avatar" style="color:var(--teal);">AT</div>
+          <div class="dev-header-text">
+            <div class="dev-name">ALEJANDRA TINOCO</div>
+            <div class="dev-role" style="color:var(--teal);">Desarrolladora Front-End · Co-fundadora</div>
+          </div>
+        </div>
+        <div class="dev-divider" style="background:linear-gradient(90deg,var(--teal),transparent);"></div>
+        <p class="dev-bio">
+          Estudiante de Ingeniería con enfoque en análisis matemático, diseño visual y
+          documentación técnica. Responsable del <strong>diseño visual de la plataforma</strong>,
+          la validación matemática de los resultados, las gráficas interactivas del tema 2
+          y el motor gráfico del módulo TIR. Su criterio garantiza que cada salida sea
+          matemáticamente correcta y visualmente comunicativa.
+        </p>
+        <div class="dev-contrib-label" style="color:var(--teal);">CONTRIBUCIONES CLAVE</div>
+        <div class="dev-contribs">
+          <div class="dev-contrib-item">
+            <span class="contrib-dot" style="background:var(--teal);"></span>
+            <span>Diseño visual · Paleta de colores · Modo oscuro/claro</span>
+          </div>
+          <div class="dev-contrib-item">
+            <span class="contrib-dot" style="background:var(--teal);"></span>
+            <span>Diseño cards, Lagrange, pruebas y gráficas T1</span>
+          </div>
+          <div class="dev-contrib-item">
+            <span class="contrib-dot" style="background:var(--teal);"></span>
+            <span>Motor gráfico interactivo T2 · Flujos TIR / Ing. Económica</span>
+          </div>
+          <div class="dev-contrib-item">
+            <span class="contrib-dot" style="background:var(--teal);"></span>
+            <span>Verificación Müller/Bairstow · Diseño tarjetas T3</span>
+          </div>
+          <div class="dev-contrib-item">
+            <span class="contrib-dot" style="background:var(--teal);"></span>
+            <span>CSS responsivo · Dominio · Configuración final</span>
+          </div>
+        </div>
+        <div class="dev-skills">
+          <span class="dev-skill">Análisis numérico</span>
+          <span class="dev-skill">Diseño UI/UX</span>
+          <span class="dev-skill">CSS responsivo</span>
+          <span class="dev-skill">Validación matemática</span>
+          <span class="dev-skill">Gráficas interactivas</span>
+          <span class="dev-skill">Testing</span>
+        </div>
+      </div>
+
+    </div><!-- /devs-grid -->
+
+    <!-- ── CRONOGRAMA ── -->
+    <div class="crono-wrapper reveal">
+      <div class="crono-header">
+        <div class="eyebrow" style="margin-bottom:0;">Cronograma de desarrollo</div>
+        <div class="crono-period">Semana 1 — 10 · Marzo–Mayo 2026</div>
+      </div>
+
+      <div class="crono-table">
+        <div class="crono-head">
+          <div class="crono-col-sem">SEM</div>
+          <div class="crono-col-act">ACTIVIDAD</div>
+          <div class="crono-col-dev">
+            <span class="crono-dev-tag fg">FG</span> Fernando
+          </div>
+          <div class="crono-col-dev">
+            <span class="crono-dev-tag at">AT</span> Alejandra
+          </div>
+        </div>
+
+        <div class="crono-row">
+          <div class="crono-col-sem"><span class="sem-badge">01</span><span class="sem-date">19 mar</span></div>
+          <div class="crono-col-act">Planificación y arquitectura base · HTML/CSS inicial</div>
+          <div class="crono-col-dev">Estructura JS, evaluador de expresiones</div>
+          <div class="crono-col-dev">Diseño visual, paleta de colores</div>
+        </div>
+
+        <div class="crono-row">
+          <div class="crono-col-sem"><span class="sem-badge">02</span></div>
+          <div class="crono-col-act">Tema 1: Series de Taylor — algoritmo, tabla, gráfica</div>
+          <div class="crono-col-dev">Algoritmo Taylor, derivadas numéricas</div>
+          <div class="crono-col-dev">Diseño card, Lagrange, pruebas y gráficas</div>
+        </div>
+
+        <div class="crono-row">
+          <div class="crono-col-sem"><span class="sem-badge">03</span></div>
+          <div class="crono-col-act">Tema 2: Bisección, Regla Falsa, Newton-Raphson</div>
+          <div class="crono-col-dev">Implementación de los 3 métodos</div>
+          <div class="crono-col-dev">Diseño de resultados, validación y gráficas</div>
+        </div>
+
+        <div class="crono-row">
+          <div class="crono-col-sem"><span class="sem-badge">04</span></div>
+          <div class="crono-col-act">Tema 2: Secante, Punto Fijo, Modo Automático</div>
+          <div class="crono-col-dev">Scanner multi-raíz, deduplicación</div>
+          <div class="crono-col-dev">Pruebas con ejemplos de clase y gráficas</div>
+        </div>
+
+        <div class="crono-row crono-row-alt">
+          <div class="crono-col-sem"><span class="sem-badge">04</span></div>
+          <div class="crono-col-act">Tema 2: TIR / Ingeniería Económica · Gráfica T2</div>
+          <div class="crono-col-dev crono-empty">—</div>
+          <div class="crono-col-dev">Flujos de caja, interfaz TIR, motor gráfico interactivo T2</div>
+        </div>
+
+        <div class="crono-row">
+          <div class="crono-col-sem"><span class="sem-badge">06</span></div>
+          <div class="crono-col-act">Tema 3: Müller, Bairstow, Horner</div>
+          <div class="crono-col-dev">Algoritmo e implementación</div>
+          <div class="crono-col-dev">Verificación, diseño de tarjetas y gráficas</div>
+        </div>
+
+        <div class="crono-row">
+          <div class="crono-col-sem"><span class="sem-badge">08</span></div>
+          <div class="crono-col-act">Tema 4: Newton-Raphson Sistemas No Lineales</div>
+          <div class="crono-col-dev">Jacobiana numérica</div>
+          <div class="crono-col-dev">Gráfica curvas de nivel 2×2</div>
+        </div>
+
+        <div class="crono-row">
+          <div class="crono-col-sem"><span class="sem-badge">08</span></div>
+          <div class="crono-col-act">Exportación Excel · Responsivo · Modo Oscuro</div>
+          <div class="crono-col-dev">Motor SheetJS, 4 hojas por tema</div>
+          <div class="crono-col-dev">CSS responsivo, breakpoints</div>
+        </div>
+
+        <div class="crono-row crono-row-final">
+          <div class="crono-col-sem"><span class="sem-badge" style="background:var(--gold);color:var(--bg);">9–10</span></div>
+          <div class="crono-col-act">Publicación · AdSense · Pruebas finales</div>
+          <div class="crono-col-dev">Deploy Vercel · Manual de usuario · Documentación</div>
+          <div class="crono-col-dev">Dominio · Configuración · Pruebas finales</div>
+        </div>
+
+      </div><!-- /crono-table -->
+    </div><!-- /crono-wrapper -->
+
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ═══ POR QUÉ NUMERIX ════════════════════════ -->
+<section class="section why-section">
+  <div class="section-inner">
+    <div class="reveal">
+      <div class="eyebrow">05 · Diferenciadores</div>
+      <h2 class="title">Por qué<br><em>elegir NUMERIX</em></h2>
+    </div>
+    <div class="why-grid reveal">
+      <div class="why-card">
+        <span class="why-card-icon">⚡</span>
+        <div class="why-card-title">ITERACIONES VISIBLES</div>
+        <p class="why-card-text">Cada método muestra su tabla de iteraciones completa con todos los valores intermedios y el error relativo en cada paso. No hay cajas negras.</p>
+      </div>
+      <div class="why-card">
+        <span class="why-card-icon">📈</span>
+        <div class="why-card-title">GRÁFICAS INTERACTIVAS</div>
+        <p class="why-card-text">Canvas interactivos con zoom y tooltips que muestran la función, la convergencia y la raíz encontrada. Aprendizaje visual real.</p>
+      </div>
+      <div class="why-card">
+        <span class="why-card-icon">📊</span>
+        <div class="why-card-title">EXPORTACIÓN A EXCEL</div>
+        <p class="why-card-text">Descargá todos los resultados y la tabla iterativa en un archivo .xlsx listo para incluir en informes y trabajos académicos.</p>
+      </div>
+      <div class="why-card">
+        <span class="why-card-icon">🌙</span>
+        <div class="why-card-title">MODO OSCURO / CLARO</div>
+        <p class="why-card-text">Interfaz adaptable con tema oscuro y claro para estudiar cómodamente a cualquier hora, sin forzar la vista.</p>
+      </div>
+      <div class="why-card">
+        <span class="why-card-icon">∞</span>
+        <div class="why-card-title">SIN LÍMITES</div>
+        <p class="why-card-text">Acceso gratuito a los cuatro módulos completos, sin registro, sin suscripción y sin restricciones de uso.</p>
+      </div>
+      <div class="why-card">
+        <span class="why-card-icon">🎯</span>
+        <div class="why-card-title">ENFOQUE ACADÉMICO</div>
+        <p class="why-card-text">Diseñado específicamente para cursos de Análisis Numérico e Ingeniería. Terminología, notación y ejemplos adaptados al contexto universitario.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ STATS ══════════════════════════════════ -->
+<div class="stats-band section reveal">
+  <div class="section-inner" style="padding:0 5rem;">
+    <div class="stats-row">
+      <div class="stat-cell">
+        <div class="stat-n" data-target="4">0</div>
+        <div class="stat-l">Módulos</div>
+      </div>
+      <div class="stat-cell">
+        <div class="stat-n" data-target="12">0</div>
+        <div class="stat-l">Métodos implementados</div>
+      </div>
+      <div class="stat-cell">
+        <div class="stat-n" data-target="100">0</div>
+        <div class="stat-l">% Iteraciones transparentes</div>
+      </div>
+      <div class="stat-cell">
+        <div class="stat-n">GRATIS</div>
+        <div class="stat-l">Acceso completo</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ CTA FINAL ══════════════════════════════ -->
+<section class="cta-final section reveal">
+  <div class="eyebrow">Listo para comenzar</div>
+  <h2 class="cta-h">
+    <span class="gold">CALCULÁ.</span><br>
+    <span class="stroke">CONVERGÉ.</span><br>
+    ENTREGÁ.
+  </h2>
+  <p class="cta-sub">
+    Cuatro módulos. Docenas de métodos. Cero excusas
+    para no entender el análisis numérico.
+  </p>
+  <a href="index.html" class="cta-big-btn">
+    ENTRAR A NUMERIX <span class="arr">→</span>
+  </a>
+</section>
+
+<!-- ═══ FOOTER ═════════════════════════════════ -->
+<footer>
+  <div class="footer-brand">
+    <div class="footer-logo">NUMERIX</div>
+    <div class="footer-tag">Plataforma de Métodos Numéricos</div>
+  </div>
+  <div class="footer-mid">
+    <strong>Fernando Granja</strong> &amp; <strong>Alejandra Tinoco</strong><br>
+    © 2026 · Todos los derechos reservados
+  </div>
+  <div class="footer-right">
+    Uso académico y personal<br>
+    Prohibida su reproducción sin autorización
+  </div>
+</footer>
+
+<script>
+/* ── CURSOR ── */
+const cur = document.getElementById('cur');
+const ring = document.getElementById('cur-ring');
+let mx=0,my=0,rx=0,ry=0;
+document.addEventListener('mousemove',e=>{
+  mx=e.clientX; my=e.clientY;
+  cur.style.transform=`translate(${mx-4}px,${my-4}px)`;
+});
+(function animR(){
+  rx+=(mx-rx)*.1; ry+=(my-ry)*.1;
+  ring.style.transform=`translate(${rx-16}px,${ry-16}px)`;
+  requestAnimationFrame(animR);
+})();
+document.querySelectorAll('a,button,.mod-row,.dev-card,.why-card,.plan-card').forEach(el=>{
+  el.addEventListener('mouseenter',()=>ring.classList.add('hover'));
+  el.addEventListener('mouseleave',()=>ring.classList.remove('hover'));
+});
+
+/* ── NAV SCROLL ── */
+window.addEventListener('scroll',()=>{
+  document.getElementById('nav').classList.toggle('scrolled',window.scrollY>60);
+});
+
+/* ── BG CANVAS ── */
+const cv=document.getElementById('bgc');
+const cx=cv.getContext('2d');
+let W,H;
+const resize=()=>{W=cv.width=innerWidth;H=cv.height=innerHeight;};
+resize(); window.addEventListener('resize',resize);
+
+const SYMS=['∫','∑','π','√','∂','∞','≈','Δ','λ','Σ','∇','∈','∀','∃','±'];
+class P{
+  constructor(){this.reset(true);}
+  reset(init){
+    this.x=Math.random()*W;
+    this.y=init?Math.random()*H:H+20;
+    this.vy=-(Math.random()*.5+.1);
+    this.vx=(Math.random()-.5)*.25;
+    this.a=Math.random()*.18+.03;
+    this.s=Math.random()*16+9;
+    this.ch=SYMS[Math.floor(Math.random()*SYMS.length)];
+    this.c=Math.random()<.5?`rgba(201,168,76,${this.a})`:`rgba(74,127,255,${this.a*.7})`;
+  }
+  tick(){
+    this.x+=this.vx; this.y+=this.vy; this.a-=.0005;
+    if(this.y<-30||this.a<=0)this.reset(false);
+  }
+  draw(){
+    cx.save();cx.globalAlpha=this.a;
+    cx.font=`${this.s}px "DM Mono",monospace`;
+    cx.fillStyle=this.c;
+    cx.fillText(this.ch,this.x,this.y);
+    cx.restore();
+  }
+}
+const pts=Array.from({length:70},()=>new P());
+
+function drawGrid(){
+  cx.clearRect(0,0,W,H);
+  cx.strokeStyle='rgba(201,168,76,0.018)';
+  cx.lineWidth=1;
+  for(let x=0;x<W;x+=90){cx.beginPath();cx.moveTo(x,0);cx.lineTo(x,H);cx.stroke();}
+  for(let y=0;y<H;y+=90){cx.beginPath();cx.moveTo(0,y);cx.lineTo(W,y);cx.stroke();}
+}
+(function anim(){
+  drawGrid();
+  pts.forEach(p=>{p.tick();p.draw();});
+  requestAnimationFrame(anim);
+})();
+
+/* ── REVEAL ── */
+const io=new IntersectionObserver(entries=>{
+  entries.forEach(e=>{
+    if(e.isIntersecting){e.target.classList.add('visible');io.unobserve(e.target);}
+  });
+},{threshold:.1});
+document.querySelectorAll('.reveal').forEach(r=>io.observe(r));
+
+/* ── COUNT UP ── */
+function countUp(el,target,dur=1400){
+  if(isNaN(target))return;
+  let v=0,step=target/dur*16;
+  const t=setInterval(()=>{
+    v=Math.min(v+step,target);
+    el.textContent=Math.floor(v)+(target===100?'%':'');
+    if(v>=target)clearInterval(t);
+  },16);
+}
+const statsIO=new IntersectionObserver(entries=>{
+  entries.forEach(e=>{
+    if(e.isIntersecting){
+      e.target.querySelectorAll('.stat-n[data-target]').forEach(el=>{
+        const t=+el.dataset.target;
+        if(!isNaN(t))countUp(el,t);
+      });
+      statsIO.unobserve(e.target);
+    }
+  });
+},{threshold:.3});
+document.querySelectorAll('.stats-band').forEach(s=>statsIO.observe(s));
+
+/* ── 3D TILT on dev cards ── */
+document.querySelectorAll('.dev-card').forEach(card=>{
+  card.style.transition='transform .15s ease,background .3s';
+  card.addEventListener('mousemove',e=>{
+    const r=card.getBoundingClientRect();
+    const x=(e.clientX-r.left)/r.width-.5;
+    const y=(e.clientY-r.top)/r.height-.5;
+    card.style.transform=`perspective(600px) rotateY(${x*10}deg) rotateX(${-y*8}deg) translateZ(8px)`;
+  });
+  card.addEventListener('mouseleave',()=>{card.style.transform='';});
+});
+</script>
+</body>
+</html>
