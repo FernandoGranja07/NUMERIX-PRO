@@ -1,0 +1,1643 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>NUMERIX — Plataforma de Métodos Numéricos</title>
+  <meta name="description" content="NUMERIX: Plataforma interactiva de Métodos Numéricos. Series de Taylor, Raíces de Ecuaciones, Raíces de Polinomios y más." />
+  <meta name="author" content="Fernando Granja, Alejandra Tinoco" />
+  <!--
+  ╔══════════════════════════════════════════════════════════╗
+  ║                        NUMERIX                           ║
+  ║         Plataforma de Métodos Numéricos                  ║
+  ╠══════════════════════════════════════════════════════════╣
+  ║  © 2026 Fernando Granja & Alejandra Tinoco               ║
+  ║  Todos los derechos reservados.                          ║
+  ║                                                          ║
+  ║  Este software es de uso académico y personal.           ║
+  ║  Queda prohibida su reproducción, distribución o         ║
+  ║  modificación sin autorización expresa de los autores.   ║
+  ╚══════════════════════════════════════════════════════════╝
+  -->
+  <link rel="stylesheet" href="styles.css" />
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2231548296895140" crossorigin="anonymous"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════════════════════
+     HEADER PRINCIPAL
+══════════════════════════════════════════════════════════ -->
+<header class="app-header">
+  <div class="header-brand">
+    <div class="header-icon-numerix">N<span>X</span></div>
+    <div>
+      <h1 class="numerix-title">NUMERIX</h1>
+      <p>Plataforma de Métodos Numéricos</p>
+    </div>
+  </div>
+  <div style="display:flex;align-items:center;gap:1rem;margin-left:auto;">
+    <button id="btnDarkMode" aria-label="Cambiar tema" title="Modo oscuro / claro"
+      style="width:38px;height:38px;border-radius:50%;border:2px solid rgba(255,255,255,0.3);
+             background:rgba(255,255,255,0.15);cursor:pointer;font-size:1.1rem;
+             display:flex;align-items:center;justify-content:center;
+             transition:background .2s,border-color .2s;flex-shrink:0;">
+      🌙
+    </button>
+    <div class="header-authors">
+      <div class="header-authors-label">Desarrollado por</div>
+      <div class="header-authors-names">Fernando Granja &amp; Alejandra Tinoco</div>
+    </div>
+  </div>
+</header>
+
+<!-- ══════════════════════════════════════════════════════════
+     NAVEGACIÓN DE TEMAS
+══════════════════════════════════════════════════════════ -->
+<nav class="theme-nav">
+
+  <button class="theme-tab" data-theme="t1">
+    <span class="tab-num">1</span>
+    <span class="tab-label">
+      Aproximaciones Taylor
+      <span class="tab-sublabel">Series y error de truncamiento</span>
+    </span>
+    <span class="tab-badge" title="Módulo activo"></span>
+  </button>
+
+  <button class="theme-tab active" data-theme="t2">
+    <span class="tab-num">2</span>
+    <span class="tab-label">
+      Métodos de Resolución
+      <span class="tab-sublabel">Ecuaciones no lineales</span>
+    </span>
+    <span class="tab-badge" title="Módulo activo"></span>
+  </button>
+
+  <button class="theme-tab" data-theme="t3">
+    <span class="tab-num">3</span>
+    <span class="tab-label">
+      Raíces de Polinomios
+      <span class="tab-sublabel">Müller · Bairstow · Horner</span>
+    </span>
+    <span class="tab-badge" title="Müller activo"></span>
+  </button>
+
+  <button class="theme-tab" data-theme="t4">
+    <span class="tab-num">4</span>
+    <span class="tab-label">
+      Newton-Raphson Sistemas
+      <span class="tab-sublabel">Ecuaciones no lineales múltiples</span>
+    </span>
+    <span class="tab-badge" title="Módulo activo"></span>
+  </button>
+
+</nav>
+
+<!-- ══════════════════════════════════════════════════════════
+     APP LAYOUT
+══════════════════════════════════════════════════════════ -->
+<div class="app-layout">
+
+<!-- ════════════════════════════════════════════════════════
+     TEMA 1 — Aproximaciones Taylor (COMPLETO)
+════════════════════════════════════════════════════════ -->
+<div id="panel-t1" class="theme-panel with-sidebar">
+
+  <!-- Sidebar T1 -->
+  <nav class="inner-sidebar">
+    <div class="nav-section-label">Entrada</div>
+    <a class="nav-item t1-nav active" data-t1="t1-input">
+      <span class="nav-icon">📝</span> Definición
+    </a>
+    <div class="nav-section-label">Procedimiento</div>
+    <a class="nav-item t1-nav" data-t1="t1-planteamiento">
+      <span class="nav-icon">📌</span> 1. Planteamiento
+    </a>
+    <a class="nav-item t1-nav" data-t1="t1-derivadas">
+      <span class="nav-icon">∂</span> 2. Derivadas
+    </a>
+    <a class="nav-item t1-nav" data-t1="t1-polinomio">
+      <span class="nav-icon">∑</span> 3. Polinomio
+    </a>
+    <a class="nav-item t1-nav" data-t1="t1-tabla">
+      <span class="nav-icon">📋</span> 4. Tabla
+    </a>
+    <a class="nav-item t1-nav" data-t1="t1-resultado">
+      <span class="nav-icon">🎯</span> 5. Resultado
+    </a>
+    <a class="nav-item t1-nav" data-t1="t1-lagrange">
+      <span class="nav-icon">📐</span> 6. Lagrange
+    </a>
+    <a class="nav-item t1-nav" data-t1="t1-conclusion">
+      <span class="nav-icon">✅</span> 7. Conclusión
+    </a>
+    <div class="nav-section-label">Visualización</div>
+    <a class="nav-item t1-nav" data-t1="t1-grafica">
+      <span class="nav-icon">📈</span> Gráfica Taylor
+    </a>
+  </nav>
+
+  <!-- Mobile nav T1 -->
+  <div class="mobile-inner-nav">
+    <button class="mobile-inner-item t1-nav active" data-t1="t1-input">
+      <span class="mobile-inner-icon">📝</span>Datos
+    </button>
+    <button class="mobile-inner-item t1-nav" data-t1="t1-planteamiento">
+      <span class="mobile-inner-icon">📌</span>Plan.
+    </button>
+    <button class="mobile-inner-item t1-nav" data-t1="t1-derivadas">
+      <span class="mobile-inner-icon">∂</span>Deriv.
+    </button>
+    <button class="mobile-inner-item t1-nav" data-t1="t1-polinomio">
+      <span class="mobile-inner-icon">∑</span>Polinomio
+    </button>
+    <button class="mobile-inner-item t1-nav" data-t1="t1-tabla">
+      <span class="mobile-inner-icon">📋</span>Tabla
+    </button>
+    <button class="mobile-inner-item t1-nav" data-t1="t1-resultado">
+      <span class="mobile-inner-icon">🎯</span>Result.
+    </button>
+    <button class="mobile-inner-item t1-nav" data-t1="t1-lagrange">
+      <span class="mobile-inner-icon">📐</span>Lagrange
+    </button>
+    <button class="mobile-inner-item t1-nav" data-t1="t1-conclusion">
+      <span class="mobile-inner-icon">✅</span>Concl.
+    </button>
+    <button class="mobile-inner-item t1-nav" data-t1="t1-grafica">
+      <span class="mobile-inner-icon">📈</span>Gráfica
+    </button>
+  </div>
+
+  <!-- Contenido T1 -->
+  <div class="app-main">
+
+    <!-- ── ENTRADA ──────────────────────────────────────── -->
+    <div id="t1-input" class="t1-sec active">
+      <div class="page-header">
+        <h2>Series de Taylor — Entrada</h2>
+        <p>Defina la función, el punto de expansión <em>a</em>, el punto de evaluación <em>x</em> y el orden <em>n</em>.</p>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-header-icon amber">∑</div>
+          <div>
+            <div class="card-title">Parámetros de la Serie</div>
+            <div class="card-subtitle">El procedimiento completo se mostrará paso a paso, como en papel</div>
+          </div>
+        </div>
+
+        <div class="form-group" style="margin-bottom:1rem;">
+          <label for="t1Func">Función f(x)</label>
+          <input type="text" id="t1Func" class="mono"
+            placeholder="Ej: sqrt(x)  |  exp(x)  |  sin(x)  |  cos(x)  |  ln(x)" />
+          <div class="hint">Funciones: <code>sin</code> <code>cos</code> <code>tan</code> <code>exp</code> <code>ln</code> <code>sqrt</code> <code>abs</code> — Constantes: <code>pi</code> <code>e</code> — Potencias: <code>^</code></div>
+        </div>
+
+        <div class="form-grid">
+          <div class="form-group">
+            <label for="t1A">Punto de expansión <em>a</em></label>
+            <input type="number" id="t1A" placeholder="4" step="any" value="4" />
+            <div class="hint">Centro de la serie</div>
+          </div>
+          <div class="form-group">
+            <label for="t1X">Punto de evaluación <em>x</em></label>
+            <input type="number" id="t1X" placeholder="4.2" step="any" value="4.2" />
+            <div class="hint">Valor a aproximar</div>
+          </div>
+          <div class="form-group" id="t1NGroup">
+            <label for="t1N">Orden <em>n</em></label>
+            <input type="number" id="t1N" placeholder="4" min="1" max="8" value="4" />
+            <div class="hint">Número de términos − 1 (recomendado: 2 a 6)</div>
+          </div>
+        </div>
+
+        <!-- ── MODO DE CÁLCULO ─────────────────────────────── -->
+        <div class="mode-selector-block">
+          <div class="mode-selector-label">Modo de cálculo</div>
+          <div class="mode-radio-group">
+
+            <label class="mode-radio-item">
+              <input type="radio" name="t1Mode" id="t1ModeSimple"    value="simple"    checked />
+              <span class="mode-radio-box">
+                <span class="mode-radio-icon">🔢</span>
+                <span class="mode-radio-text">
+                  <strong>Solo aproximación</strong>
+                  <small>Calcula P<sub>n</sub>(x) sin análisis de error</small>
+                </span>
+              </span>
+            </label>
+
+            <label class="mode-radio-item">
+              <input type="radio" name="t1Mode" id="t1ModeLagrange"  value="lagrange" />
+              <span class="mode-radio-box">
+                <span class="mode-radio-icon">📐</span>
+                <span class="mode-radio-text">
+                  <strong>Aproximación + Lagrange</strong>
+                  <small>Calcula P<sub>n</sub>(x), R<sub>n</sub>(x) y cota del error</small>
+                </span>
+              </span>
+            </label>
+
+            <label class="mode-radio-item">
+              <input type="radio" name="t1Mode" id="t1ModeTol"       value="tolerancia" />
+              <span class="mode-radio-box">
+                <span class="mode-radio-icon">🎯</span>
+                <span class="mode-radio-text">
+                  <strong>Por tolerancia</strong>
+                  <small>Itera hasta que |R<sub>n</sub>| &lt; tolerancia (ignora n)</small>
+                </span>
+              </span>
+            </label>
+
+          </div>
+
+          <!-- Input tolerancia (solo visible en modo tolerancia) -->
+          <div id="t1TolGroup" style="display:none;margin-top:.875rem;">
+            <div class="form-group" style="max-width:280px;">
+              <label for="t1Tol">Tolerancia</label>
+              <input type="number" id="t1Tol" placeholder="0.001" step="any" value="0.001" min="0" />
+              <div class="hint">El algoritmo itera hasta que |R<sub>n</sub>| &lt; este valor (máx n = 20)</div>
+            </div>
+          </div>
+        </div>
+
+        <div id="t1Alert"></div>
+
+        <div class="btn-group">
+          <button id="btnTaylor" class="btn btn-primary">▶ Calcular Serie de Taylor</button>
+        </div>
+      </div>
+
+      <!-- Referencia teórica -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-header-icon amber">📖</div>
+          <div>
+            <div class="card-title">Fórmula General</div>
+          </div>
+        </div>
+        <div class="taylor-ref-grid">
+          <div class="taylor-ref-box amber">
+            <div class="trb-title">Polinomio de Taylor</div>
+            <div class="trb-formula">
+              P<sub>n</sub>(x) = f(a) + f'(a)(x−a) + f''(a)/2! (x−a)² + ··· + f<sup>(n)</sup>(a)/n! (x−a)<sup>n</sup>
+            </div>
+          </div>
+          <div class="taylor-ref-box red">
+            <div class="trb-title">Resto de Lagrange</div>
+            <div class="trb-formula">
+              R<sub>n</sub>(x) = f<sup>(n+1)</sup>(ξ) / (n+1)! · (x−a)<sup>n+1</sup>,  ξ ∈ (a, x)
+            </div>
+          </div>
+          <div class="taylor-ref-box blue">
+            <div class="trb-title">Error Absoluto</div>
+            <div class="trb-formula">
+              E<sub>a</sub> = |f(x) − P<sub>n</sub>(x)|
+            </div>
+          </div>
+          <div class="taylor-ref-box green">
+            <div class="trb-title">Cota del Resto</div>
+            <div class="trb-formula">
+              |R<sub>n</sub>| ≤ M / (n+1)! · |x−a|<sup>n+1</sup>,  M = máx|f<sup>(n+1)</sup>|
+            </div>
+          </div>
+        </div>
+      </div>
+    </div><!-- /t1-input -->
+
+    <!-- ── SECCIONES DE RESULTADOS (se renderizan con JS) ── -->
+    <div id="t1-planteamiento" class="t1-sec" style="display:none;"></div>
+    <div id="t1-derivadas"     class="t1-sec" style="display:none;"></div>
+    <div id="t1-polinomio"     class="t1-sec" style="display:none;"></div>
+    <div id="t1-tabla"         class="t1-sec" style="display:none;"></div>
+    <div id="t1-resultado"     class="t1-sec" style="display:none;"></div>
+    <div id="t1-lagrange"      class="t1-sec" style="display:none;"></div>
+    <div id="t1-conclusion"    class="t1-sec" style="display:none;"></div>
+
+    <!-- ── GRÁFICA TAYLOR ─────────────────────────────────── -->
+    <div id="t1-grafica" class="t1-sec" style="display:none;">
+      <div class="page-header">
+        <h2>Gráfica Interactiva — Taylor</h2>
+        <p>Visualiza f(x) vs P<sub>n</sub>(x). Arrastra · Zoom con rueda · Hover para valores exactos.</p>
+      </div>
+
+      <!-- Controles -->
+      <div class="card" style="padding:.75rem 1.25rem;margin-bottom:.875rem;">
+        <div style="display:flex;align-items:center;gap:.75rem;flex-wrap:wrap;">
+          <div style="flex:1;min-width:180px;font-family:var(--font-main);font-size:.82rem;color:var(--gray-600);">
+            <span id="t1g-expr-label">Ejecuta un cálculo de Taylor para ver la gráfica.</span>
+          </div>
+          <button id="btnT1GReset" class="btn btn-secondary" style="white-space:nowrap;flex-shrink:0;">⟳ Resetear vista</button>
+        </div>
+        <!-- Leyenda -->
+        <div style="display:flex;gap:1.25rem;margin-top:.625rem;flex-wrap:wrap;">
+          <div style="display:flex;align-items:center;gap:.4rem;">
+            <div style="width:22px;height:3px;background:#4f46e5;border-radius:2px;"></div>
+            <span style="font-family:var(--font-main);font-size:.75rem;color:var(--gray-600);">f(x) original</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:.4rem;">
+            <div style="width:22px;height:3px;background:#f59e0b;border-radius:2px;border-top:2px dashed #f59e0b;background:none;"></div>
+            <span style="font-family:var(--font-main);font-size:.75rem;color:var(--gray-600);">P<sub>n</sub>(x) Taylor</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:.4rem;">
+            <div style="width:10px;height:10px;border-radius:50%;background:#6366f1;"></div>
+            <span style="font-family:var(--font-main);font-size:.75rem;color:var(--gray-600);">Punto a (expansión)</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:.4rem;">
+            <div style="width:10px;height:10px;border-radius:50%;background:#ef4444;"></div>
+            <span style="font-family:var(--font-main);font-size:.75rem;color:var(--gray-600);">Punto x (evaluación)</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Canvas interactivo -->
+      <div class="card" style="padding:0;overflow:hidden;position:relative;">
+        <canvas id="t1GraphCanvas" style="display:block;width:100%;cursor:crosshair;touch-action:none;"></canvas>
+        <!-- Tooltip -->
+        <div id="t1GraphTooltip" style="
+          position:absolute;pointer-events:none;display:none;
+          background:#1e293b;color:#f8fafc;
+          font-family:'JetBrains Mono',monospace;font-size:.75rem;font-weight:500;
+          padding:.35rem .65rem;border-radius:6px;
+          box-shadow:0 4px 16px rgba(0,0,0,.25);
+          border:1px solid #334155;white-space:nowrap;z-index:10;line-height:1.6;">
+        </div>
+        <!-- Zoom buttons -->
+        <div style="position:absolute;bottom:12px;right:12px;display:flex;flex-direction:column;gap:4px;">
+          <button onclick="t1GraphZoom(0.75)" style="width:30px;height:30px;border:1px solid #e2e8f0;border-radius:6px;background:rgba(255,255,255,.92);backdrop-filter:blur(4px);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 6px rgba(0,0,0,.08);">+</button>
+          <button onclick="t1GraphZoom(1.35)" style="width:30px;height:30px;border:1px solid #e2e8f0;border-radius:6px;background:rgba(255,255,255,.92);backdrop-filter:blur(4px);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 6px rgba(0,0,0,.08);">−</button>
+        </div>
+        <!-- Coordenadas -->
+        <div id="t1GraphCoords" style="
+          position:absolute;bottom:12px;left:12px;
+          background:rgba(255,255,255,.88);backdrop-filter:blur(4px);
+          border:1px solid #e2e8f0;border-radius:6px;
+          padding:.25rem .6rem;font-family:'JetBrains Mono',monospace;
+          font-size:.72rem;color:#64748b;box-shadow:0 2px 6px rgba(0,0,0,.06);">
+          x = — &nbsp; y = —
+        </div>
+      </div>
+    </div>
+
+    <!-- Botón descarga T1 -->
+    <div id="t1-download-bar" style="display:none;margin:1rem 1.5rem;">
+      <button onclick="numerixExport.t1()" class="btn-download-excel">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10,9 9,9 8,9"/></svg>
+        Descargar Excel — Series de Taylor
+      </button>
+    </div>
+
+  </div><!-- /app-main T1 -->
+</div><!-- /panel-t1 -->
+
+
+<!-- ════════════════════════════════════════════════════════
+     TEMA 2 — Métodos de Resolución (COMPLETO)
+════════════════════════════════════════════════════════ -->
+<div id="panel-t2" class="theme-panel with-sidebar active">
+
+  <!-- ── Sidebar interno ──────────────────────────────── -->
+  <nav class="inner-sidebar">
+    <div class="nav-section-label">Análisis</div>
+    <a class="nav-item active" data-nav="verify">
+      <span class="nav-icon">🔍</span> Verificación
+    </a>
+    <div class="nav-section-label">Métodos</div>
+    <a class="nav-item" data-nav="methods">
+      <span class="nav-icon">⚙️</span> Métodos Numéricos
+    </a>
+    <a class="nav-item" data-nav="results">
+      <span class="nav-icon">📊</span> Resultados
+    </a>
+    <div class="nav-section-label">Datos</div>
+    <a class="nav-item" data-nav="history">
+      <span class="nav-icon">📋</span> Historial
+    </a>
+    <a class="nav-item" data-nav="graph">
+      <span class="nav-icon">📈</span> Gráfica
+    </a>
+    <div class="nav-section-label">Aplicaciones</div>
+    <a class="nav-item" data-nav="tir">
+      <span class="nav-icon">💰</span> Ing. Económica — TIR
+    </a>
+  </nav>
+
+  <!-- ── Mobile nav interno ────────────────────────────── -->
+  <div class="mobile-inner-nav">
+    <button class="mobile-inner-item active" data-nav="verify">
+      <span class="mobile-inner-icon">🔍</span>Verificar
+    </button>
+    <button class="mobile-inner-item" data-nav="methods">
+      <span class="mobile-inner-icon">⚙️</span>Métodos
+    </button>
+    <button class="mobile-inner-item" data-nav="results">
+      <span class="mobile-inner-icon">📊</span>Resultados
+    </button>
+    <button class="mobile-inner-item" data-nav="history">
+      <span class="mobile-inner-icon">📋</span>Historial
+    </button>
+    <button class="mobile-inner-item" data-nav="graph">
+      <span class="mobile-inner-icon">📈</span>Gráfica
+    </button>
+    <button class="mobile-inner-item" data-nav="tir">
+      <span class="mobile-inner-icon">💰</span>TIR
+    </button>
+  </div>
+
+  <!-- ── Contenido principal T2 ───────────────────────── -->
+  <div class="app-main">
+
+    <!-- ══ VERIFICACIÓN ══════════════════════════════════ -->
+    <section id="sec-verify" class="section active">
+      <div class="page-header">
+        <h2>Verificación de Función</h2>
+        <p>Ingrese f(x) y el intervalo [a, b] para analizar el comportamiento y detectar raíces.</p>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-header-icon purple">∫</div>
+          <div>
+            <div class="card-title">Definición de la función</div>
+            <div class="card-subtitle">Sintaxis matemática estándar — sin frameworks externos</div>
+          </div>
+        </div>
+
+        <div class="form-group" style="margin-bottom:1rem;">
+          <label for="funcInput">
+            Función f(x)
+            <span class="label-hint">— sin, cos, tan, exp, ln, log, sqrt, abs, pi, e, ^</span>
+          </label>
+          <input type="text" id="funcInput" class="mono"
+            placeholder="Ej: x^3 - x - 2  |  sin(x) - x/2  |  exp(x) - 3*x" />
+          <div class="hint">
+            ℹ Ejemplos:
+            <code>x^3 - x - 2</code>&nbsp;·&nbsp;
+            <code>sin(x) - 0.5*x</code>&nbsp;·&nbsp;
+            <code>ln(x) - 1</code>&nbsp;·&nbsp;
+            <code>exp(x) - 2*x - 1</code>
+          </div>
+        </div>
+
+        <div class="form-grid">
+          <div class="form-group">
+            <label for="intervalA">Extremo a</label>
+            <input type="number" id="intervalA" placeholder="Ej: 1" step="any" />
+          </div>
+          <div class="form-group">
+            <label for="intervalB">Extremo b</label>
+            <input type="number" id="intervalB" placeholder="Ej: 2" step="any" />
+          </div>
+        </div>
+
+        <div class="btn-group">
+          <button id="btnVerify" class="btn btn-primary">🔍 Verificar Función</button>
+          <button class="btn btn-secondary" onclick="navigateTo('methods')">⚙️ Ir a Métodos →</button>
+        </div>
+
+        <div id="verifyAlert"></div>
+        <div id="verifyResults"></div>
+      </div>
+
+      <!-- Referencia de sintaxis -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-header-icon blue">📖</div>
+          <div>
+            <div class="card-title">Referencia de sintaxis</div>
+            <div class="card-subtitle">Funciones y constantes disponibles en el parser</div>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:.5rem;">
+          <div style="background:var(--gray-50);border-radius:6px;padding:.6rem .85rem;">
+            <div style="font-size:.7rem;color:var(--gray-500);margin-bottom:.2rem;font-family:var(--font-main);font-weight:600;text-transform:uppercase;">Trigonométricas</div>
+            <code style="font-size:.8rem;font-family:var(--font-mono);">sin(x), cos(x), tan(x)</code>
+          </div>
+          <div style="background:var(--gray-50);border-radius:6px;padding:.6rem .85rem;">
+            <div style="font-size:.7rem;color:var(--gray-500);margin-bottom:.2rem;font-family:var(--font-main);font-weight:600;text-transform:uppercase;">Inversas</div>
+            <code style="font-size:.8rem;font-family:var(--font-mono);">asin(x), acos(x), atan(x)</code>
+          </div>
+          <div style="background:var(--gray-50);border-radius:6px;padding:.6rem .85rem;">
+            <div style="font-size:.7rem;color:var(--gray-500);margin-bottom:.2rem;font-family:var(--font-main);font-weight:600;text-transform:uppercase;">Exponencial / Log</div>
+            <code style="font-size:.8rem;font-family:var(--font-mono);">exp(x), ln(x), log(x)</code>
+          </div>
+          <div style="background:var(--gray-50);border-radius:6px;padding:.6rem .85rem;">
+            <div style="font-size:.7rem;color:var(--gray-500);margin-bottom:.2rem;font-family:var(--font-main);font-weight:600;text-transform:uppercase;">Raíces / Módulo</div>
+            <code style="font-size:.8rem;font-family:var(--font-mono);">sqrt(x), cbrt(x), abs(x)</code>
+          </div>
+          <div style="background:var(--gray-50);border-radius:6px;padding:.6rem .85rem;">
+            <div style="font-size:.7rem;color:var(--gray-500);margin-bottom:.2rem;font-family:var(--font-main);font-weight:600;text-transform:uppercase;">Constantes</div>
+            <code style="font-size:.8rem;font-family:var(--font-mono);">pi, e, x^n</code>
+          </div>
+          <div style="background:var(--gray-50);border-radius:6px;padding:.6rem .85rem;">
+            <div style="font-size:.7rem;color:var(--gray-500);margin-bottom:.2rem;font-family:var(--font-main);font-weight:600;text-transform:uppercase;">Implícita</div>
+            <code style="font-size:.8rem;font-family:var(--font-mono);">2x → 2*x, 3sin(x)</code>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══ MÉTODOS ════════════════════════════════════════ -->
+    <section id="sec-methods" class="section">
+      <div class="page-header">
+        <h2>Métodos Numéricos</h2>
+        <p>Seleccione un método, configure parámetros y ejecute. La función se sincroniza automáticamente desde Verificación.</p>
+      </div>
+
+      <div class="methods-intro">
+        💡 <strong>Consejo:</strong> Primero use <em>Verificar Función</em> para poblar automáticamente los campos de intervalo y valor inicial. La derivada y g(x) se calculan de forma automática.
+      </div>
+
+      <!-- Tabs de métodos -->
+      <div class="method-tabs">
+        <button class="method-tab active" data-method="bisect">Bisección</button>
+        <button class="method-tab" data-method="false">Regla Falsa</button>
+        <button class="method-tab" data-method="newton">Newton-Raphson</button>
+        <button class="method-tab" data-method="secant">Secante</button>
+        <button class="method-tab" data-method="fixed">Punto Fijo</button>
+      </div>
+
+      <!-- Panel Bisección -->
+      <div id="panel-bisect" class="method-panel active card">
+        <div class="card-header">
+          <div class="card-header-icon purple">✂</div>
+          <div>
+            <div class="card-title">Método de Bisección</div>
+            <div class="card-subtitle">Método cerrado · Requiere cambio de signo en [a, b] · Convergencia lineal garantizada</div>
+          </div>
+        </div>
+
+        <!-- Selector de modo -->
+        <div class="auto-mode-toggle">
+          <label class="auto-mode-opt">
+            <input type="radio" name="bisect_mode" value="single" checked />
+            <span>🎯 Modo normal <small>(un intervalo)</small></span>
+          </label>
+          <label class="auto-mode-opt">
+            <input type="radio" name="bisect_mode" value="auto" />
+            <span>🔍 Modo automático <small>(todas las raíces)</small></span>
+          </label>
+        </div>
+
+        <div class="form-group" style="margin-bottom:1rem;">
+          <label>Función f(x)</label>
+          <input type="text" id="func_bisect" class="mono" placeholder="x^3 - x - 2" />
+        </div>
+
+        <!-- Campos modo normal -->
+        <div id="bisect-single-fields">
+          <div class="form-grid">
+            <div class="form-group"><label>Extremo a</label><input type="number" id="bisect_a" placeholder="1" step="any" /></div>
+            <div class="form-group"><label>Extremo b</label><input type="number" id="bisect_b" placeholder="2" step="any" /></div>
+            <div class="form-group"><label>Tolerancia Ea</label><input type="number" id="bisect_tol" value="0.0001" step="any" /></div>
+            <div class="form-group"><label>Máx. iteraciones</label><input type="number" id="bisect_iter" value="100" min="1" max="500" /></div>
+          </div>
+        </div>
+
+        <!-- Campos modo automático -->
+        <div id="bisect-auto-fields" style="display:none;">
+          <div class="auto-mode-hint">
+            ℹ El sistema divide el rango en subintervalos, detecta cambios de signo por el Teorema de Bolzano y aplica Bisección en cada uno.
+          </div>
+          <div class="form-grid">
+            <div class="form-group"><label>Rango A (inicio)</label><input type="number" id="bisect_A" placeholder="-5" step="any" value="-5" /></div>
+            <div class="form-group"><label>Rango B (fin)</label><input type="number" id="bisect_B" placeholder="5" step="any" value="5" /></div>
+            <div class="form-group"><label>Tamaño de paso</label><input type="number" id="bisect_step" placeholder="0.5" step="any" value="0.5" /><div class="hint">Pasos más pequeños detectan más raíces pero tardan más</div></div>
+            <div class="form-group"><label>Tolerancia Ea</label><input type="number" id="bisect_tol_auto" value="0.0001" step="any" /></div>
+          </div>
+        </div>
+
+        <div class="btn-group"><button id="btnBisect" class="btn btn-primary">▶ Ejecutar Bisección</button></div>
+        <div id="bisectAlert"></div>
+      </div>
+
+      <!-- Panel Regla Falsa -->
+      <div id="panel-false" class="method-panel card">
+        <div class="card-header">
+          <div class="card-header-icon blue">📐</div>
+          <div>
+            <div class="card-title">Método de la Regla Falsa (Falsi)</div>
+            <div class="card-subtitle">Método cerrado · Converge más rápido que bisección en la mayoría de los casos</div>
+          </div>
+        </div>
+
+        <div class="auto-mode-toggle">
+          <label class="auto-mode-opt">
+            <input type="radio" name="false_mode" value="single" checked />
+            <span>🎯 Modo normal <small>(un intervalo)</small></span>
+          </label>
+          <label class="auto-mode-opt">
+            <input type="radio" name="false_mode" value="auto" />
+            <span>🔍 Modo automático <small>(todas las raíces)</small></span>
+          </label>
+        </div>
+
+        <div class="form-group" style="margin-bottom:1rem;">
+          <label>Función f(x)</label>
+          <input type="text" id="func_false" class="mono" placeholder="x^3 - x - 2" />
+        </div>
+
+        <div id="false-single-fields">
+          <div class="form-grid">
+            <div class="form-group"><label>Extremo a</label><input type="number" id="false_a" placeholder="1" step="any" /></div>
+            <div class="form-group"><label>Extremo b</label><input type="number" id="false_b" placeholder="2" step="any" /></div>
+            <div class="form-group"><label>Tolerancia Ea</label><input type="number" id="false_tol" value="0.0001" step="any" /></div>
+            <div class="form-group"><label>Máx. iteraciones</label><input type="number" id="false_iter" value="100" min="1" max="500" /></div>
+          </div>
+        </div>
+
+        <div id="false-auto-fields" style="display:none;">
+          <div class="auto-mode-hint">
+            ℹ El sistema escanea el rango, detecta cambios de signo y aplica Regla Falsa en cada subintervalo encontrado.
+          </div>
+          <div class="form-grid">
+            <div class="form-group"><label>Rango A (inicio)</label><input type="number" id="false_A" placeholder="-5" step="any" value="-5" /></div>
+            <div class="form-group"><label>Rango B (fin)</label><input type="number" id="false_B" placeholder="5" step="any" value="5" /></div>
+            <div class="form-group"><label>Tamaño de paso</label><input type="number" id="false_step" placeholder="0.5" step="any" value="0.5" /></div>
+            <div class="form-group"><label>Tolerancia Ea</label><input type="number" id="false_tol_auto" value="0.0001" step="any" /></div>
+          </div>
+        </div>
+
+        <div class="btn-group"><button id="btnFalse" class="btn btn-primary">▶ Ejecutar Regla Falsa</button></div>
+        <div id="falseAlert"></div>
+      </div>
+
+      <!-- Panel Newton-Raphson -->
+      <div id="panel-newton" class="method-panel card">
+        <div class="card-header">
+          <div class="card-header-icon green">∂</div>
+          <div>
+            <div class="card-title">Método de Newton-Raphson</div>
+            <div class="card-subtitle">Método abierto · Derivada numérica automática · Convergencia cuadrática</div>
+          </div>
+        </div>
+
+        <div class="auto-mode-toggle">
+          <label class="auto-mode-opt">
+            <input type="radio" name="newton_mode" value="single" checked />
+            <span>🎯 Modo normal <small>(un punto inicial)</small></span>
+          </label>
+          <label class="auto-mode-opt">
+            <input type="radio" name="newton_mode" value="auto" />
+            <span>🔍 Modo automático <small>(todas las raíces)</small></span>
+          </label>
+        </div>
+
+        <div class="form-group" style="margin-bottom:1rem;">
+          <label>Función f(x)</label>
+          <input type="text" id="func_newton" class="mono" placeholder="x^3 - x - 2" />
+        </div>
+        <div class="hint" style="margin-bottom:.75rem;">
+          ℹ La derivada f'(x) se calcula automáticamente por diferencias centrales: <code>f'(x) ≈ [f(x+h) − f(x−h)] / 2h</code>. No se requiere ingresarla manualmente.
+        </div>
+
+        <div id="newton-single-fields">
+          <div class="form-grid">
+            <div class="form-group"><label>Valor inicial x₀</label><input type="number" id="newton_x0" placeholder="1.5" step="any" /></div>
+            <div class="form-group"><label>Tolerancia Ea</label><input type="number" id="newton_tol" value="0.0001" step="any" /></div>
+            <div class="form-group"><label>Máx. iteraciones</label><input type="number" id="newton_iter" value="100" min="1" max="500" /></div>
+          </div>
+        </div>
+
+        <div id="newton-auto-fields" style="display:none;">
+          <div class="auto-mode-hint">
+            ℹ En modo automático, el sistema detecta cambios de signo y usa el punto medio de cada subintervalo como x₀ para Newton-Raphson.
+          </div>
+          <div class="form-grid">
+            <div class="form-group"><label>Rango A (inicio)</label><input type="number" id="newton_A" placeholder="-5" step="any" value="-5" /></div>
+            <div class="form-group"><label>Rango B (fin)</label><input type="number" id="newton_B" placeholder="5" step="any" value="5" /></div>
+            <div class="form-group"><label>Tamaño de paso</label><input type="number" id="newton_step" placeholder="0.5" step="any" value="0.5" /></div>
+            <div class="form-group"><label>Tolerancia Ea</label><input type="number" id="newton_tol_auto" value="0.0001" step="any" /></div>
+          </div>
+        </div>
+
+        <div class="btn-group"><button id="btnNewton" class="btn btn-primary">▶ Ejecutar Newton-Raphson</button></div>
+        <div id="newtonAlert"></div>
+      </div>
+
+      <!-- Panel Secante -->
+      <div id="panel-secant" class="method-panel card">
+        <div class="card-header">
+          <div class="card-header-icon amber">〜</div>
+          <div>
+            <div class="card-title">Método de la Secante</div>
+            <div class="card-subtitle">Método abierto · No requiere derivada · Orden de convergencia ≈ 1.618 (áureo)</div>
+          </div>
+        </div>
+
+        <div class="auto-mode-toggle">
+          <label class="auto-mode-opt">
+            <input type="radio" name="secant_mode" value="single" checked />
+            <span>🎯 Modo normal <small>(dos puntos iniciales)</small></span>
+          </label>
+          <label class="auto-mode-opt">
+            <input type="radio" name="secant_mode" value="auto" />
+            <span>🔍 Modo automático <small>(todas las raíces)</small></span>
+          </label>
+        </div>
+
+        <div class="form-group" style="margin-bottom:1rem;">
+          <label>Función f(x)</label>
+          <input type="text" id="func_secant" class="mono" placeholder="x^3 - x - 2" />
+        </div>
+
+        <div id="secant-single-fields">
+          <div class="form-grid">
+            <div class="form-group"><label>Valor inicial x₀</label><input type="number" id="sec_x0" placeholder="1" step="any" /></div>
+            <div class="form-group"><label>Valor inicial x₁</label><input type="number" id="sec_x1" placeholder="2" step="any" /></div>
+            <div class="form-group"><label>Tolerancia Ea</label><input type="number" id="sec_tol" value="0.0001" step="any" /></div>
+            <div class="form-group"><label>Máx. iteraciones</label><input type="number" id="sec_iter" value="100" min="1" max="500" /></div>
+          </div>
+        </div>
+
+        <div id="secant-auto-fields" style="display:none;">
+          <div class="auto-mode-hint">
+            ℹ En modo automático, usa los extremos de cada subintervalo como x₀ y x₁ para el método de la Secante.
+          </div>
+          <div class="form-grid">
+            <div class="form-group"><label>Rango A (inicio)</label><input type="number" id="secant_A" placeholder="-5" step="any" value="-5" /></div>
+            <div class="form-group"><label>Rango B (fin)</label><input type="number" id="secant_B" placeholder="5" step="any" value="5" /></div>
+            <div class="form-group"><label>Tamaño de paso</label><input type="number" id="secant_step" placeholder="0.5" step="any" value="0.5" /></div>
+            <div class="form-group"><label>Tolerancia Ea</label><input type="number" id="secant_tol_auto" value="0.0001" step="any" /></div>
+          </div>
+        </div>
+
+        <div class="btn-group"><button id="btnSecant" class="btn btn-primary">▶ Ejecutar Secante</button></div>
+        <div id="secantAlert"></div>
+      </div>
+
+      <!-- Panel Punto Fijo — Laboratorio de Transformadas -->
+      <div id="panel-fixed" class="method-panel card">
+        <div class="card-header">
+          <div class="card-header-icon red">◎</div>
+          <div>
+            <div class="card-title">Punto Fijo — Laboratorio de Transformadas</div>
+            <div class="card-subtitle">El sistema genera múltiples g(x), evalúa convergencia y permite seleccionar la mejor transformación</div>
+          </div>
+        </div>
+
+        <!-- ── PASO 1: Entrada ─────────────────────────── -->
+        <div class="pf-section-label">① Definición de la función</div>
+        <div class="form-group" style="margin-bottom:1rem;">
+          <label>Función f(x) <span class="label-hint">— se generarán g(x) automáticamente</span></label>
+          <input type="text" id="func_fixed" class="mono" placeholder="Ej: x^3 - x - 2  |  cos(x) - x  |  exp(x) - 3*x" />
+        </div>
+        <div class="form-grid" style="margin-bottom:1rem;">
+          <div class="form-group">
+            <label>Punto de referencia x₀</label>
+            <input type="number" id="fixed_x0" placeholder="1.5" step="any" />
+            <div class="hint">Se usará para evaluar |g'(x₀)| en cada transformada</div>
+          </div>
+          <div class="form-group">
+            <label>Tolerancia E<sub>a</sub></label>
+            <input type="number" id="fixed_tol" value="0.0001" step="any" />
+          </div>
+          <div class="form-group">
+            <label>Máx. iteraciones</label>
+            <input type="number" id="fixed_iter" value="100" min="1" max="500" />
+          </div>
+        </div>
+
+        <!-- Botón generar transformadas -->
+        <div class="btn-group" style="margin-bottom:0;">
+          <button id="btnGenerateG" class="btn btn-secondary">🔬 Generar Transformadas g(x)</button>
+        </div>
+
+        <!-- ── PASO 2: Transformadas generadas ────────── -->
+        <div id="pf-transforms-section" style="display:none;">
+          <div class="pf-section-label" style="margin-top:1.25rem;">② Transformadas propuestas — selecciona una</div>
+
+          <!-- Modo de selección -->
+          <div class="pf-mode-row">
+            <label class="pf-mode-opt">
+              <input type="radio" name="pfMode" value="auto" checked />
+              <span>⚡ Automático <small>(mejor g(x))</small></span>
+            </label>
+            <label class="pf-mode-opt">
+              <input type="radio" name="pfMode" value="manual" />
+              <span>🖐 Manual <small>(elijo yo)</small></span>
+            </label>
+          </div>
+
+          <!-- Tarjetas de transformadas -->
+          <div id="pf-transform-cards"></div>
+
+          <!-- Transformada activa -->
+          <div id="pf-active-transform" style="display:none;">
+            <div class="pf-section-label" style="margin-top:1rem;">③ Transformación seleccionada</div>
+            <div id="pf-active-box" class="pf-active-box"></div>
+          </div>
+
+          <!-- Botón ejecutar -->
+          <div class="btn-group" style="margin-top:1rem;">
+            <button id="btnFixed" class="btn btn-primary">▶ Ejecutar Punto Fijo</button>
+          </div>
+        </div>
+
+        <div id="fixedAlert"></div>
+      </div>
+
+      <!-- Tabla de iteraciones compartida -->
+      <div id="methodIterTable"></div>
+
+      <!-- Botón de descarga T2 -->
+      <div id="t2-download-bar" style="display:none;margin-top:1rem;">
+        <button onclick="numerixExport.t2()" class="btn-download-excel">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10,9 9,9 8,9"/></svg>
+          Descargar Excel — Iteraciones completas
+        </button>
+      </div>
+    </section>
+
+    <!-- ══ RESULTADOS ════════════════════════════════════ -->
+    <section id="sec-results" class="section">
+      <div class="page-header">
+        <h2>Resultados</h2>
+        <p>Resumen del último método ejecutado.</p>
+      </div>
+      <div id="resultsContent">
+        <div class="card">
+          <div style="text-align:center;padding:3rem;color:var(--gray-400);">
+            <div style="font-size:2.5rem;margin-bottom:1rem;">📊</div>
+            <p style="font-family:var(--font-main);font-weight:500;color:var(--gray-500);">
+              Aún no se ha ejecutado ningún método.
+            </p>
+            <p style="font-size:.875rem;margin-top:.5rem;">
+              Vaya a <strong>Métodos Numéricos</strong> y ejecute un cálculo.
+            </p>
+            <button class="btn btn-primary" style="margin-top:1.5rem;" onclick="navigateTo('methods')">
+              ⚙️ Ir a Métodos
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══ HISTORIAL ═════════════════════════════════════ -->
+    <section id="sec-history" class="section">
+      <div class="page-header">
+        <h2>Historial</h2>
+        <p>Registro local persistente de todos los cálculos realizados.</p>
+      </div>
+      <div class="card">
+        <div class="history-toolbar">
+          <span id="historyCount" class="history-count">0 registros</span>
+          <div style="display:flex;gap:.5rem;flex-wrap:wrap;">
+            <button id="btnExportHistory" class="btn btn-secondary btn-sm">⬇ Exportar JSON</button>
+            <button id="btnClearHistory"  class="btn btn-danger btn-sm">🗑 Limpiar todo</button>
+          </div>
+        </div>
+        <div id="historyList"></div>
+      </div>
+    </section>
+
+    <!-- ══ GRÁFICA ════════════════════════════════════════ -->
+    <section id="sec-graph" class="section">
+      <div class="page-header">
+        <h2>Gráfica Interactiva</h2>
+        <p>Arrastra para mover · Rueda del ratón para zoom · Hover para ver valores exactos</p>
+      </div>
+
+      <!-- Toolbar -->
+      <div class="card" style="padding:.75rem 1.25rem;">
+        <div style="display:flex;align-items:center;gap:.75rem;flex-wrap:wrap;">
+          <div class="form-group" style="flex:1;min-width:200px;margin:0;">
+            <input type="text" id="graph_func" class="mono"
+              placeholder="f(x) = … · se autocarga al calcular"
+              style="margin:0;" />
+          </div>
+          <button id="btnRenderGraph" class="btn btn-primary" style="white-space:nowrap;flex-shrink:0;">
+            📈 Graficar
+          </button>
+          <button id="btnGraphReset" class="btn btn-secondary" style="white-space:nowrap;flex-shrink:0;">
+            ⟳ Resetear vista
+          </button>
+          <button class="btn btn-secondary" style="white-space:nowrap;flex-shrink:0;" onclick="
+            const fi = document.getElementById('funcInput');
+            const gf = document.getElementById('graph_func');
+            if (fi && fi.value) { gf.value = fi.value; renderGraph(); }">
+            Usar función verificada
+          </button>
+        </div>
+      </div>
+
+      <!-- Gráfica interactiva -->
+      <div class="card" style="padding:0;overflow:hidden;position:relative;">
+        <canvas id="graphCanvas"
+          style="display:block;width:100%;cursor:crosshair;touch-action:none;">
+        </canvas>
+        <!-- Tooltip flotante -->
+        <div id="graphTooltip" style="
+          position:absolute;pointer-events:none;display:none;
+          background:#1e293b;color:#f8fafc;
+          font-family:'JetBrains Mono',monospace;font-size:.75rem;font-weight:500;
+          padding:.35rem .65rem;border-radius:6px;
+          box-shadow:0 4px 16px rgba(0,0,0,.25);
+          border:1px solid #334155;white-space:nowrap;z-index:10;">
+        </div>
+        <!-- Badge de función activa -->
+        <div id="graphFuncBadge" style="
+          position:absolute;top:10px;left:12px;
+          background:rgba(255,255,255,.92);backdrop-filter:blur(4px);
+          border:1px solid #e2e8f0;border-radius:8px;
+          padding:.3rem .7rem;font-family:'JetBrains Mono',monospace;
+          font-size:.75rem;color:#4f46e5;font-weight:600;
+          box-shadow:0 2px 8px rgba(0,0,0,.08);display:none;">
+        </div>
+        <!-- Controles zoom -->
+        <div style="position:absolute;bottom:12px;right:12px;display:flex;flex-direction:column;gap:4px;">
+          <button id="btnZoomIn"  onclick="graphZoom(0.75)" style="
+            width:30px;height:30px;border:1px solid #e2e8f0;border-radius:6px;
+            background:rgba(255,255,255,.92);backdrop-filter:blur(4px);
+            font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;
+            box-shadow:0 2px 6px rgba(0,0,0,.08);">+</button>
+          <button id="btnZoomOut" onclick="graphZoom(1.35)" style="
+            width:30px;height:30px;border:1px solid #e2e8f0;border-radius:6px;
+            background:rgba(255,255,255,.92);backdrop-filter:blur(4px);
+            font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;
+            box-shadow:0 2px 6px rgba(0,0,0,.08);">−</button>
+        </div>
+        <!-- Coordenadas en tiempo real -->
+        <div id="graphCoords" style="
+          position:absolute;bottom:12px;left:12px;
+          background:rgba(255,255,255,.88);backdrop-filter:blur(4px);
+          border:1px solid #e2e8f0;border-radius:6px;
+          padding:.25rem .6rem;font-family:'JetBrains Mono',monospace;
+          font-size:.72rem;color:#64748b;
+          box-shadow:0 2px 6px rgba(0,0,0,.06);">
+          x = — &nbsp; y = —
+        </div>
+      </div>
+
+      <!-- Panel de info -->
+      <div id="graphInfo" class="graph-info">
+        <h4>Gráfica interactiva NUMERIX</h4>
+        <p>Ingresa una función y presiona <strong>Graficar</strong>. Arrastra el plano para mover la vista, usa la rueda del ratón para hacer zoom.</p>
+      </div>
+    </section>
+
+    <!-- ══ INGENIERÍA ECONÓMICA — TIR ════════════════════════════ -->
+    <section id="sec-tir" class="section">
+      <div class="page-header">
+        <h2>Ingeniería Económica — TIR</h2>
+        <p>Calcula la <strong>Tasa Interna de Retorno</strong> usando métodos numéricos. Ingresa flujos de caja o escribe la función VPN(x) directamente.</p>
+      </div>
+
+      <!-- Card de entrada -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-header-icon purple">💰</div>
+          <div>
+            <div class="card-title">Configuración del Proyecto</div>
+            <div class="card-subtitle">Elige el modo de entrada y el método numérico a usar</div>
+          </div>
+        </div>
+
+        <!-- Modo de entrada -->
+        <div class="auto-mode-toggle" style="margin-bottom:1.1rem;">
+          <label class="auto-mode-opt">
+            <input type="radio" name="tir_mode" value="flujos" checked />
+            <span>📊 Flujos de Caja <small>(tabla de periodos)</small></span>
+          </label>
+          <label class="auto-mode-opt">
+            <input type="radio" name="tir_mode" value="funcion" />
+            <span>ƒ Función VPN(x) <small>(expresión directa)</small></span>
+          </label>
+        </div>
+
+        <!-- Campos: modo flujos -->
+        <div id="tir-flujos-fields">
+          <div class="auto-mode-hint" style="margin-bottom:.875rem;">
+            ℹ Ingresa los flujos de caja periodo a periodo. F₀ suele ser la inversión inicial (negativa). Se construye automáticamente VPN(x) = Σ Fₜ / (1+x)ᵗ.
+          </div>
+          <div class="form-grid" style="margin-bottom:.75rem;">
+            <div class="form-group">
+              <label>Nº de periodos n</label>
+              <input type="number" id="tir_n" value="4" min="1" max="50" />
+            </div>
+            <div class="form-group">
+              <label>Inversión inicial F₀</label>
+              <input type="number" id="tir_f0" value="-10000" step="any" />
+              <div class="hint">Normalmente negativa (egreso)</div>
+            </div>
+          </div>
+          <button id="btnTirGenTabla" class="btn" style="background:var(--gray-100);color:var(--gray-700);font-size:.82rem;padding:.45rem .875rem;margin-bottom:.75rem;">
+            🔄 Generar / Actualizar tabla
+          </button>
+          <div id="tir-flujos-tabla"></div>
+        </div>
+
+        <!-- Campos: modo función directa -->
+        <div id="tir-funcion-fields" style="display:none;">
+          <div class="auto-mode-hint" style="margin-bottom:.875rem;">
+            ℹ Escribe VPN como función de <strong>x</strong> (minúscula). Ejemplo: <code>-5000 + 2000/(1+x) + 3000/(1+x)^2 + 4000/(1+x)^3</code>
+          </div>
+          <div class="form-group">
+            <label for="tir_func">Función VPN(x)</label>
+            <input type="text" id="tir_func" class="mono"
+              placeholder="-5000 + 2000/(1+x) + 3000/(1+x)^2 + 4000/(1+x)^3" />
+            <div class="hint">Usa <strong>x</strong> minúscula como tasa de descuento</div>
+          </div>
+        </div>
+
+        <!-- Método y rango -->
+        <div style="border-top:1px solid var(--border);padding-top:1rem;margin-top:.75rem;">
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Método numérico</label>
+              <select id="tir_metodo" style="padding:.55rem .875rem;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-family:var(--font-main);font-size:.875rem;width:100%;background:var(--card);">
+                <option value="newton" selected>Newton-Raphson</option>
+                <option value="bisection">Bisección</option>
+                <option value="false">Regla Falsa</option>
+                <option value="secant">Secante</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Límite inferior i₀</label>
+              <input type="number" id="tir_i0" value="0" step="0.01" />
+              <div class="hint">0 = 0%</div>
+            </div>
+            <div class="form-group">
+              <label>Límite superior i₁</label>
+              <input type="number" id="tir_i1" value="1" step="0.01" />
+              <div class="hint">1 = 100%</div>
+            </div>
+            <div class="form-group">
+              <label>Tolerancia</label>
+              <input type="number" id="tir_tol" value="0.000001" step="any" />
+            </div>
+          </div>
+        </div>
+
+        <div id="tirAlert"></div>
+        <div class="btn-group">
+          <button id="btnCalcularTIR" class="btn btn-primary">▶ Calcular TIR</button>
+        </div>
+      </div>
+
+      <!-- Teoría rápida -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-header-icon purple">📖</div>
+          <div><div class="card-title">¿Qué es la TIR y por qué métodos numéricos?</div></div>
+        </div>
+        <div class="taylor-ref-grid">
+          <div class="taylor-ref-box green">
+            <div class="trb-title">Definición</div>
+            <div class="trb-formula">TIR = x* tal que VPN(x*) = 0</div>
+          </div>
+          <div class="taylor-ref-box amber">
+            <div class="trb-title">VPN con flujos discretos</div>
+            <div class="trb-formula">VPN(x) = Σ Fₜ / (1+x)ᵗ &nbsp; t=0…n</div>
+          </div>
+          <div class="taylor-ref-box blue">
+            <div class="trb-title">Criterio de decisión</div>
+            <div class="trb-formula">TIR &gt; TMAR → proyecto viable</div>
+          </div>
+          <div class="taylor-ref-box red">
+            <div class="trb-title">Por qué métodos numéricos</div>
+            <div class="trb-formula">VPN(x) no lineal → no tiene solución algebraica cerrada para n &gt; 4</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Panel de resultado -->
+      <div id="tirResult"></div>
+    </section>
+
+  </div><!-- /app-main -->
+</div><!-- /panel-t2 -->
+
+
+<!-- ════════════════════════════════════════════════════════
+     TEMA 3 — Raíces de Polinomios
+════════════════════════════════════════════════════════ -->
+<div id="panel-t3" class="theme-panel with-sidebar">
+
+  <!-- Sidebar T3 -->
+  <nav class="inner-sidebar">
+    <div class="nav-section-label">Métodos</div>
+
+    <!-- Müller — activo -->
+    <a class="nav-item t3-method-nav active" data-t3panel="t3-muller">
+      <span class="nav-icon">📐</span> Müller
+      <span class="badge badge-success" style="margin-left:auto;font-size:.62rem;padding:.15rem .45rem;">Activo</span>
+    </a>
+
+    <!-- Bairstow — activo -->
+    <a class="nav-item t3-method-nav" data-t3panel="t3-bairstow">
+      <span class="nav-icon">🔢</span> Bairstow
+      <span class="badge badge-success" style="margin-left:auto;font-size:.62rem;padding:.15rem .45rem;">Activo</span>
+    </a>
+
+    <!-- Newton + Horner — activo -->
+    <a class="nav-item t3-method-nav" data-t3panel="t3-horner">
+      <span class="nav-icon">⚡</span> Newton-Horner
+      <span class="badge badge-success" style="margin-left:auto;font-size:.62rem;padding:.15rem .45rem;">Activo</span>
+    </a>
+  </nav>
+
+  <!-- Mobile nav T3 -->
+  <div class="mobile-inner-nav">
+    <button class="mobile-inner-item t3-method-nav active" data-t3panel="t3-muller">
+      <span class="mobile-inner-icon">📐</span>Müller
+    </button>
+    <button class="mobile-inner-item t3-method-nav" data-t3panel="t3-bairstow">
+      <span class="mobile-inner-icon">🔢</span>Bairstow
+    </button>
+    <button class="mobile-inner-item t3-method-nav" data-t3panel="t3-horner">
+      <span class="mobile-inner-icon">⚡</span>N-Horner
+    </button>
+  </div>
+
+  <div class="app-main">
+
+    <!-- ══ PANEL MÜLLER ══════════════════════════════════════ -->
+    <div id="t3-muller" class="t3-panel">
+
+      <div class="page-header">
+        <h2>Método de Müller</h2>
+        <p>Aproximación cuadrática iterativa. Encuentra raíces reales <em>y complejas</em>. Convergencia automática de orden ≈ 1.84.</p>
+      </div>
+
+      <!-- Entrada -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-header-icon green">📐</div>
+          <div>
+            <div class="card-title">Parámetros de Entrada</div>
+            <div class="card-subtitle">El sistema evalúa la convergencia automáticamente — no se requiere especificar n</div>
+          </div>
+        </div>
+
+        <div class="form-group" style="margin-bottom:1rem;">
+          <label for="m3Func">Función f(x)</label>
+          <input type="text" id="m3Func" class="mono"
+            placeholder="Ej: x^3 - 13*x - 12  |  x^4 - 3*x^2 + 2  |  x^3 - x - 2" />
+          <div class="hint">Funciones: <code>sin</code> <code>cos</code> <code>exp</code> <code>ln</code> <code>sqrt</code> — Potencias: <code>^</code></div>
+        </div>
+
+        <div class="form-grid">
+          <div class="form-group">
+            <label for="m3X0">Punto x<sub>0</sub></label>
+            <input type="number" id="m3X0" placeholder="0" step="any" value="0" />
+          </div>
+          <div class="form-group">
+            <label for="m3X1">Punto x<sub>1</sub></label>
+            <input type="number" id="m3X1" placeholder="1" step="any" value="1" />
+          </div>
+          <div class="form-group">
+            <label for="m3X2">Punto x<sub>2</sub></label>
+            <input type="number" id="m3X2" placeholder="2" step="any" value="2" />
+            <div class="hint">Los 3 puntos iniciales deben ser distintos</div>
+          </div>
+          <div class="form-group">
+            <label for="m3Tol">Tolerancia</label>
+            <input type="number" id="m3Tol" placeholder="0.0001" step="any" value="0.0001" />
+            <div class="hint">El método se detiene cuando E<sub>a</sub> &lt; tolerancia</div>
+          </div>
+        </div>
+
+        <div id="m3Alert"></div>
+
+        <div class="btn-group">
+          <button id="btnMuller" class="btn btn-primary" style="background:var(--success);box-shadow:0 1px 3px rgba(16,185,129,.35);">
+            ▶ Ejecutar Método de Müller
+          </button>
+        </div>
+      </div>
+
+      <!-- Referencia teórica -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-header-icon green">📖</div>
+          <div><div class="card-title">Fundamento del Método</div></div>
+        </div>
+        <div class="taylor-ref-grid">
+          <div class="taylor-ref-box green">
+            <div class="trb-title">Parábola interpolante</div>
+            <div class="trb-formula">
+              Ajusta una parábola por los 3 puntos (x<sub>0</sub>, f<sub>0</sub>), (x<sub>1</sub>, f<sub>1</sub>), (x<sub>2</sub>, f<sub>2</sub>)
+            </div>
+          </div>
+          <div class="taylor-ref-box amber">
+            <div class="trb-title">Diferencias divididas</div>
+            <div class="trb-formula">
+              b = [x<sub>2</sub>,x<sub>1</sub>] + [x<sub>2</sub>,x<sub>0</sub>] − [x<sub>1</sub>,x<sub>0</sub>]
+            </div>
+          </div>
+          <div class="taylor-ref-box blue">
+            <div class="trb-title">Nueva raíz estimada</div>
+            <div class="trb-formula">
+              x<sub>3</sub> = x<sub>2</sub> − 2f<sub>2</sub> / (b ± √(b² − 4ac))
+            </div>
+          </div>
+          <div class="taylor-ref-box red">
+            <div class="trb-title">Error relativo</div>
+            <div class="trb-formula">
+              E<sub>a</sub> = |(x<sub>nuevo</sub> − x<sub>2</sub>) / x<sub>nuevo</sub>| × 100%
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Gráfica en vivo -->
+      <div id="m3GraphCard" class="card" style="display:none;padding:0;overflow:hidden;position:relative;margin-bottom:1rem;">
+        <!-- Toolbar -->
+        <div style="display:flex;align-items:center;gap:.75rem;padding:.75rem 1rem;border-bottom:1px solid var(--border);flex-wrap:wrap;">
+          <div style="font-family:var(--font-main);font-size:.8rem;font-weight:600;color:var(--gray-600);">
+            <span id="m3GraphLabel">Convergencia visual de Müller</span>
+          </div>
+          <div style="margin-left:auto;display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;">
+            <!-- Slider iteraciones -->
+            <div style="display:flex;align-items:center;gap:.5rem;">
+              <span style="font-family:var(--font-main);font-size:.75rem;color:var(--gray-500);">Iter.</span>
+              <input type="range" id="m3IterSlider" min="1" value="1" step="1"
+                style="width:110px;accent-color:#10b981;" />
+              <span id="m3IterLabel" style="font-family:var(--font-mono);font-size:.75rem;font-weight:700;color:#10b981;min-width:20px;">1</span>
+            </div>
+            <button id="btnM3Play" class="btn btn-sm" style="background:#10b981;color:#fff;padding:.3rem .75rem;font-size:.78rem;">▶ Animar</button>
+            <button id="btnM3GReset" class="btn btn-sm btn-secondary" style="padding:.3rem .75rem;font-size:.78rem;">⟳ Vista</button>
+          </div>
+        </div>
+
+        <!-- Canvas interactivo -->
+        <canvas id="m3Canvas" style="display:block;width:100%;cursor:crosshair;touch-action:none;"></canvas>
+
+        <!-- Tooltip -->
+        <div id="m3Tooltip" style="
+          position:absolute;pointer-events:none;display:none;
+          background:#1e293b;color:#f8fafc;
+          font-family:'JetBrains Mono',monospace;font-size:.75rem;font-weight:500;
+          padding:.35rem .65rem;border-radius:6px;
+          box-shadow:0 4px 16px rgba(0,0,0,.35);
+          border:1px solid #334155;white-space:nowrap;z-index:10;line-height:1.6;">
+        </div>
+
+        <!-- Zoom buttons -->
+        <div style="position:absolute;bottom:12px;right:12px;display:flex;flex-direction:column;gap:4px;">
+          <button onclick="m3GZoom(0.75)" style="width:28px;height:28px;border:1px solid #334155;border-radius:6px;background:rgba(15,23,42,.7);backdrop-filter:blur(4px);color:#e2e8f0;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;">+</button>
+          <button onclick="m3GZoom(1.35)" style="width:28px;height:28px;border:1px solid #334155;border-radius:6px;background:rgba(15,23,42,.7);backdrop-filter:blur(4px);color:#e2e8f0;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;">−</button>
+        </div>
+
+        <!-- Coordenadas -->
+        <div id="m3GraphCoords" style="
+          position:absolute;bottom:12px;left:12px;
+          background:rgba(15,23,42,.75);backdrop-filter:blur(4px);
+          border:1px solid #334155;border-radius:6px;
+          padding:.25rem .6rem;font-family:'JetBrains Mono',monospace;
+          font-size:.72rem;color:#94a3b8;">
+          x = — &nbsp; y = —
+        </div>
+
+        <!-- Info de iteración -->
+        <div id="m3GraphInfo" style="
+          padding:.5rem 1rem;border-top:1px solid var(--border);
+          font-family:var(--font-main);font-size:.8rem;color:var(--gray-600);
+          background:var(--gray-50);min-height:32px;">
+        </div>
+      </div>
+
+      <!-- Resultado (se rellena con JS) -->
+      <div id="m3Result"></div>
+
+      <!-- Botón descarga T3 -->
+      <div id="t3-download-bar" style="display:none;margin-top:1rem;">
+        <button onclick="numerixExport.t3()" class="btn-download-excel">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10,9 9,9 8,9"/></svg>
+          Descargar Excel — Raíces de Polinomios
+        </button>
+      </div>
+
+    </div><!-- /t3-muller -->
+
+
+    <!-- ══ PANEL BAIRSTOW ═══════════════════════════════════ -->
+    <div id="t3-bairstow" class="t3-panel" style="display:none;">
+      <div class="page-header">
+        <h2>Método de Bairstow</h2>
+        <p>Extrae factores cuadráticos <em>(x² − r·x − s)</em> mediante deflación sintética doble. Encuentra todas las raíces reales <em>y complejas conjugadas</em> en una sola pasada.</p>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-header-icon green">🔢</div>
+          <div>
+            <div class="card-title">Parámetros de Entrada</div>
+            <div class="card-subtitle">Ingresa el polinomio como expresión — se extraen los coeficientes automáticamente</div>
+          </div>
+        </div>
+        <div class="form-group" style="margin-bottom:1rem;">
+          <label for="bsFunc">Polinomio P(x)</label>
+          <input type="text" id="bsFunc" class="mono" placeholder="Ej: x^3 - 6x^2 + 11x - 6  |  4x^3 + 2x^2 - 2x + 3  |  x^4 - 5x^2 + 4" />
+          <div class="hint">Soporta: xⁿ, coeficientes enteros y decimales, signos negativos</div>
+        </div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label for="bsR0">Semilla inicial r₀</label>
+            <input type="number" id="bsR0" placeholder="0.5" step="any" value="0.5" />
+          </div>
+          <div class="form-group">
+            <label for="bsS0">Semilla inicial s₀</label>
+            <input type="number" id="bsS0" placeholder="-1" step="any" value="-1" />
+            <div class="hint">El sistema prueba semillas alternativas automáticamente</div>
+          </div>
+          <div class="form-group">
+            <label for="bsTol">Tolerancia E<sub>a</sub></label>
+            <input type="number" id="bsTol" placeholder="0.0001" step="any" value="0.0001" />
+          </div>
+        </div>
+        <div id="bsAlert"></div>
+        <div class="btn-group">
+          <button id="btnBairstow" class="btn btn-primary" style="background:var(--success);box-shadow:0 1px 4px rgba(16,185,129,.35);">
+            ▶ Ejecutar Bairstow
+          </button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-header-icon green">📖</div>
+          <div><div class="card-title">Fundamento del Método</div></div>
+        </div>
+        <div class="taylor-ref-grid">
+          <div class="taylor-ref-box green">
+            <div class="trb-title">Factor cuadrático objetivo</div>
+            <div class="trb-formula">Busca (x² − r·x − s) que divide exactamente a P(x)</div>
+          </div>
+          <div class="taylor-ref-box amber">
+            <div class="trb-title">División sintética doble</div>
+            <div class="trb-formula">bᵢ = aᵢ + r·bᵢ₋₁ + s·bᵢ₋₂ → cᵢ = bᵢ + r·cᵢ₋₁ + s·cᵢ₋₂</div>
+          </div>
+          <div class="taylor-ref-box blue">
+            <div class="trb-title">Correcciones (Jacobiano)</div>
+            <div class="trb-formula">Δr = (−b_{n−1}·c_{n−2} + b_n·c_{n−3}) / det</div>
+          </div>
+          <div class="taylor-ref-box red">
+            <div class="trb-title">Raíces del factor</div>
+            <div class="trb-formula">x = ( r ± √(r² + 4s) ) / 2</div>
+          </div>
+        </div>
+      </div>
+
+      <div id="bsResult"></div>
+
+      <!-- Gráfica Bairstow -->
+      <div id="bsGraphCard" class="card" style="display:none;padding:0;overflow:hidden;position:relative;margin-top:1rem;">
+        <div style="display:flex;align-items:center;gap:.75rem;padding:.75rem 1rem;border-bottom:1px solid var(--border);">
+          <span style="font-family:var(--font-main);font-size:.8rem;font-weight:600;color:var(--gray-600);">Gráfica — Bairstow · Raíces del polinomio</span>
+          <div style="margin-left:auto;display:flex;gap:.4rem;">
+            <button onclick="bsGZoom(0.75)" style="width:28px;height:28px;border:1px solid var(--border);border-radius:6px;background:var(--card);font-size:15px;cursor:pointer;">+</button>
+            <button onclick="bsGZoom(1.35)" style="width:28px;height:28px;border:1px solid var(--border);border-radius:6px;background:var(--card);font-size:15px;cursor:pointer;">−</button>
+            <button onclick="bsGReset()" style="padding:0 .6rem;height:28px;border:1px solid var(--border);border-radius:6px;background:var(--card);font-family:var(--font-main);font-size:.72rem;cursor:pointer;">⟳ Vista</button>
+          </div>
+        </div>
+        <canvas id="bsCanvas" style="display:block;width:100%;cursor:crosshair;touch-action:none;"></canvas>
+        <div id="bsTooltip" style="position:absolute;pointer-events:none;display:none;background:#1e293b;color:#f8fafc;font-family:'JetBrains Mono',monospace;font-size:.75rem;padding:.35rem .65rem;border-radius:6px;box-shadow:0 4px 16px rgba(0,0,0,.25);border:1px solid #334155;white-space:nowrap;z-index:10;"></div>
+        <div id="bsGraphCoords" style="position:absolute;bottom:10px;left:10px;background:rgba(255,255,255,.88);backdrop-filter:blur(4px);border:1px solid #e2e8f0;border-radius:6px;padding:.2rem .55rem;font-family:'JetBrains Mono',monospace;font-size:.72rem;color:#64748b;">x = — &nbsp; y = —</div>
+      </div>
+      <div id="bs-download-bar" style="display:none;margin-top:1rem;">
+        <button onclick="numerixExport.t3Bairstow()" class="btn-download-excel">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/></svg>
+          Descargar Excel — Bairstow
+        </button>
+      </div>
+    </div>
+
+    <!-- ══ PANEL NEWTON-HORNER ══════════════════════════════ -->
+    <div id="t3-horner" class="t3-panel" style="display:none;">
+      <div class="page-header">
+        <h2>Método de Horner</h2>
+        <p>Evalúa P(c) y P′(c) de forma eficiente. La secuencia anidada <em>bₙ = aₙ, bₖ = aₖ + c·bₖ₊₁</em> da <strong>b₀ = P(c)</strong>. Aplicado al cociente Q(x) da <strong>Q(c) = P′(c)</strong>.</p>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-header-icon green">⚡</div>
+          <div>
+            <div class="card-title">Parámetros de Entrada</div>
+            <div class="card-subtitle">Ingresa el polinomio P(x) y el punto c donde evaluar</div>
+          </div>
+        </div>
+        <div class="form-group" style="margin-bottom:1rem;">
+          <label for="nhFunc">Polinomio P(x)</label>
+          <input type="text" id="nhFunc" class="mono"
+            placeholder="Ej: 3x^3 - 4x^2 + 2x - 5  |  x^7 - 2x^5 + x^4 - x^2 + 5" />
+          <div class="hint">Los coeficientes se extraen automáticamente — soporta términos faltantes</div>
+        </div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label for="nhX0">Punto de evaluación c</label>
+            <input type="number" id="nhX0" placeholder="2" step="any" value="2" />
+            <div class="hint">Se calculará P(c) y P′(c) = Q(c)</div>
+          </div>
+        </div>
+        <div id="nhAlert"></div>
+        <div class="btn-group">
+          <button id="btnNewtonHorner" class="btn btn-primary" style="background:var(--success);box-shadow:0 1px 4px rgba(16,185,129,.35);">
+            ▶ Ejecutar Horner
+          </button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-header-icon green">📖</div>
+          <div><div class="card-title">Fundamento del Método</div></div>
+        </div>
+        <div class="taylor-ref-grid">
+          <div class="taylor-ref-box green">
+            <div class="trb-title">Inicio: bₙ = aₙ</div>
+            <div class="trb-formula">El primer valor es el coeficiente líder</div>
+          </div>
+          <div class="taylor-ref-box amber">
+            <div class="trb-title">Recurrencia</div>
+            <div class="trb-formula">bₖ = aₖ + c · bₖ₊₁  para k = n−1, …, 0</div>
+          </div>
+          <div class="taylor-ref-box blue">
+            <div class="trb-title">Resultado: b₀ = P(c)</div>
+            <div class="trb-formula">Cociente Q(x) tiene coefs b₁, b₂, …, bₙ</div>
+          </div>
+          <div class="taylor-ref-box red">
+            <div class="trb-title">P′(c) = Q(c)</div>
+            <div class="trb-formula">Segunda aplicación de Horner sobre Q(x) en c</div>
+          </div>
+        </div>
+      </div>
+
+      <div id="nhResult"></div>
+
+      <!-- Gráfica Horner -->
+      <div id="nhGraphCard" class="card" style="display:none;padding:0;overflow:hidden;position:relative;margin-top:1rem;">
+        <div style="display:flex;align-items:center;gap:.75rem;padding:.75rem 1rem;border-bottom:1px solid var(--border);">
+          <span style="font-family:var(--font-main);font-size:.8rem;font-weight:600;color:var(--gray-600);">Gráfica — Horner · P(c) y Q(x) = P(x)/(x−c)</span>
+          <div style="margin-left:auto;display:flex;gap:.4rem;">
+            <button onclick="nhGZoom(0.75)" style="width:28px;height:28px;border:1px solid var(--border);border-radius:6px;background:var(--card);font-size:15px;cursor:pointer;">+</button>
+            <button onclick="nhGZoom(1.35)" style="width:28px;height:28px;border:1px solid var(--border);border-radius:6px;background:var(--card);font-size:15px;cursor:pointer;">−</button>
+            <button onclick="nhGReset()" style="padding:0 .6rem;height:28px;border:1px solid var(--border);border-radius:6px;background:var(--card);font-family:var(--font-main);font-size:.72rem;cursor:pointer;">⟳ Vista</button>
+          </div>
+        </div>
+        <canvas id="nhCanvas" style="display:block;width:100%;cursor:crosshair;touch-action:none;"></canvas>
+        <div id="nhTooltip" style="position:absolute;pointer-events:none;display:none;background:#1e293b;color:#f8fafc;font-family:'JetBrains Mono',monospace;font-size:.75rem;padding:.35rem .65rem;border-radius:6px;box-shadow:0 4px 16px rgba(0,0,0,.25);border:1px solid #334155;white-space:nowrap;z-index:10;"></div>
+        <div id="nhGraphCoords" style="position:absolute;bottom:10px;left:10px;background:rgba(255,255,255,.88);backdrop-filter:blur(4px);border:1px solid #e2e8f0;border-radius:6px;padding:.2rem .55rem;font-family:'JetBrains Mono',monospace;font-size:.72rem;color:#64748b;">x = — &nbsp; y = —</div>
+      </div>
+      <div id="nh-download-bar" style="display:none;margin-top:1rem;">
+        <button onclick="numerixExport.t3NewtonHorner()" class="btn-download-excel">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/></svg>
+          Descargar Excel — Horner
+        </button>
+      </div>
+    </div>
+
+  </div><!-- /app-main T3 -->
+</div><!-- /panel-t3 -->
+
+
+<!-- ════════════════════════════════════════════════════════
+     TEMA 4 — Newton-Raphson para Sistemas No Lineales
+════════════════════════════════════════════════════════ -->
+<div id="panel-t4" class="theme-panel with-sidebar">
+<div class="app-main">
+
+  <!-- ══ ENCABEZADO ══════════════════════════════════════════ -->
+  <div class="page-header">
+    <h2>Newton-Raphson — Sistemas No Lineales</h2>
+    <p>Resuelve sistemas de <em>n</em> ecuaciones no lineales con <em>n</em> incógnitas.<br>
+    X<sup>(k+1)</sup> = X<sup>(k)</sup> − [J(X<sup>(k)</sup>)]<sup>−1</sup> · F(X<sup>(k)</sup>)
+    </p>
+  </div>
+
+  <!-- ══ CONFIGURACIÓN DEL SISTEMA ══════════════════════════ -->
+  <div class="card" style="margin-bottom:1.25rem;">
+    <div class="card-header">
+      <div class="card-header-icon blue">🔗</div>
+      <div>
+        <div class="card-title">Sistema de Ecuaciones</div>
+        <div class="card-subtitle">Ingresa cada ecuación en la forma f(x,y,…) = 0 · Variables: x, y, z, w (minúsculas)</div>
+      </div>
+      <div style="margin-left:auto;display:flex;align-items:center;gap:.5rem;">
+        <label style="font-family:var(--font-main);font-size:.8rem;color:var(--gray-600);">N° de ecuaciones:</label>
+        <select id="t4_n" style="padding:.35rem .65rem;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-family:var(--font-main);font-size:.875rem;background:var(--card);">
+          <option value="2" selected>2 × 2</option>
+          <option value="3">3 × 3</option>
+          <option value="4">4 × 4</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Ecuaciones dinámicas -->
+    <div id="t4-eqs-container" style="margin-bottom:1rem;"></div>
+
+    <!-- Vector inicial -->
+    <div style="border-top:1px solid var(--border);padding-top:1rem;">
+      <div style="font-family:var(--font-main);font-size:.82rem;font-weight:700;color:var(--gray-600);margin-bottom:.625rem;text-transform:uppercase;letter-spacing:.4px;">
+        Vector inicial X⁰
+      </div>
+      <div id="t4-x0-container" style="display:flex;gap:.625rem;flex-wrap:wrap;"></div>
+    </div>
+
+    <!-- Parámetros -->
+    <div class="form-grid" style="margin-top:1rem;">
+      <div class="form-group">
+        <label for="t4_tol">Tolerancia ‖Δx‖</label>
+        <input type="number" id="t4_tol" value="0.0001" step="any" />
+      </div>
+      <div class="form-group">
+        <label for="t4_maxiter">Máx. iteraciones</label>
+        <input type="number" id="t4_maxiter" value="50" min="1" max="200" />
+      </div>
+    </div>
+
+    <div id="t4Alert"></div>
+    <div class="btn-group">
+      <button id="btnT4Resolver" class="btn btn-primary" style="background:var(--t4-dark,#0369a1);">
+        ▶ Resolver Sistema
+      </button>
+    </div>
+  </div>
+
+  <!-- ══ FUNDAMENTO TEÓRICO ══════════════════════════════════ -->
+  <div class="card" style="margin-bottom:1.25rem;">
+    <div class="card-header">
+      <div class="card-header-icon blue">📖</div>
+      <div><div class="card-title">Fundamento del Método</div></div>
+    </div>
+    <div class="taylor-ref-grid">
+      <div class="taylor-ref-box blue">
+        <div class="trb-title">Sistema F(X) = 0</div>
+        <div class="trb-formula">f₁(x,y,…)=0, f₂(x,y,…)=0, …, fₙ=0</div>
+      </div>
+      <div class="taylor-ref-box green">
+        <div class="trb-title">Jacobiana J(X)</div>
+        <div class="trb-formula">J<sub>ij</sub> = ∂fᵢ/∂xⱼ (diferencias centrales)</div>
+      </div>
+      <div class="taylor-ref-box amber">
+        <div class="trb-title">Corrección ΔX</div>
+        <div class="trb-formula">J(X<sup>(k)</sup>) · ΔX = −F(X<sup>(k)</sup>)</div>
+      </div>
+      <div class="taylor-ref-box red">
+        <div class="trb-title">Actualización</div>
+        <div class="trb-formula">X<sup>(k+1)</sup> = X<sup>(k)</sup> + ΔX</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ RESULTADO ══════════════════════════════════════════ -->
+  <div id="t4Result"></div>
+
+  <!-- ══ GRÁFICA (solo para sistemas 2×2) ══════════════════ -->
+  <div id="t4GraphCard" class="card" style="display:none;padding:0;overflow:hidden;position:relative;margin-top:1.25rem;">
+    <div style="display:flex;align-items:center;gap:.75rem;padding:.75rem 1rem;border-bottom:1px solid var(--border);flex-wrap:wrap;">
+      <span style="font-family:var(--font-main);font-size:.8rem;font-weight:600;color:var(--gray-600);">Gráfica — Curvas de nivel f₁=0 y f₂=0 · La intersección es la solución</span>
+      <div style="margin-left:auto;display:flex;gap:.4rem;">
+        <button onclick="t4GZoom(0.75)" style="width:28px;height:28px;border:1px solid var(--border);border-radius:6px;background:var(--card);font-size:15px;cursor:pointer;">+</button>
+        <button onclick="t4GZoom(1.35)" style="width:28px;height:28px;border:1px solid var(--border);border-radius:6px;background:var(--card);font-size:15px;cursor:pointer;">−</button>
+        <button onclick="t4GReset()" style="padding:0 .6rem;height:28px;border:1px solid var(--border);border-radius:6px;background:var(--card);font-family:var(--font-main);font-size:.72rem;cursor:pointer;">⟳ Vista</button>
+      </div>
+    </div>
+    <canvas id="t4Canvas" style="display:block;width:100%;cursor:crosshair;touch-action:none;"></canvas>
+    <div id="t4Tooltip" style="position:absolute;pointer-events:none;display:none;background:#1e293b;color:#f8fafc;font-family:'JetBrains Mono',monospace;font-size:.75rem;padding:.35rem .65rem;border-radius:6px;box-shadow:0 4px 16px rgba(0,0,0,.25);border:1px solid #334155;white-space:nowrap;z-index:10;line-height:1.6;"></div>
+    <div id="t4GraphCoords" style="position:absolute;bottom:10px;left:10px;background:rgba(255,255,255,.88);backdrop-filter:blur(4px);border:1px solid #e2e8f0;border-radius:6px;padding:.2rem .55rem;font-family:'JetBrains Mono',monospace;font-size:.72rem;color:#64748b;">x = — &nbsp; y = —</div>
+  </div>
+
+  <!-- Botón descarga T4 -->
+  <div id="t4-download-bar" style="display:none;margin-top:1rem;">
+    <button onclick="numerixExport.t4()" class="btn-download-excel">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/></svg>
+      Descargar Excel — Newton-Raphson Sistemas
+    </button>
+  </div>
+
+</div><!-- /app-main T4 -->
+</div><!-- /panel-t4 -->
+
+
+</div><!-- /app-layout -->
+
+<!-- ══════════════════════════════════════════════════════════
+     FOOTER COPYRIGHT
+══════════════════════════════════════════════════════════ -->
+<footer class="app-footer">
+  <div class="footer-inner">
+    <div class="footer-brand">
+      <span class="footer-logo">NUMERIX</span>
+      <span class="footer-sep">·</span>
+      <span class="footer-tagline">Plataforma de Métodos Numéricos</span>
+    </div>
+    <div class="footer-copy">
+      <span>© 2026</span>
+      <strong>Fernando Granja &amp; Alejandra Tinoco</strong>
+      <span class="footer-sep">·</span>
+      <span>Todos los derechos reservados</span>
+    </div>
+    <div class="footer-legal">
+      Uso académico y personal · Prohibida su reproducción sin autorización
+    </div>
+  </div>
+</footer>
+
+<script src="script.js"></script>
+</body>
+</html>
