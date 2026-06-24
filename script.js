@@ -111,6 +111,25 @@ function safeEval(expr, x) {
 }
 
 /* ══════════════════════════════════════════════════════════════
+   VALIDACIÓN: aviso de X mayúscula
+   La variable independiente siempre es x (minúscula).
+   X mayúscula se usa para matrices/vectores — es un error común.
+══════════════════════════════════════════════════════════════ */
+function checkUpperX(expr, alertId) {
+  if (!expr) return false;
+  /* Detectar X aislada (no parte de palabras como exp, sqrt, xmin...) */
+  if (/(?<![a-zA-Z])X(?![a-zA-Z])/.test(expr)) {
+    showAlert(alertId, 'warning',
+      '⚠ Usa <strong>x minúscula</strong> como variable independiente, no <code>X</code>. ' +
+      'En métodos numéricos <code>x</code> es la incógnita escalar; ' +
+      '<code>X</code> mayúscula se reserva para matrices y vectores. ' +
+      'Corrige la expresión e intenta de nuevo.');
+    return true; /* detiene la ejecución */
+  }
+  return false;
+}
+
+/* ══════════════════════════════════════════════════════════════
    2. MÉTODOS NUMÉRICOS
 ══════════════════════════════════════════════════════════════ */
 
@@ -5423,7 +5442,10 @@ function t3GMakeEngine(cfg) {
 
   /* Base de dibujo: fondo, grid, ejes, etiquetas */
   function drawBase() {
-    const {canvas:c,ctx,xMin,xMax,yMin,yMax,bgDark}=eng;
+    /* bgDark se resuelve dinámicamente para responder al toggle de dark mode */
+    const bgDark = document.body.classList.contains('dark-mode') ? true : (cfg.bgDark || false);
+    eng.bgDark = bgDark;
+    const {canvas:c,ctx,xMin,xMax,yMin,yMax}=eng;
     const W=c.width,H=c.height;
     ctx.clearRect(0,0,W,H);
     ctx.fillStyle=bgDark?'#0f172a':'#ffffff'; ctx.fillRect(0,0,W,H);
@@ -5918,25 +5940,6 @@ document.addEventListener('DOMContentLoaded', () => {
    Genera archivos .xlsx profesionales con SheetJS
    Marca de agua NUMERIX © 2026 en cada hoja
 ══════════════════════════════════════════════════════════════ */
-/* ══════════════════════════════════════════════════════════════
-   VALIDACIÓN: aviso de X mayúscula
-   La variable independiente siempre es x (minúscula).
-   X mayúscula se usa para matrices/vectores — es un error común.
-══════════════════════════════════════════════════════════════ */
-function checkUpperX(expr, alertId) {
-  if (!expr) return false;
-  /* Detectar X aislada (no parte de palabras como exp, sqrt, xmin...) */
-  if (/(?<![a-zA-Z])X(?![a-zA-Z])/.test(expr)) {
-    showAlert(alertId, 'warning',
-      '⚠ Usa <strong>x minúscula</strong> como variable independiente, no <code>X</code>. ' +
-      'En métodos numéricos <code>x</code> es la incógnita escalar; ' +
-      '<code>X</code> mayúscula se reserva para matrices y vectores. ' +
-      'Corrige la expresión e intenta de nuevo.');
-    return true; /* detiene la ejecución */
-  }
-  return false;
-}
-
 /* ══════════════════════════════════════════════════════════════
    INGENIERÍA ECONÓMICA — TIR
    Encuentra x* tal que VPN(x*) = 0 usando métodos numéricos.
@@ -7434,8 +7437,28 @@ document.addEventListener('DOMContentLoaded', () => {
       if (btn) { btn.textContent = '🌙'; btn.title = 'Cambiar a modo oscuro'; }
     }
     /* Redibujar gráficas */
-    try { if (typeof graphDraw   === 'function') graphDraw();   } catch(e) {}
-    try { if (typeof t1GraphDraw === 'function') t1GraphDraw(); } catch(e) {}
+    try { if (typeof graphDraw    === 'function') graphDraw();    } catch(e) {}
+    try { if (typeof t1GraphDraw  === 'function') t1GraphDraw();  } catch(e) {}
+    /* T3: Müller, Bairstow, Horner */
+    try { if (typeof m3Draw       === 'function') m3Draw();       } catch(e) {}
+    try { if (typeof bsGraphDraw  === 'function') bsGraphDraw();  } catch(e) {}
+    try { if (typeof nhGraphDraw  === 'function') nhGraphDraw();  } catch(e) {}
+    /* T4: Newton-Raphson Sistemas */
+    try { if (typeof t4GraphDraw  === 'function') t4GraphDraw();  } catch(e) {}
+    /* T5: Sistemas Lineales Iterativos */
+    try { if (typeof t5DrawGraph  === 'function') t5DrawGraph();  } catch(e) {}
+    /* T6: Ajuste de Curvas */
+    try { if (typeof t6DrawLin    === 'function') t6DrawLin();    } catch(e) {}
+    /* T7: Interpolación Polinomial */
+    try { if (typeof t7DrawGraph  === 'function') t7DrawGraph();  } catch(e) {}
+    /* T7 Splines */
+    try { if (typeof splDrawGraph  === 'function') splDrawGraph();  } catch(e) {}
+    /* T8: Diferenciación — sin gráfica, nada que redibujar */
+    /* T11: Métodos de un paso EDO */
+    try { if (typeof t11DrawGraph === 'function') t11DrawGraph(); } catch(e) {}
+    /* T12: Sistemas de EDO */
+    try { if (typeof t12DrawGraphT === 'function') t12DrawGraphT(); } catch(e) {}
+    try { if (typeof t12DrawGraphFase === 'function') t12DrawGraphFase(); } catch(e) {}
   }
 
   /* Cargar preferencia guardada */
@@ -7451,4 +7474,6709 @@ document.addEventListener('DOMContentLoaded', () => {
       localStorage.setItem('numerix-dark', String(!isDark));
     });
   }
+});
+
+
+/* ══════════════════════════════════════════════════════════════
+   TEMA 5 — SISTEMAS LINEALES ITERATIVOS
+   Jacobi y Gauss-Seidel
+   © 2026 Fernando Granja & Alejandra Tinoco
+══════════════════════════════════════════════════════════════ */
+
+/* ── Variables de color T5 ─────────────────────────────────── */
+const T5_COLOR  = '#db2777';
+const T5_LIGHT  = '#fce7f3';
+const T5_DARK   = '#9d174d';
+const T5_VARS   = ['x₁','x₂','x₃','x₄','x₅'];
+
+/* ── Estado T5 ─────────────────────────────────────────────── */
+const t5State = {
+  last: null   // { A, b, x0, n, method, tol, maxIter, iters, solution, converged }
+};
+
+/* ══════════════════════════════════════════════════════════════
+   ALGORITMOS NUMÉRICOS
+══════════════════════════════════════════════════════════════ */
+
+/**
+ * Verifica si la matriz es diagonal dominante.
+ * Retorna array de { row, lhs, rhs, ok } por cada fila.
+ */
+function t5DiagDominant(A, n) {
+  return Array.from({ length: n }, (_, i) => {
+    const lhs = Math.abs(A[i][i]);
+    const rhs = A[i].reduce((s, v, j) => j !== i ? s + Math.abs(v) : s, 0);
+    return { row: i, lhs, rhs, ok: lhs > rhs };
+  });
+}
+
+/**
+ * Método de Jacobi
+ * Usa todos los valores x^(k) para calcular x^(k+1)
+ */
+function t5Jacobi(A, b, x0, tol, maxIter, n) {
+  let x = [...x0];
+  const iters = [];
+
+  for (let k = 0; k < maxIter; k++) {
+    const xNew = new Array(n).fill(0);
+
+    for (let i = 0; i < n; i++) {
+      let sum = 0;
+      for (let j = 0; j < n; j++) {
+        if (j !== i) sum += A[i][j] * x[j];   // usa x^(k) completo
+      }
+      xNew[i] = (b[i] - sum) / A[i][i];
+    }
+
+    // Error absoluto máximo entre componentes
+    const ea = xNew.map((xi, i) => Math.abs(xi - x[i]));
+    const eaMax = Math.max(...ea);
+    const erPct = xNew.map((xi, i) =>
+      Math.abs(xi) > 1e-14 ? (Math.abs(xi - x[i]) / Math.abs(xi)) * 100 : null
+    );
+
+    iters.push({
+      k: k + 1,
+      xPrev: [...x],
+      xNew:  [...xNew],
+      ea,
+      eaMax,
+      erPct,
+      converged: eaMax < tol
+    });
+
+    x = xNew;
+    if (eaMax < tol) break;
+  }
+
+  return { solution: x, iters };
+}
+
+/**
+ * Método de Gauss-Seidel
+ * Usa los x^(k+1) ya calculados en la misma iteración
+ */
+function t5GaussSeidel(A, b, x0, tol, maxIter, n) {
+  let x = [...x0];
+  const iters = [];
+
+  for (let k = 0; k < maxIter; k++) {
+    const xPrevSnap = [...x];   // snapshot para guardar en tabla
+    const xNew = [...x];        // se va actualizando in-place
+
+    for (let i = 0; i < n; i++) {
+      let sum = 0;
+      for (let j = 0; j < n; j++) {
+        if (j !== i) sum += A[i][j] * xNew[j];  // usa valores más recientes
+      }
+      xNew[i] = (b[i] - sum) / A[i][i];
+    }
+
+    const ea = xNew.map((xi, i) => Math.abs(xi - xPrevSnap[i]));
+    const eaMax = Math.max(...ea);
+    const erPct = xNew.map((xi, i) =>
+      Math.abs(xi) > 1e-14 ? (Math.abs(xi - xPrevSnap[i]) / Math.abs(xi)) * 100 : null
+    );
+
+    iters.push({
+      k: k + 1,
+      xPrev: xPrevSnap,
+      xNew:  [...xNew],
+      ea,
+      eaMax,
+      erPct,
+      converged: eaMax < tol
+    });
+
+    x = [...xNew];
+    if (eaMax < tol) break;
+  }
+
+  return { solution: x, iters };
+}
+
+/* ══════════════════════════════════════════════════════════════
+   RENDERIZADO
+══════════════════════════════════════════════════════════════ */
+
+/** Renderiza la verificación de diagonal dominante */
+function t5RenderDomCheck(checks, n) {
+  const card = document.getElementById('t5DomCard');
+  const cont = document.getElementById('t5DomContent');
+  if (!card || !cont) return;
+  card.style.display = 'block';
+
+  const allOk = checks.every(c => c.ok);
+  const statusColor = allOk ? '#065f46' : '#92400e';
+  const statusBg    = allOk ? '#d1fae5' : '#fef3c7';
+  const statusBorder= allOk ? '#6ee7b7' : '#fcd34d';
+  const statusIcon  = allOk ? '✓' : '⚠';
+  const statusText  = allOk
+    ? 'La matriz es diagonal dominante — convergencia garantizada'
+    : 'La matriz NO es estrictamente diagonal dominante — puede converger de todas formas, pero no está garantizado';
+
+  let html = `
+    <div style="display:flex;align-items:center;gap:.75rem;padding:.75rem 1.25rem;margin-bottom:1rem;
+                background:${statusBg};border:1.5px solid ${statusBorder};border-radius:var(--radius-sm);">
+      <span style="font-size:1.3rem;">${statusIcon}</span>
+      <span style="font-family:var(--font-main);font-size:.85rem;font-weight:600;color:${statusColor};">${statusText}</span>
+    </div>
+    <div style="overflow-x:auto;padding:0 1.25rem 1.25rem;">
+    <table style="width:100%;border-collapse:collapse;font-family:var(--font-mono);font-size:.8rem;">
+      <thead>
+        <tr style="background:${T5_LIGHT};">
+          <th style="padding:.5rem .75rem;text-align:left;color:${T5_DARK};border-bottom:2px solid ${T5_COLOR}33;">Fila</th>
+          <th style="padding:.5rem .75rem;text-align:center;color:${T5_DARK};border-bottom:2px solid ${T5_COLOR}33;">|a<sub>ii</sub>|</th>
+          <th style="padding:.5rem .75rem;text-align:center;color:${T5_DARK};border-bottom:2px solid ${T5_COLOR}33;">Σ<sub>j≠i</sub>|a<sub>ij</sub>|</th>
+          <th style="padding:.5rem .75rem;text-align:center;color:${T5_DARK};border-bottom:2px solid ${T5_COLOR}33;">¿Domina?</th>
+        </tr>
+      </thead>
+      <tbody>`;
+
+  checks.forEach(c => {
+    const rowBg = c.ok ? '' : 'background:#fef9c3;';
+    html += `<tr style="${rowBg}">
+      <td style="padding:.45rem .75rem;border-bottom:1px solid var(--border);">
+        <strong>Ecuación ${c.row + 1}</strong> (a<sub>${c.row+1}${c.row+1}</sub>)
+      </td>
+      <td style="padding:.45rem .75rem;text-align:center;border-bottom:1px solid var(--border);">
+        ${c.lhs.toFixed(6)}
+      </td>
+      <td style="padding:.45rem .75rem;text-align:center;border-bottom:1px solid var(--border);">
+        ${c.rhs.toFixed(6)}
+      </td>
+      <td style="padding:.45rem .75rem;text-align:center;border-bottom:1px solid var(--border);">
+        <span style="font-weight:700;color:${c.ok ? '#065f46' : '#b45309'};">
+          ${c.ok ? '✓ Sí' : '✗ No'}
+        </span>
+      </td>
+    </tr>`;
+  });
+
+  html += `</tbody></table></div>`;
+  cont.innerHTML = html;
+}
+
+/** Renderiza las fórmulas despejadas del método */
+function t5RenderFormulas(A, b, n, method) {
+  const card = document.getElementById('t5FormulasCard');
+  const cont = document.getElementById('t5FormulasContent');
+  if (!card || !cont) return;
+  card.style.display = 'block';
+
+  const methodLabel = method === 'jacobi' ? 'Jacobi' : 'Gauss-Seidel';
+  let html = `<div style="padding:1rem 1.25rem;">
+    <div style="font-family:var(--font-main);font-size:.78rem;font-weight:600;
+                color:${T5_DARK};text-transform:uppercase;letter-spacing:.4px;margin-bottom:1rem;">
+      ${methodLabel} — Ecuaciones despejadas
+    </div>`;
+
+  for (let i = 0; i < n; i++) {
+    // Construir el string de la suma
+    let sumStr = '';
+    for (let j = 0; j < n; j++) {
+      if (j === i) continue;
+      const coef = A[i][j];
+      if (coef === 0) continue;
+      const sign  = sumStr === '' ? (coef < 0 ? '−' : '') : (coef < 0 ? ' − ' : ' + ');
+      const absV  = Math.abs(coef);
+      const coefStr = Number.isInteger(absV) ? String(absV) : absV.toFixed(4).replace(/\.?0+$/, '');
+
+      let xLabel;
+      if (method === 'gauss' && j < i) {
+        xLabel = `x<sub>${j+1}</sub><sup>(k+1)</sup>`;
+      } else {
+        xLabel = `x<sub>${j+1}</sub><sup>(k)</sup>`;
+      }
+      sumStr += `${sign}${coefStr}·${xLabel}`;
+    }
+
+    const aii    = A[i][i];
+    const aiiStr = Number.isInteger(Math.abs(aii)) ? String(aii) : aii.toFixed(4).replace(/\.?0+$/, '');
+    const biStr  = Number.isInteger(Math.abs(b[i]))  ? String(b[i])  : b[i].toFixed(4).replace(/\.?0+$/, '');
+    const bSign  = b[i] < 0 ? `(${biStr})` : biStr;
+
+    const inner = sumStr
+      ? `<span style="color:#4b5563;">${bSign}</span> <span style="color:#6b7280;font-size:.85em;">−</span> <span style="color:#4b5563;">(${sumStr})</span>`
+      : `<span style="color:#4b5563;">${bSign}</span>`;
+
+    html += `
+      <div class="t5-formula-row">
+        <div class="t5-formula-lhs">
+          x<sub>${i+1}</sub><sup>(k+1)</sup> =
+        </div>
+        <div class="t5-formula-frac">
+          <div class="t5-frac-num">${inner}</div>
+          <div class="t5-frac-line"></div>
+          <div class="t5-frac-den">${aiiStr}</div>
+        </div>
+      </div>`;
+  }
+
+  html += `</div>`;
+  cont.innerHTML = html;
+}
+
+/** Renderiza la tabla de iteraciones */
+function t5RenderTable(iters, n, method) {
+  const card = document.getElementById('t5TableCard');
+  const cont = document.getElementById('t5TableContent');
+  const sub  = document.getElementById('t5TableSubtitle');
+  if (!card || !cont) return;
+  card.style.display = 'block';
+
+  const conv  = iters.at(-1)?.converged;
+  const label = method === 'jacobi' ? 'Jacobi' : 'Gauss-Seidel';
+  if (sub) sub.textContent = `${label} — ${iters.length} iteraciones · ${conv ? 'Convergió' : 'Máx. iteraciones alcanzado'}`;
+
+  // Encabezado
+  let hdr = `<tr>
+    <th style="background:${T5_LIGHT};color:${T5_DARK};border-bottom:2px solid ${T5_COLOR}33;">k</th>`;
+  for (let i = 0; i < n; i++) {
+    hdr += `<th style="background:${T5_LIGHT};color:${T5_DARK};border-bottom:2px solid ${T5_COLOR}33;">
+      x<sub>${i+1}</sub><sup>(k)</sup></th>`;
+  }
+  for (let i = 0; i < n; i++) {
+    hdr += `<th style="background:${T5_LIGHT};color:${T5_DARK};border-bottom:2px solid ${T5_COLOR}33;">
+      x<sub>${i+1}</sub><sup>(k+1)</sup></th>`;
+  }
+  hdr += `<th style="background:${T5_LIGHT};color:${T5_DARK};border-bottom:2px solid ${T5_COLOR}33;">Ea máx</th>
+    <th style="background:${T5_LIGHT};color:${T5_DARK};border-bottom:2px solid ${T5_COLOR}33;">Er% máx</th>
+  </tr>`;
+
+  // Filas
+  let bdy = '';
+  iters.forEach(it => {
+    const rowStyle = it.converged
+      ? 'background:linear-gradient(90deg,#f0fdf4,#dcfce7);font-weight:600;'
+      : '';
+    bdy += `<tr style="${rowStyle}">
+      <td style="text-align:center;font-weight:700;color:${T5_COLOR};">${it.k}</td>`;
+
+    // xPrev
+    it.xPrev.forEach(v => {
+      bdy += `<td style="font-family:var(--font-mono);font-size:.78rem;">${v.toFixed(8)}</td>`;
+    });
+    // xNew
+    it.xNew.forEach((v, i) => {
+      const changed = Math.abs(v - it.xPrev[i]) > 1e-10;
+      bdy += `<td style="font-family:var(--font-mono);font-size:.78rem;color:${changed ? T5_COLOR : 'inherit'};">
+        ${v.toFixed(8)}</td>`;
+    });
+
+    // Ea max
+    bdy += `<td style="font-family:var(--font-mono);font-size:.78rem;">${it.eaMax.toExponential(4)}</td>`;
+    // Er% max
+    const erMax = Math.max(...it.erPct.map(v => v ?? 0));
+    bdy += `<td style="font-family:var(--font-mono);font-size:.78rem;">${erMax.toFixed(4)}%</td>`;
+
+    if (it.converged) {
+      bdy += `</tr><tr style="background:linear-gradient(90deg,#f0fdf4,#dcfce7);">
+        <td colspan="${1 + 2*n + 2}" style="text-align:center;font-family:var(--font-main);
+            font-size:.78rem;color:#065f46;font-weight:700;padding:.4rem;">
+          ✓ Convergencia alcanzada — Ea = ${it.eaMax.toExponential(4)} &lt; tolerancia
+        </td></tr>`;
+    } else {
+      bdy += `</tr>`;
+    }
+  });
+
+  cont.innerHTML = `<table style="width:100%;border-collapse:collapse;font-size:.8rem;">
+    <thead>${hdr}</thead><tbody>${bdy}</tbody></table>`;
+}
+
+/** Renderiza la solución final con verificación Ax=b */
+function t5RenderResult(A, b, x, n, method, tol, iters) {
+  const card = document.getElementById('t5ResultCard');
+  const cont = document.getElementById('t5ResultContent');
+  const sub  = document.getElementById('t5ResultSubtitle');
+  if (!card || !cont) return;
+  card.style.display = 'block';
+
+  const conv  = iters.at(-1)?.converged;
+  const label = method === 'jacobi' ? 'Jacobi' : 'Gauss-Seidel';
+  const COLORS = [T5_COLOR,'#4f46e5','#10b981','#f59e0b','#0ea5e9'];
+
+  if (sub) sub.textContent = `${label} — ${conv ? '✓ Convergencia' : '⚠ Máx. iteraciones'} en ${iters.length} iter.`;
+
+  // Tarjetas de solución
+  let solCards = `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:.75rem;padding:1.25rem 1.25rem .75rem;">`;
+  x.forEach((xi, i) => {
+    solCards += `
+      <div style="border-radius:var(--radius-sm);border:2px solid ${COLORS[i%COLORS.length]}33;
+                  border-left:5px solid ${COLORS[i%COLORS.length]};padding:.875rem 1rem;
+                  background:var(--gray-50);">
+        <div style="font-family:var(--font-main);font-size:.72rem;font-weight:700;
+                    color:${COLORS[i%COLORS.length]};text-transform:uppercase;margin-bottom:.35rem;">
+          x<sub>${i+1}</sub>
+        </div>
+        <div style="font-family:var(--font-mono);font-size:1.05rem;font-weight:700;
+                    color:${COLORS[i%COLORS.length]};">${xi.toFixed(10)}</div>
+      </div>`;
+  });
+  solCards += `</div>`;
+
+  // Verificación Ax = b
+  let verif = `<div style="padding:.5rem 1.25rem 1.25rem;">
+    <div style="font-family:var(--font-main);font-size:.78rem;font-weight:700;
+                color:var(--gray-600);text-transform:uppercase;letter-spacing:.4px;margin-bottom:.625rem;">
+      Verificación Ax = b
+    </div>
+    <div style="overflow-x:auto;">
+    <table style="border-collapse:collapse;font-family:var(--font-mono);font-size:.78rem;">
+      <thead><tr>
+        <th style="padding:.4rem .65rem;background:${T5_LIGHT};color:${T5_DARK};border-bottom:2px solid ${T5_COLOR}33;">Ecuación</th>
+        <th style="padding:.4rem .65rem;background:${T5_LIGHT};color:${T5_DARK};border-bottom:2px solid ${T5_COLOR}33;">A·x (calculado)</th>
+        <th style="padding:.4rem .65rem;background:${T5_LIGHT};color:${T5_DARK};border-bottom:2px solid ${T5_COLOR}33;">b (esperado)</th>
+        <th style="padding:.4rem .65rem;background:${T5_LIGHT};color:${T5_DARK};border-bottom:2px solid ${T5_COLOR}33;">Residuo |Ax−b|</th>
+      </tr></thead><tbody>`;
+
+  for (let i = 0; i < n; i++) {
+    const ax  = A[i].reduce((s, aij, j) => s + aij * x[j], 0);
+    const res = Math.abs(ax - b[i]);
+    const ok  = res < tol * 100;
+    verif += `<tr>
+      <td style="padding:.35rem .65rem;border-bottom:1px solid var(--border);">f<sub>${i+1}</sub></td>
+      <td style="padding:.35rem .65rem;border-bottom:1px solid var(--border);">${ax.toFixed(8)}</td>
+      <td style="padding:.35rem .65rem;border-bottom:1px solid var(--border);">${b[i].toFixed(8)}</td>
+      <td style="padding:.35rem .65rem;border-bottom:1px solid var(--border);color:${ok?'#065f46':'#b45309'};">
+        ${res.toExponential(4)} ${ok?'✓':'⚠'}
+      </td></tr>`;
+  }
+  verif += `</tbody></table></div></div>`;
+
+  cont.innerHTML = solCards + verif;
+}
+
+/** Gráfica de convergencia (error máximo por iteración, escala log) */
+function t5DrawGraph() {
+  const canvas = document.getElementById('t5Canvas');
+  if (!canvas || !t5State.last) return;
+  const { iters, n } = t5State.last;
+  if (!iters || iters.length === 0) return;
+
+  const isDark = document.body.classList.contains('dark-mode');
+  const W = canvas.parentElement.clientWidth || 700;
+  canvas.width  = W;
+  canvas.height = Math.max(280, Math.round(W * 0.38));
+  const H = canvas.height;
+  const ctx = canvas.getContext('2d');
+  const PAD = { top: 28, right: 28, bottom: 48, left: 72 };
+  const PW = W - PAD.left - PAD.right;
+  const PH = H - PAD.top  - PAD.bottom;
+
+  // Fondo
+  ctx.fillStyle = isDark ? '#0f172a' : '#ffffff';
+  ctx.fillRect(0, 0, W, H);
+
+  // Datos: eaMax por iteración
+  const eaVals = iters.map(it => it.eaMax);
+  const logMin = Math.log10(Math.min(...eaVals.filter(v => v > 0)) * 0.5);
+  const logMax = Math.log10(Math.max(...eaVals) * 2);
+  const ks     = iters.map(it => it.k);
+  const kMin   = 0, kMax = ks.at(-1) + 1;
+
+  const toX = k  => PAD.left + ((k - kMin) / (kMax - kMin)) * PW;
+  const toY = ea => PAD.top  + (1 - (Math.log10(Math.max(ea, 1e-20)) - logMin) / (logMax - logMin)) * PH;
+
+  // Grid horizontal (líneas de potencias de 10)
+  ctx.strokeStyle = isDark ? 'rgba(148,163,184,.08)' : '#f1f5f9';
+  ctx.lineWidth = 1;
+  for (let p = Math.floor(logMin); p <= Math.ceil(logMax); p++) {
+    const py = toY(Math.pow(10, p));
+    if (py < PAD.top || py > PAD.top + PH) continue;
+    ctx.beginPath(); ctx.moveTo(PAD.left, py); ctx.lineTo(PAD.left + PW, py); ctx.stroke();
+    // Label
+    ctx.fillStyle = isDark ? 'rgba(148,163,184,.6)' : '#94a3b8';
+    ctx.font = '10px "JetBrains Mono",monospace';
+    ctx.textAlign = 'right';
+    ctx.fillText(`10^${p}`, PAD.left - 6, py + 4);
+  }
+
+  // Grid vertical
+  ctx.strokeStyle = isDark ? 'rgba(148,163,184,.08)' : '#f1f5f9';
+  for (let k = 1; k <= kMax; k++) {
+    const px = toX(k);
+    ctx.beginPath(); ctx.moveTo(px, PAD.top); ctx.lineTo(px, PAD.top + PH); ctx.stroke();
+  }
+
+  // Ejes
+  ctx.strokeStyle = isDark ? 'rgba(148,163,184,.3)' : '#cbd5e1';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.moveTo(PAD.left, PAD.top); ctx.lineTo(PAD.left, PAD.top + PH); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(PAD.left, PAD.top + PH); ctx.lineTo(PAD.left + PW, PAD.top + PH); ctx.stroke();
+
+  // Línea de tolerancia
+  const tolLine = toY(t5State.last.tol);
+  if (tolLine >= PAD.top && tolLine <= PAD.top + PH) {
+    ctx.save();
+    ctx.strokeStyle = '#10b981'; ctx.lineWidth = 1.5; ctx.setLineDash([5,4]);
+    ctx.beginPath(); ctx.moveTo(PAD.left, tolLine); ctx.lineTo(PAD.left + PW, tolLine); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = '#10b981'; ctx.font = '10px "Poppins",sans-serif'; ctx.textAlign = 'left';
+    ctx.fillText('Tolerancia', PAD.left + 4, tolLine - 4);
+    ctx.restore();
+  }
+
+  // Curva de error máximo
+  ctx.beginPath(); ctx.strokeStyle = T5_COLOR; ctx.lineWidth = 2.5;
+  ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+  iters.forEach((it, idx) => {
+    const px = toX(it.k), py = toY(it.eaMax);
+    if (idx === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+  });
+  ctx.stroke();
+
+  // Puntos
+  iters.forEach(it => {
+    const px = toX(it.k), py = toY(it.eaMax);
+    ctx.beginPath();
+    ctx.arc(px, py, it.converged ? 5 : 3.5, 0, Math.PI * 2);
+    ctx.fillStyle = it.converged ? '#10b981' : T5_COLOR;
+    ctx.fill();
+  });
+
+  // Etiquetas eje X
+  ctx.fillStyle = isDark ? 'rgba(148,163,184,.6)' : '#94a3b8';
+  ctx.font = '10px "JetBrains Mono",monospace';
+  ctx.textAlign = 'center';
+  for (let k = 1; k <= kMax - 1; k++) {
+    if (kMax > 20 && k % 5 !== 0) continue;
+    ctx.fillText(k, toX(k), PAD.top + PH + 16);
+  }
+
+  // Títulos de ejes
+  ctx.fillStyle = isDark ? '#94a3b8' : '#64748b';
+  ctx.font = '11px "Poppins",sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('Iteración (k)', PAD.left + PW / 2, H - 8);
+
+  ctx.save();
+  ctx.translate(14, PAD.top + PH / 2);
+  ctx.rotate(-Math.PI / 2);
+  ctx.fillText('Error Ea (log)', 0, 0);
+  ctx.restore();
+
+  // Watermark
+  ctx.fillStyle = isDark ? 'rgba(219,39,119,.15)' : 'rgba(148,163,184,.4)';
+  ctx.font = '600 11px "Poppins",sans-serif';
+  ctx.textAlign = 'right'; ctx.textBaseline = 'bottom';
+  ctx.fillText('NUMERIX © 2026', W - 10, H - 8);
+  ctx.textBaseline = 'alphabetic';
+}
+window.t5DrawGraph = t5DrawGraph;
+
+function t5GReset() { t5DrawGraph(); }
+window.t5GReset = t5GReset;
+
+/* ══════════════════════════════════════════════════════════════
+   CONSTRUCCIÓN DE UI DINÁMICA
+══════════════════════════════════════════════════════════════ */
+
+function t5BuildUI() {
+  const n = parseInt(document.getElementById('t5_n')?.value) || 3;
+
+  // Matriz A
+  const mCont = document.getElementById('t5-matrix-container');
+  if (mCont) {
+    let html = `<div style="overflow-x:auto;"><table class="t5-matrix-table">`;
+    for (let i = 0; i < n; i++) {
+      html += `<tr>`;
+      for (let j = 0; j < n; j++) {
+        html += `<td><input type="number" id="t5_a_${i}_${j}"
+          class="t5-matrix-input" value="0" step="any"
+          style="${i === j ? 'border-color:'+T5_COLOR+';font-weight:700;' : ''}" /></td>`;
+      }
+      html += `</tr>`;
+    }
+    html += `</table></div>`;
+    mCont.innerHTML = html;
+  }
+
+  // Vector b
+  const bCont = document.getElementById('t5-b-container');
+  if (bCont) {
+    bCont.innerHTML = Array.from({ length: n }, (_, i) => `
+      <div class="form-group" style="min-width:100px;max-width:130px;">
+        <label>b<sub>${i+1}</sub></label>
+        <input type="number" id="t5_b_${i}" value="0" step="any" />
+      </div>`).join('');
+  }
+
+  // Vector x0
+  const x0Cont = document.getElementById('t5-x0-container');
+  if (x0Cont) {
+    x0Cont.innerHTML = Array.from({ length: n }, (_, i) => `
+      <div class="form-group" style="min-width:100px;max-width:130px;">
+        <label>x<sub>${i+1}</sub><sup>(0)</sup></label>
+        <input type="number" id="t5_x0_${i}" value="0" step="any" />
+      </div>`).join('');
+  }
+
+  // Ocultar resultados previos
+  ['t5DomCard','t5FormulasCard','t5TableCard','t5ResultCard','t5GraphCard'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.display = 'none';
+  });
+  const dl = document.getElementById('t5-download-bar');
+  if (dl) dl.style.display = 'none';
+}
+
+/* ══════════════════════════════════════════════════════════════
+   LECTURA DE INPUTS
+══════════════════════════════════════════════════════════════ */
+
+function t5ReadMatrix() {
+  const n = parseInt(document.getElementById('t5_n')?.value) || 3;
+  const A = [];
+  for (let i = 0; i < n; i++) {
+    A.push([]);
+    for (let j = 0; j < n; j++) {
+      const v = parseFloat(document.getElementById(`t5_a_${i}_${j}`)?.value);
+      A[i].push(isNaN(v) ? 0 : v);
+    }
+  }
+  return A;
+}
+
+function t5ReadVector(prefix, n) {
+  return Array.from({ length: n }, (_, i) => {
+    const v = parseFloat(document.getElementById(`${prefix}_${i}`)?.value);
+    return isNaN(v) ? 0 : v;
+  });
+}
+
+/* ══════════════════════════════════════════════════════════════
+   EJEMPLO DE CLASE (sistema 3×3 de las fotos)
+   A = [[10,-1,0],[-1,10,-2],[0,-2,10]]  b = [9,7,6]  x0 = [0,0,0]
+══════════════════════════════════════════════════════════════ */
+
+function t5LoadExample() {
+  const A = [[10,-1,0],[-1,10,-2],[0,-2,10]];
+  const b = [9,7,6];
+
+  document.getElementById('t5_n').value = '3';
+  t5BuildUI();
+
+  A.forEach((row, i) => row.forEach((v, j) => {
+    const el = document.getElementById(`t5_a_${i}_${j}`);
+    if (el) el.value = v;
+  }));
+  b.forEach((v, i) => {
+    const el = document.getElementById(`t5_b_${i}`);
+    if (el) el.value = v;
+  });
+
+  showAlert('t5Alert','info','📋 Ejemplo de clase cargado — sistema 3×3 del 08/05/26. Presiona ▶ Resolver para ver el procedimiento.');
+}
+
+/* ══════════════════════════════════════════════════════════════
+   BOTÓN RESOLVER — FLUJO PRINCIPAL
+══════════════════════════════════════════════════════════════ */
+
+document.addEventListener('DOMContentLoaded', () => {
+
+  t5BuildUI();
+
+  document.getElementById('t5_n')?.addEventListener('change', t5BuildUI);
+
+  document.getElementById('btnT5Ejemplo')?.addEventListener('click', () => {
+    clearAlert('t5Alert');
+    t5LoadExample();
+  });
+
+  document.getElementById('btnT5Resolver')?.addEventListener('click', () => {
+    clearAlert('t5Alert');
+
+    const n      = parseInt(document.getElementById('t5_n')?.value) || 3;
+    const method = document.getElementById('t5_method')?.value || 'jacobi';
+    const tol    = parseFloat(document.getElementById('t5_tol')?.value) || 1e-5;
+    const maxIter= parseInt(document.getElementById('t5_maxiter')?.value) || 100;
+
+    const A  = t5ReadMatrix();
+    const b  = t5ReadVector('t5_b', n);
+    const x0 = t5ReadVector('t5_x0', n);
+
+    // Validar diagonal no nula
+    for (let i = 0; i < n; i++) {
+      if (Math.abs(A[i][i]) < 1e-14) {
+        showAlert('t5Alert','danger',
+          `El elemento diagonal a<sub>${i+1}${i+1}</sub> = 0. Reordena las ecuaciones para que la diagonal no tenga ceros.`);
+        return;
+      }
+    }
+
+    try {
+      // 1. Diagonal dominante
+      const domChecks = t5DiagDominant(A, n);
+      t5RenderDomCheck(domChecks, n);
+
+      // 2. Fórmulas despejadas
+      t5RenderFormulas(A, b, n, method);
+
+      // 3. Iterar
+      let result;
+      if (method === 'jacobi') {
+        result = t5Jacobi(A, b, x0, tol, maxIter, n);
+      } else {
+        result = t5GaussSeidel(A, b, x0, tol, maxIter, n);
+      }
+
+      const { solution, iters } = result;
+      const conv = iters.at(-1)?.converged;
+      const label = method === 'jacobi' ? 'Jacobi' : 'Gauss-Seidel';
+
+      // 4. Tabla
+      t5RenderTable(iters, n, method);
+
+      // 5. Solución
+      t5RenderResult(A, b, solution, n, method, tol, iters);
+
+      // 6. Gráfica
+      const gc = document.getElementById('t5GraphCard');
+      if (gc) gc.style.display = 'block';
+
+      // Guardar estado
+      t5State.last = { A, b, x0, n, method, tol, maxIter, iters, solution, converged: conv };
+
+      setTimeout(() => {
+        t5DrawGraph();
+        const dl = document.getElementById('t5-download-bar');
+        if (dl) dl.style.display = 'block';
+      }, 50);
+
+      showAlert('t5Alert', conv ? 'success' : 'warning',
+        `${conv ? '✓' : '⚠'} ${label}: ${conv ? 'Convergencia' : 'Máx. iteraciones'} en ${iters.length} iteraciones · ` +
+        `Solución: (${solution.map(v => v.toFixed(6)).join(', ')})`);
+
+    } catch(e) {
+      showAlert('t5Alert','danger','Error: ' + e.message);
+    }
+  });
+
+  // Redibujar gráfica T5 al cambiar tamaño
+  window.addEventListener('resize', () => {
+    if (t5State.last) t5DrawGraph();
+  });
+});
+
+/* ══════════════════════════════════════════════════════════════
+   EXPORTACIÓN EXCEL T5
+══════════════════════════════════════════════════════════════ */
+// Se integra en el objeto numerixExport después de su definición
+(function patchT5Export() {
+  document.addEventListener('DOMContentLoaded', () => {
+    if (typeof numerixExport === 'undefined') return;
+    numerixExport.t5 = function() {
+      const d = t5State.last;
+      if (!d) { alert('Ejecuta el método primero para generar datos.'); return; }
+
+      const { A, b, solution, iters, n, method, tol } = d;
+      const label = method === 'jacobi' ? 'Jacobi' : 'Gauss-Seidel';
+      const wb = XLSX.utils.book_new();
+
+      /* ── Hoja 1: Información general ── */
+      const info = [
+        ['NUMERIX — Sistemas Lineales Iterativos', '', '© 2026 Fernando Granja & Alejandra Tinoco'],
+        [],
+        ['Método:', label],
+        ['Tamaño:', `${n} × ${n}`],
+        ['Tolerancia:', tol],
+        ['Iteraciones:', iters.length],
+        ['Convergió:', iters.at(-1)?.converged ? 'Sí' : 'No'],
+        [],
+        ['SOLUCIÓN'],
+        ...solution.map((v, i) => [`x${i+1}`, v]),
+        [],
+        ['MATRIZ A'],
+        ...A.map((row, i) => [`Fila ${i+1}`, ...row]),
+        [],
+        ['VECTOR b'],
+        ...b.map((v, i) => [`b${i+1}`, v]),
+      ];
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(info), 'Resumen');
+
+      /* ── Hoja 2: Tabla de iteraciones ── */
+      const hdr = ['k', ...Array.from({length:n},(_,i)=>`x${i+1}(k)`),
+                        ...Array.from({length:n},(_,i)=>`x${i+1}(k+1)`),
+                        'Ea_max', 'Er%_max'];
+      const rows = iters.map(it => {
+        const erMax = Math.max(...it.erPct.map(v => v ?? 0));
+        return [it.k, ...it.xPrev, ...it.xNew, it.eaMax, erMax];
+      });
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([hdr, ...rows]), 'Iteraciones');
+
+      XLSX.writeFile(wb, `NUMERIX_T5_${label}_${n}x${n}.xlsx`);
+    };
+    numerixExport.showT5Bar = function() {
+      const b = document.getElementById('t5-download-bar');
+      if (b) b.style.display = 'block';
+    };
+  });
+})();
+
+
+/* ══════════════════════════════════════════════════════════════
+   TEMA 6 — AJUSTE DE CURVAS DISCRETAS
+   Regresión Lineal Simple · Regresión Polinomial Cuadrática
+   Método de Mínimos Cuadrados Ordinarios
+   © 2026 Fernando Granja & Alejandra Tinoco
+══════════════════════════════════════════════════════════════ */
+
+const T6_COLOR  = '#059669';   /* verde esmeralda */
+const T6_LIGHT  = '#d1fae5';
+const T6_DARK   = '#065f46';
+const T6_ACCENT = '#0ea5e9';   /* azul para recta */
+
+/* ── Estado global T6 ───────────────────────────────────────── */
+const t6State = {
+  data:    [],          // [{x, y}]
+  lineal:  null,        // resultado regresión lineal
+  pol:     null,        // resultado regresión polinomial
+  mode:    'lineal',
+  labelX:  'X',
+  labelY:  'Y',
+  /* motor gráfica lineal */
+  graph: {
+    canvas: null, ctx: null,
+    xMin:-1, xMax:10, yMin:-1, yMax:15,
+    dragging:false, lastMouse:{x:0,y:0},
+    mouseWorld:{x:0,y:0}, hoverOn:false,
+    drawFn: null,
+  }
+};
+
+/* ══════════════════════════════════════════════════════════════
+   NAVEGACIÓN INTERNA T6
+══════════════════════════════════════════════════════════════ */
+function t6GoTo(secId) {
+  document.querySelectorAll('.t6-sec').forEach(s => s.style.display = 'none');
+  document.querySelectorAll('.t6-nav').forEach(n => n.classList.remove('active'));
+  const sec = document.getElementById(secId);
+  if (sec) sec.style.display = 'block';
+  document.querySelectorAll(`[data-t6="${secId}"]`).forEach(el => el.classList.add('active'));
+  /* Mostrar download bar si ya hay resultados calculados y no estamos en la pantalla de datos */
+  const dl = document.getElementById('t6-download-bar');
+  if (dl && dl.dataset.ready === '1' && secId !== 't6-input') {
+    dl.style.display = 'block';
+  }
+}
+window.t6GoTo = t6GoTo;
+
+/* ══════════════════════════════════════════════════════════════
+   TABLA DE DATOS DINÁMICA
+══════════════════════════════════════════════════════════════ */
+function t6RenderDataTable() {
+  const tbody = document.getElementById('t6DataBody');
+  if (!tbody) return;
+  const n = t6State.data.length;
+  tbody.innerHTML = t6State.data.map((pt, i) => `
+    <tr>
+      <td style="text-align:center;font-family:var(--font-mono);font-size:.8rem;
+                 color:var(--gray-400);">${i + 1}</td>
+      <td><input type="number" class="t6-cell-input" id="t6_x_${i}"
+          value="${pt.x}" step="any" onchange="t6UpdateCell(${i},'x',this.value)" /></td>
+      <td><input type="number" class="t6-cell-input" id="t6_y_${i}"
+          value="${pt.y}" step="any" onchange="t6UpdateCell(${i},'y',this.value)" /></td>
+    </tr>`).join('');
+}
+
+function t6UpdateCell(i, field, val) {
+  if (!t6State.data[i]) return;
+  t6State.data[i][field] = parseFloat(val) || 0;
+}
+window.t6UpdateCell = t6UpdateCell;
+
+function t6AddRow() {
+  t6State.data.push({ x: 0, y: 0 });
+  t6RenderDataTable();
+}
+
+function t6RemRow() {
+  if (t6State.data.length <= 2) return;
+  t6State.data.pop();
+  t6RenderDataTable();
+}
+
+function t6ReadData() {
+  /* Leer valores actuales de inputs antes de procesar */
+  t6State.data.forEach((pt, i) => {
+    const xEl = document.getElementById(`t6_x_${i}`);
+    const yEl = document.getElementById(`t6_y_${i}`);
+    if (xEl) pt.x = parseFloat(xEl.value) || 0;
+    if (yEl) pt.y = parseFloat(yEl.value) || 0;
+  });
+  return t6State.data.map(p => ({ x: p.x, y: p.y }));
+}
+
+/* ══════════════════════════════════════════════════════════════
+   ALGORITMOS — REGRESIÓN LINEAL
+══════════════════════════════════════════════════════════════ */
+function t6RegLineal(pts) {
+  const n   = pts.length;
+  const sx  = pts.reduce((s, p) => s + p.x,         0);
+  const sy  = pts.reduce((s, p) => s + p.y,         0);
+  const sx2 = pts.reduce((s, p) => s + p.x * p.x,   0);
+  const sxy = pts.reduce((s, p) => s + p.x * p.y,   0);
+  const xm  = sx / n;
+  const ym  = sy / n;
+
+  const beta1 = (n * sxy - sx * sy) / (n * sx2 - sx * sx);
+  const beta0 = ym - beta1 * xm;
+
+  /* Predicciones y residuos */
+  const pred = pts.map(p => ({ x: p.x, y: p.y, yhat: beta0 + beta1 * p.x, e: p.y - (beta0 + beta1 * p.x) }));
+
+  /* R² por fórmula de la maestra */
+  const num = pts.reduce((s, p) => s + (p.x - xm) * (p.y - ym), 0);
+  const den = Math.sqrt(
+    pts.reduce((s, p) => s + (p.x - xm) ** 2, 0) *
+    pts.reduce((s, p) => s + (p.y - ym) ** 2, 0)
+  );
+  const r   = den > 1e-14 ? num / den : 0;
+  const R2  = r * r;
+
+  /* Error estándar Sy/x = sqrt(Σ(yi-ŷi)² / (n-2)) */
+  const SRR  = pred.reduce((s, p) => s + p.e * p.e, 0);
+  const Syx  = Math.sqrt(SRR / (n - 2));
+
+  return { n, sx, sy, sx2, sxy, xm, ym, beta0, beta1, pred, r, R2, SRR, Syx };
+}
+
+/* ══════════════════════════════════════════════════════════════
+   ALGORITMOS — REGRESIÓN POLINOMIAL (cuadrática)
+   Construye sistema 3×3 y lo resuelve por Gauss-Jordan
+══════════════════════════════════════════════════════════════ */
+function t6RegPolinomial(pts) {
+  const n   = pts.length;
+  const sx  = pts.reduce((s, p) => s + p.x,             0);
+  const sy  = pts.reduce((s, p) => s + p.y,             0);
+  const sx2 = pts.reduce((s, p) => s + p.x**2,          0);
+  const sx3 = pts.reduce((s, p) => s + p.x**3,          0);
+  const sx4 = pts.reduce((s, p) => s + p.x**4,          0);
+  const sxy  = pts.reduce((s, p) => s + p.x   * p.y,    0);
+  const sx2y = pts.reduce((s, p) => s + p.x**2 * p.y,   0);
+
+  /* Sistema aumentado [A|b] 3×4 */
+  const sums = { n, sx, sy, sx2, sx3, sx4, sxy, sx2y };
+  const M0 = [
+    [n,   sx,  sx2, sy   ],
+    [sx,  sx2, sx3, sxy  ],
+    [sx2, sx3, sx4, sx2y ],
+  ];
+
+  /* Pasos de Gauss-Jordan con snapshots para mostrar */
+  const steps = [];
+  const M = M0.map(r => [...r]);
+  const snap = () => M.map(r => [...r]);
+  steps.push({ label: 'Sistema original (matriz ampliada)', M: snap() });
+
+  /* Eliminación hacia adelante */
+  for (let col = 0; col < 3; col++) {
+    /* Buscar pivot */
+    let pivot = col;
+    for (let row = col + 1; row < 3; row++)
+      if (Math.abs(M[row][col]) > Math.abs(M[pivot][col])) pivot = row;
+    if (pivot !== col) {
+      [M[col], M[pivot]] = [M[pivot], M[col]];
+      steps.push({ label: `Intercambio f${col+1} ↔ f${pivot+1}`, M: snap() });
+    }
+
+    /* Normalizar fila pivot */
+    const div = M[col][col];
+    if (Math.abs(div) < 1e-14) continue;
+    for (let k = col; k < 4; k++) M[col][k] /= div;
+    steps.push({ label: `f${col+1} = f${col+1} / ${div.toFixed(4)}`, M: snap() });
+
+    /* Eliminar columna en otras filas */
+    for (let row = 0; row < 3; row++) {
+      if (row === col) continue;
+      const factor = M[row][col];
+      if (Math.abs(factor) < 1e-14) continue;
+      for (let k = col; k < 4; k++) M[row][k] -= factor * M[col][k];
+      steps.push({
+        label: `f${row+1} = f${row+1} − (${factor.toFixed(4)})·f${col+1}`,
+        M: snap()
+      });
+    }
+  }
+
+  const b0 = M[0][3], b1 = M[1][3], b2 = M[2][3];
+
+  /* Predicciones */
+  const pred = pts.map(p => {
+    const yhat = b0 + b1 * p.x + b2 * p.x * p.x;
+    return { x: p.x, y: p.y, yhat, e: p.y - yhat };
+  });
+
+  /* R² = 1 - SR²/Sy² */
+  const ym   = sy / n;
+  const SR2  = pred.reduce((s, p) => s + p.e ** 2,             0);
+  const Sy2  = pts.reduce( (s, p) => s + (p.y - ym) ** 2,     0);
+  const R2   = Sy2 > 1e-14 ? 1 - SR2 / Sy2 : 0;
+
+  return { n, sums, M0, steps, b0, b1, b2, pred, R2, SR2, Sy2, ym };
+}
+
+/* ══════════════════════════════════════════════════════════════
+   FORMATO AUXILIAR
+══════════════════════════════════════════════════════════════ */
+const t6Fmt = (v, d = 6) => (v === null || v === undefined || isNaN(v)) ? '—' : Number(v).toFixed(d);
+const t6Sci = (v, d = 4) => (v === null || v === undefined || isNaN(v)) ? '—' : Number(v).toExponential(d);
+
+function t6FmtCoef(v) {
+  /* Para mostrar coeficientes en la ecuación: reduce decimales innecesarios */
+  if (Math.abs(v) >= 1000 || (Math.abs(v) < 0.001 && v !== 0)) return v.toExponential(4);
+  return parseFloat(v.toFixed(6)).toString();
+}
+
+/* ══════════════════════════════════════════════════════════════
+   RENDERIZADO — REGRESIÓN LINEAL
+══════════════════════════════════════════════════════════════ */
+
+/** Sección 1: Tabla auxiliar (n, x, y, x², xy, sumas) */
+function t6RenderLinTabla(res, pts, lx, ly) {
+  const sec = document.getElementById('t6-lin-tabla');
+  if (!sec) return;
+
+  let html = `
+  <div class="page-header">
+    <h2>Regresión Lineal — Tabla Auxiliar</h2>
+    <p>Cálculo de las sumas necesarias para obtener los coeficientes β₀ y β₁</p>
+  </div>
+  <div class="card" style="padding:0;overflow:hidden;">
+    <div class="card-header" style="padding:.75rem 1.25rem;border-bottom:1px solid var(--border);">
+      <div class="card-header-icon t6-icon">📋</div>
+      <div>
+        <div class="card-title">Tabla de sumas — Método de Mínimos Cuadrados</div>
+        <div class="card-subtitle">n = ${res.n} · X: ${lx} · Y: ${ly}</div>
+      </div>
+    </div>
+    <div style="overflow-x:auto;">
+    <table style="width:100%;border-collapse:collapse;font-family:var(--font-mono);font-size:.8rem;">
+      <thead>
+        <tr style="background:${T6_LIGHT};">
+          <th style="padding:.5rem .75rem;color:${T6_DARK};border-bottom:2px solid ${T6_COLOR}33;text-align:center;">i</th>
+          <th style="padding:.5rem .75rem;color:${T6_DARK};border-bottom:2px solid ${T6_COLOR}33;text-align:center;">xᵢ</th>
+          <th style="padding:.5rem .75rem;color:${T6_DARK};border-bottom:2px solid ${T6_COLOR}33;text-align:center;">yᵢ</th>
+          <th style="padding:.5rem .75rem;color:${T6_DARK};border-bottom:2px solid ${T6_COLOR}33;text-align:center;">xᵢ²</th>
+          <th style="padding:.5rem .75rem;color:${T6_DARK};border-bottom:2px solid ${T6_COLOR}33;text-align:center;">xᵢyᵢ</th>
+          <th style="padding:.5rem .75rem;color:${T6_DARK};border-bottom:2px solid ${T6_COLOR}33;text-align:center;">(xᵢ−x̄)</th>
+          <th style="padding:.5rem .75rem;color:${T6_DARK};border-bottom:2px solid ${T6_COLOR}33;text-align:center;">(yᵢ−ȳ)</th>
+        </tr>
+      </thead>
+      <tbody>`;
+
+  pts.forEach((p, i) => {
+    html += `<tr style="${i%2===1?'background:var(--gray-50)':''}">
+      <td style="text-align:center;padding:.4rem .75rem;">${i+1}</td>
+      <td style="text-align:right;padding:.4rem .75rem;">${t6Fmt(p.x,4)}</td>
+      <td style="text-align:right;padding:.4rem .75rem;">${t6Fmt(p.y,4)}</td>
+      <td style="text-align:right;padding:.4rem .75rem;">${t6Fmt(p.x*p.x,4)}</td>
+      <td style="text-align:right;padding:.4rem .75rem;">${t6Fmt(p.x*p.y,4)}</td>
+      <td style="text-align:right;padding:.4rem .75rem;">${t6Fmt(p.x - res.xm,4)}</td>
+      <td style="text-align:right;padding:.4rem .75rem;">${t6Fmt(p.y - res.ym,4)}</td>
+    </tr>`;
+  });
+
+  html += `
+      <tr style="background:${T6_LIGHT};font-weight:700;border-top:2px solid ${T6_COLOR}33;">
+        <td style="padding:.5rem .75rem;color:${T6_DARK};">Σ</td>
+        <td style="text-align:right;padding:.5rem .75rem;color:${T6_DARK};">${t6Fmt(res.sx,4)}</td>
+        <td style="text-align:right;padding:.5rem .75rem;color:${T6_DARK};">${t6Fmt(res.sy,4)}</td>
+        <td style="text-align:right;padding:.5rem .75rem;color:${T6_DARK};">${t6Fmt(res.sx2,4)}</td>
+        <td style="text-align:right;padding:.5rem .75rem;color:${T6_DARK};">${t6Fmt(res.sxy,4)}</td>
+        <td style="text-align:center;padding:.5rem .75rem;color:var(--gray-400);">—</td>
+        <td style="text-align:center;padding:.5rem .75rem;color:var(--gray-400);">—</td>
+      </tr>
+      <tr style="background:var(--gray-50);">
+        <td style="padding:.4rem .75rem;color:var(--gray-500);font-family:var(--font-main);font-size:.75rem;">Media</td>
+        <td style="text-align:right;padding:.4rem .75rem;color:var(--gray-600);">x̄ = ${t6Fmt(res.xm,4)}</td>
+        <td style="text-align:right;padding:.4rem .75rem;color:var(--gray-600);">ȳ = ${t6Fmt(res.ym,4)}</td>
+        <td colspan="4"></td>
+      </tr>
+    </tbody>
+    </table></div>
+  </div>
+  <div style="margin-top:.75rem;text-align:right;">
+    <button class="btn t6-btn-primary" onclick="t6GoTo('t6-lin-coef')">
+      Siguiente: Coeficientes β →
+    </button>
+  </div>`;
+  sec.innerHTML = html;
+}
+
+/** Sección 2: Coeficientes β con sustitución numérica */
+function t6RenderLinCoef(res) {
+  const sec = document.getElementById('t6-lin-coef');
+  if (!sec) return;
+
+  const b1n = res.n * res.sxy - res.sx * res.sy;
+  const b1d = res.n * res.sx2 - res.sx * res.sx;
+
+  let html = `
+  <div class="page-header">
+    <h2>Regresión Lineal — Cálculo de Coeficientes</h2>
+    <p>Sustitución de las sumas en las fórmulas de mínimos cuadrados</p>
+  </div>
+
+  <!-- β₁ -->
+  <div class="card t6-step-card" style="margin-bottom:1.25rem;border-left:5px solid ${T6_COLOR};">
+    <div class="card-header">
+      <div class="card-header-icon t6-icon">β</div>
+      <div><div class="card-title">Pendiente β₁</div></div>
+    </div>
+    <div class="t6-step-body">
+      <div class="t6-paso-formula">
+        β₁ = <span class="t6-frac-inline">
+          <span class="t6-frac-n">n·Σxᵢyᵢ − (Σxᵢ)(Σyᵢ)</span>
+          <span class="t6-frac-d">n·Σxᵢ² − (Σxᵢ)²</span>
+        </span>
+      </div>
+      <div class="t6-paso-sust">
+        = <span class="t6-frac-inline">
+          <span class="t6-frac-n">${res.n}·${t6Fmt(res.sxy,4)} − (${t6Fmt(res.sx,4)})(${t6Fmt(res.sy,4)})</span>
+          <span class="t6-frac-d">${res.n}·${t6Fmt(res.sx2,4)} − (${t6Fmt(res.sx,4)})²</span>
+        </span>
+        = <span class="t6-frac-inline">
+          <span class="t6-frac-n">${t6Fmt(b1n,4)}</span>
+          <span class="t6-frac-d">${t6Fmt(b1d,4)}</span>
+        </span>
+      </div>
+      <div class="t6-paso-result">
+        β₁ = <strong style="color:${T6_COLOR};font-size:1.15rem;">${t6Fmt(res.beta1,6)}</strong>
+      </div>
+    </div>
+  </div>
+
+  <!-- β₀ -->
+  <div class="card t6-step-card" style="margin-bottom:1.25rem;border-left:5px solid ${T6_ACCENT};">
+    <div class="card-header">
+      <div class="card-header-icon" style="background:${T6_ACCENT};width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-weight:700;color:#fff;">β</div>
+      <div><div class="card-title">Intercepto β₀</div></div>
+    </div>
+    <div class="t6-step-body">
+      <div class="t6-paso-formula">β₀ = Ȳ − β₁ · X̄</div>
+      <div class="t6-paso-sust">
+        = ${t6Fmt(res.ym,6)} − ${t6Fmt(res.beta1,6)} · ${t6Fmt(res.xm,6)}
+        = ${t6Fmt(res.ym,6)} − ${t6Fmt(res.beta1 * res.xm,6)}
+      </div>
+      <div class="t6-paso-result">
+        β₀ = <strong style="color:${T6_ACCENT};font-size:1.15rem;">${t6Fmt(res.beta0,6)}</strong>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modelo final -->
+  <div class="card" style="margin-bottom:1.25rem;background:linear-gradient(135deg,${T6_LIGHT},#f0fdf4);border:2px solid ${T6_COLOR}44;">
+    <div class="card-header">
+      <div class="card-header-icon t6-icon">🎯</div>
+      <div><div class="card-title">Modelo de Regresión Lineal</div></div>
+    </div>
+    <div style="padding:.5rem 1.25rem 1.25rem;font-family:var(--font-mono);font-size:1.05rem;text-align:center;">
+      <div style="margin-bottom:.5rem;color:var(--gray-500);font-size:.8rem;font-family:var(--font-main);">Ecuación de la recta de regresión:</div>
+      <div style="font-size:1.3rem;font-weight:700;color:${T6_DARK};">
+        Ŷ = ${t6FmtCoef(res.beta0)} + ${t6FmtCoef(res.beta1)} · X
+      </div>
+    </div>
+  </div>
+
+  <div style="margin-top:.75rem;display:flex;gap:.75rem;justify-content:flex-end;flex-wrap:wrap;">
+    <button class="btn btn-secondary" onclick="t6GoTo('t6-lin-tabla')">← Tabla auxiliar</button>
+    <button class="btn t6-btn-primary" onclick="t6GoTo('t6-lin-error')">Siguiente: Análisis del error →</button>
+  </div>`;
+  sec.innerHTML = html;
+}
+
+/** Sección 3: Análisis del error (R², r, Sy/x, residuos) */
+function t6RenderLinError(res, pts) {
+  const sec = document.getElementById('t6-lin-error');
+  if (!sec) return;
+
+  const rLabel   = Math.abs(res.r) >= 0.9 ? '✓ Altamente significativo' :
+                   Math.abs(res.r) >= 0.7 ? '⚠ Moderado' : '✗ Débil';
+  const rColor   = Math.abs(res.r) >= 0.9 ? '#065f46' :
+                   Math.abs(res.r) >= 0.7 ? '#92400e' : '#991b1b';
+  const R2pct    = (res.R2 * 100).toFixed(2);
+
+  let html = `
+  <div class="page-header">
+    <h2>Regresión Lineal — Análisis del Error</h2>
+    <p>Coeficiente de correlación · Coeficiente de determinación · Error estándar · Residuos</p>
+  </div>
+
+  <!-- Indicadores principales -->
+  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:.875rem;margin-bottom:1.25rem;">
+    <div class="t6-metric-card" style="border-left-color:${T6_COLOR};">
+      <div class="t6-metric-label">R² (determinación)</div>
+      <div class="t6-metric-val" style="color:${T6_COLOR};">${t6Fmt(res.R2, 6)}</div>
+      <div class="t6-metric-sub">El ${R2pct}% de la variabilidad de Y es explicada por X</div>
+    </div>
+    <div class="t6-metric-card" style="border-left-color:${rColor};">
+      <div class="t6-metric-label">r (correlación)</div>
+      <div class="t6-metric-val" style="color:${rColor};">${t6Fmt(res.r, 6)}</div>
+      <div class="t6-metric-sub">${rLabel} · rango [−1, 1]</div>
+    </div>
+    <div class="t6-metric-card" style="border-left-color:${T6_ACCENT};">
+      <div class="t6-metric-label">Sy/x (error estándar)</div>
+      <div class="t6-metric-val" style="color:${T6_ACCENT};">${t6Fmt(res.Syx, 6)}</div>
+      <div class="t6-metric-sub">√[Σ(yᵢ−ŷᵢ)² / (n−2)]</div>
+    </div>
+    <div class="t6-metric-card" style="border-left-color:#8b5cf6;">
+      <div class="t6-metric-label">n (observaciones)</div>
+      <div class="t6-metric-val" style="color:#8b5cf6;">${res.n}</div>
+      <div class="t6-metric-sub">Grados de libertad: n − 2 = ${res.n - 2}</div>
+    </div>
+  </div>
+
+  <!-- Cálculo detallado R² -->
+  <div class="card t6-step-card" style="margin-bottom:1.25rem;border-left:5px solid ${T6_COLOR};">
+    <div class="card-header">
+      <div class="card-header-icon t6-icon">📊</div>
+      <div><div class="card-title">Cálculo de R²</div></div>
+    </div>
+    <div class="t6-step-body">
+      <div class="t6-paso-formula">
+        R² = <span class="t6-frac-inline">
+          <span class="t6-frac-n">[Σ(xᵢ−x̄)(yᵢ−ȳ)]²</span>
+          <span class="t6-frac-d">Σ(xᵢ−x̄)² · Σ(yᵢ−ȳ)²</span>
+        </span>
+        &nbsp;·&nbsp; r = √R²
+      </div>
+      <div class="t6-paso-result">
+        R² = <strong style="color:${T6_COLOR};">${t6Fmt(res.R2,6)}</strong>
+        &nbsp;→&nbsp; r = <strong style="color:${rColor};">${t6Fmt(res.r,6)}</strong>
+        &nbsp; ${rLabel}
+      </div>
+    </div>
+  </div>
+
+  <!-- Tabla de residuos -->
+  <div class="card" style="padding:0;overflow:hidden;margin-bottom:1.25rem;">
+    <div class="card-header" style="padding:.75rem 1.25rem;border-bottom:1px solid var(--border);">
+      <div class="card-header-icon t6-icon">📋</div>
+      <div>
+        <div class="card-title">Tabla de residuos — eᵢ = yᵢ − ŷᵢ</div>
+        <div class="card-subtitle">ŷᵢ = ${t6FmtCoef(res.beta0)} + ${t6FmtCoef(res.beta1)}·xᵢ</div>
+      </div>
+    </div>
+    <div style="overflow-x:auto;">
+    <table style="width:100%;border-collapse:collapse;font-family:var(--font-mono);font-size:.8rem;">
+      <thead>
+        <tr style="background:${T6_LIGHT};">
+          <th style="padding:.45rem .75rem;color:${T6_DARK};border-bottom:2px solid ${T6_COLOR}33;">i</th>
+          <th style="padding:.45rem .75rem;color:${T6_DARK};border-bottom:2px solid ${T6_COLOR}33;">xᵢ</th>
+          <th style="padding:.45rem .75rem;color:${T6_DARK};border-bottom:2px solid ${T6_COLOR}33;">yᵢ</th>
+          <th style="padding:.45rem .75rem;color:${T6_DARK};border-bottom:2px solid ${T6_COLOR}33;">ŷᵢ</th>
+          <th style="padding:.45rem .75rem;color:${T6_DARK};border-bottom:2px solid ${T6_COLOR}33;">eᵢ = yᵢ−ŷᵢ</th>
+          <th style="padding:.45rem .75rem;color:${T6_DARK};border-bottom:2px solid ${T6_COLOR}33;">eᵢ²</th>
+        </tr>
+      </thead>
+      <tbody>`;
+
+  let sumE2 = 0;
+  res.pred.forEach((p, i) => {
+    const e2 = p.e * p.e;
+    sumE2 += e2;
+    const ec = p.e >= 0 ? T6_COLOR : '#ef4444';
+    html += `<tr style="${i%2===1?'background:var(--gray-50)':''}">
+      <td style="text-align:center;padding:.35rem .75rem;">${i+1}</td>
+      <td style="text-align:right;padding:.35rem .75rem;">${t6Fmt(p.x,4)}</td>
+      <td style="text-align:right;padding:.35rem .75rem;">${t6Fmt(p.y,4)}</td>
+      <td style="text-align:right;padding:.35rem .75rem;">${t6Fmt(p.yhat,6)}</td>
+      <td style="text-align:right;padding:.35rem .75rem;color:${ec};font-weight:600;">${t6Fmt(p.e,6)}</td>
+      <td style="text-align:right;padding:.35rem .75rem;">${t6Fmt(e2,6)}</td>
+    </tr>`;
+  });
+
+  html += `
+      <tr style="background:${T6_LIGHT};font-weight:700;border-top:2px solid ${T6_COLOR}33;">
+        <td colspan="5" style="padding:.45rem .75rem;color:${T6_DARK};">Σeᵢ²  (Suma de residuos cuadrados)</td>
+        <td style="text-align:right;padding:.45rem .75rem;color:${T6_DARK};">${t6Fmt(sumE2,6)}</td>
+      </tr>
+    </tbody></table></div>
+  </div>
+
+  <div style="margin-top:.75rem;display:flex;gap:.75rem;justify-content:flex-end;flex-wrap:wrap;">
+    <button class="btn btn-secondary" onclick="t6GoTo('t6-lin-coef')">← Coeficientes</button>
+    <button class="btn t6-btn-primary" onclick="t6GoTo('t6-lin-grafica');setTimeout(t6DrawLin,80);">
+      Siguiente: Gráfica →
+    </button>
+  </div>`;
+  sec.innerHTML = html;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   GRÁFICA INTERACTIVA — REGRESIÓN LINEAL
+══════════════════════════════════════════════════════════════ */
+function t6InitLinGraph() {
+  const g = t6State.graph;
+  const c = document.getElementById('t6LinCanvas');
+  if (!c || g.canvas) return;
+  g.canvas = c; g.ctx = c.getContext('2d');
+
+  const resize = () => {
+    const w = c.parentElement.clientWidth || 700;
+    c.width = w; c.height = Math.max(340, Math.round(w * 0.52));
+    if (g.drawFn) g.drawFn();
+  };
+  resize();
+  window.addEventListener('resize', resize);
+
+  /* Pan */
+  c.addEventListener('mousedown', e => { g.dragging = true; g.lastMouse = { x: e.clientX, y: e.clientY }; c.style.cursor = 'grabbing'; });
+  c.addEventListener('mouseup',   () => { g.dragging = false; c.style.cursor = 'crosshair'; });
+  c.addEventListener('mouseleave',() => {
+    g.dragging = false; g.hoverOn = false; c.style.cursor = 'crosshair';
+    const tip = document.getElementById('t6LinTooltip'); if (tip) tip.style.display = 'none';
+    if (g.drawFn) g.drawFn();
+  });
+  c.addEventListener('mousemove', e => {
+    const rect = c.getBoundingClientRect();
+    const px = (e.clientX - rect.left) * (c.width / rect.width);
+    const py = (e.clientY - rect.top)  * (c.height / rect.height);
+    g.mouseWorld = t6LinToWorld(px, py);
+    g.hoverOn = true;
+    const coord = document.getElementById('t6LinCoords');
+    if (coord) coord.innerHTML = `x = ${g.mouseWorld.x.toFixed(3)} &nbsp; y = ${g.mouseWorld.y.toFixed(3)}`;
+    if (g.dragging) {
+      const dx = (e.clientX - g.lastMouse.x) / rect.width  * (g.xMax - g.xMin);
+      const dy = (e.clientY - g.lastMouse.y) / rect.height * (g.yMax - g.yMin);
+      g.xMin -= dx; g.xMax -= dx; g.yMin += dy; g.yMax += dy;
+      g.lastMouse = { x: e.clientX, y: e.clientY };
+    }
+    if (g.drawFn) g.drawFn();
+  });
+  c.addEventListener('wheel', e => {
+    e.preventDefault();
+    const f = e.deltaY > 0 ? 1.12 : 0.89;
+    const rect = c.getBoundingClientRect();
+    const { x: wx, y: wy } = t6LinToWorld(
+      (e.clientX - rect.left) * (c.width / rect.width),
+      (e.clientY - rect.top) * (c.height / rect.height)
+    );
+    g.xMin = wx + (g.xMin - wx) * f; g.xMax = wx + (g.xMax - wx) * f;
+    g.yMin = wy + (g.yMin - wy) * f; g.yMax = wy + (g.yMax - wy) * f;
+    if (g.drawFn) g.drawFn();
+  }, { passive: false });
+
+  g.drawFn = t6DrawLin;
+}
+
+function t6LinToCanvas(wx, wy) {
+  const g = t6State.graph;
+  const PAD = { t: 24, r: 24, b: 44, l: 56 };
+  const W = g.canvas.width, H = g.canvas.height;
+  const PW = W - PAD.l - PAD.r, PH = H - PAD.t - PAD.b;
+  return {
+    x: PAD.l + (wx - g.xMin) / (g.xMax - g.xMin) * PW,
+    y: PAD.t + (1 - (wy - g.yMin) / (g.yMax - g.yMin)) * PH
+  };
+}
+
+function t6LinToWorld(px, py) {
+  const g = t6State.graph;
+  const PAD = { t: 24, r: 24, b: 44, l: 56 };
+  const W = g.canvas.width, H = g.canvas.height;
+  const PW = W - PAD.l - PAD.r, PH = H - PAD.t - PAD.b;
+  return {
+    x: g.xMin + (px - PAD.l) / PW * (g.xMax - g.xMin),
+    y: g.yMin + (1 - (py - PAD.t) / PH) * (g.yMax - g.yMin)
+  };
+}
+
+function t6DrawLin() {
+  const g   = t6State.graph;
+  const res = t6State.lineal;
+  if (!g.canvas || !res) return;
+
+  const isDark = document.body.classList.contains('dark-mode');
+  const W = g.canvas.width, H = g.canvas.height;
+  const ctx = g.ctx;
+  const PAD = { t: 24, r: 24, b: 44, l: 56 };
+  const PW = W - PAD.l - PAD.r, PH = H - PAD.t - PAD.b;
+  const toC = (wx, wy) => t6LinToCanvas(wx, wy);
+  const niceStep = (range, tgt) => {
+    const r = range / tgt, m = Math.pow(10, Math.floor(Math.log10(r)));
+    const n = r / m; return (n < 1.5 ? 1 : n < 3.5 ? 2 : n < 7.5 ? 5 : 10) * m;
+  };
+
+  ctx.fillStyle = isDark ? '#0f172a' : '#fff';
+  ctx.fillRect(0, 0, W, H);
+
+  /* Grid */
+  const xSt = niceStep(g.xMax - g.xMin, 10), ySt = niceStep(g.yMax - g.yMin, 8);
+  ctx.strokeStyle = isDark ? 'rgba(148,163,184,.08)' : '#f1f5f9'; ctx.lineWidth = 1;
+  for (let gx = Math.ceil(g.xMin / xSt) * xSt; gx <= g.xMax; gx += xSt) {
+    const { x: px } = toC(gx, 0); ctx.beginPath(); ctx.moveTo(px, PAD.t); ctx.lineTo(px, PAD.t + PH); ctx.stroke();
+  }
+  for (let gy = Math.ceil(g.yMin / ySt) * ySt; gy <= g.yMax; gy += ySt) {
+    const { y: py } = toC(0, gy); ctx.beginPath(); ctx.moveTo(PAD.l, py); ctx.lineTo(PAD.l + PW, py); ctx.stroke();
+  }
+
+  /* Ejes */
+  ctx.strokeStyle = isDark ? 'rgba(148,163,184,.3)' : '#cbd5e1'; ctx.lineWidth = 1.5;
+  const { y: axY } = toC(0, 0), { x: axX } = toC(0, 0);
+  if (g.yMin <= 0 && g.yMax >= 0) { ctx.beginPath(); ctx.moveTo(PAD.l, axY); ctx.lineTo(PAD.l + PW, axY); ctx.stroke(); }
+  if (g.xMin <= 0 && g.xMax >= 0) { ctx.beginPath(); ctx.moveTo(axX, PAD.t); ctx.lineTo(axX, PAD.t + PH); ctx.stroke(); }
+
+  /* Labels ejes */
+  ctx.fillStyle = isDark ? 'rgba(148,163,184,.6)' : '#94a3b8';
+  ctx.font = '10px "JetBrains Mono",monospace'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  const lbY = Math.max(PAD.t + 10, Math.min(PAD.t + PH - 4, axY + 16));
+  const lbX = Math.max(PAD.l + 28, Math.min(PAD.l + PW - 4, axX - 8));
+  for (let gx = Math.ceil(g.xMin / xSt) * xSt; gx <= g.xMax; gx += xSt) {
+    if (Math.abs(gx) < xSt * 0.01) continue;
+    const { x: px } = toC(gx, 0); ctx.fillText(gx % 1 === 0 ? gx : gx.toFixed(1), px, lbY);
+  }
+  ctx.textAlign = 'right';
+  for (let gy = Math.ceil(g.yMin / ySt) * ySt; gy <= g.yMax; gy += ySt) {
+    if (Math.abs(gy) < ySt * 0.01) continue;
+    const { y: py } = toC(0, gy); ctx.fillText(gy % 1 === 0 ? gy : gy.toFixed(1), lbX, py);
+  }
+  ctx.textBaseline = 'alphabetic';
+
+  /* Recta de regresión */
+  const rxMin = toC(g.xMin, res.beta0 + res.beta1 * g.xMin);
+  const rxMax = toC(g.xMax, res.beta0 + res.beta1 * g.xMax);
+  ctx.beginPath(); ctx.strokeStyle = T6_ACCENT; ctx.lineWidth = 2.5;
+  ctx.setLineDash([6, 3]); ctx.moveTo(rxMin.x, rxMin.y); ctx.lineTo(rxMax.x, rxMax.y); ctx.stroke();
+  ctx.setLineDash([]);
+
+  /* Puntos de datos */
+  t6State.data.forEach((p, i) => {
+    const { x: px, y: py } = toC(p.x, p.y);
+    if (px < PAD.l - 8 || px > PAD.l + PW + 8 || py < PAD.t - 8 || py > PAD.t + PH + 8) return;
+    ctx.beginPath(); ctx.arc(px, py, 5.5, 0, Math.PI * 2);
+    ctx.fillStyle = T6_COLOR; ctx.fill();
+    ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5; ctx.stroke();
+    /* Línea residuo */
+    const { y: pyHat } = toC(p.x, res.beta0 + res.beta1 * p.x);
+    ctx.beginPath(); ctx.strokeStyle = 'rgba(239,68,68,.4)'; ctx.lineWidth = 1;
+    ctx.setLineDash([2, 2]); ctx.moveTo(px, py); ctx.lineTo(px, pyHat); ctx.stroke();
+    ctx.setLineDash([]);
+  });
+
+  /* Tooltip hover */
+  if (g.hoverOn) {
+    const nearest = t6State.data.reduce((best, p) => {
+      const { x: px, y: py } = toC(p.x, p.y);
+      const d = Math.hypot(px - toC(g.mouseWorld.x, g.mouseWorld.y).x, py - toC(g.mouseWorld.x, g.mouseWorld.y).y);
+      return d < best.d ? { d, p } : best;
+    }, { d: Infinity, p: null });
+    const tip = document.getElementById('t6LinTooltip');
+    if (tip && nearest.p && nearest.d < 20) {
+      const { x: px, y: py } = toC(nearest.p.x, nearest.p.y);
+      tip.style.display = 'block';
+      tip.style.left = (px + 12) + 'px'; tip.style.top = (py - 10) + 'px';
+      const yhat = res.beta0 + res.beta1 * nearest.p.x;
+      tip.innerHTML = `x = ${nearest.p.x}<br>y = ${nearest.p.y}<br>ŷ = ${yhat.toFixed(4)}<br>e = ${(nearest.p.y - yhat).toFixed(4)}`;
+    } else if (tip) { tip.style.display = 'none'; }
+  }
+
+  /* Leyenda */
+  ctx.font = '11px "Poppins",sans-serif'; ctx.textBaseline = 'middle';
+  const ly = PAD.t + 14;
+  ctx.fillStyle = T6_COLOR; ctx.beginPath(); ctx.arc(PAD.l + 12, ly, 5, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = isDark ? '#e2e8f0' : '#374151'; ctx.textAlign = 'left'; ctx.fillText('Datos (xᵢ, yᵢ)', PAD.l + 22, ly);
+  ctx.strokeStyle = T6_ACCENT; ctx.lineWidth = 2; ctx.setLineDash([5, 3]);
+  ctx.beginPath(); ctx.moveTo(PAD.l + 140, ly); ctx.lineTo(PAD.l + 162, ly); ctx.stroke();
+  ctx.setLineDash([]); ctx.fillStyle = isDark ? '#e2e8f0' : '#374151';
+  ctx.fillText(`Ŷ = ${t6FmtCoef(res.beta0)} + ${t6FmtCoef(res.beta1)}·X   R²=${res.R2.toFixed(4)}`, PAD.l + 168, ly);
+  ctx.textBaseline = 'alphabetic';
+
+  /* Watermark */
+  ctx.fillStyle = isDark ? 'rgba(5,150,105,.15)' : 'rgba(148,163,184,.4)';
+  ctx.font = '600 11px "Poppins",sans-serif'; ctx.textAlign = 'right'; ctx.textBaseline = 'bottom';
+  ctx.fillText('NUMERIX © 2026', W - 10, H - 8); ctx.textBaseline = 'alphabetic';
+}
+window.t6DrawLin = t6DrawLin;
+
+function t6LinZoom(f) {
+  const g = t6State.graph;
+  const cx = (g.xMin + g.xMax) / 2, cy = (g.yMin + g.yMax) / 2;
+  const hw = (g.xMax - g.xMin) / 2 * f, hh = (g.yMax - g.yMin) / 2 * f;
+  g.xMin = cx - hw; g.xMax = cx + hw; g.yMin = cy - hh; g.yMax = cy + hh;
+  t6DrawLin();
+}
+window.t6LinZoom = t6LinZoom;
+
+function t6LinReset() {
+  const pts = t6State.data;
+  if (!pts.length) return;
+  const xs = pts.map(p => p.x), ys = pts.map(p => p.y);
+  const xr = Math.max(...xs) - Math.min(...xs), yr = Math.max(...ys) - Math.min(...ys);
+  const g = t6State.graph;
+  g.xMin = Math.min(...xs) - xr * 0.15; g.xMax = Math.max(...xs) + xr * 0.15;
+  g.yMin = Math.min(...ys) - yr * 0.2;  g.yMax = Math.max(...ys) + yr * 0.2;
+  t6DrawLin();
+}
+
+/* ══════════════════════════════════════════════════════════════
+   RENDERIZADO — REGRESIÓN POLINOMIAL
+══════════════════════════════════════════════════════════════ */
+
+/** Sección 5: Sistema 3×3 con sumas */
+function t6RenderPolSistema(res) {
+  const sec = document.getElementById('t6-pol-sistema');
+  if (!sec) return;
+  const s = res.sums;
+
+  let html = `
+  <div class="page-header">
+    <h2>Regresión Polinomial — Sistema 3×3</h2>
+    <p>Construcción del sistema de ecuaciones normales para obtener β₀, β₁, β₂</p>
+  </div>
+
+  <!-- Tabla de sumas -->
+  <div class="card" style="padding:0;overflow:hidden;margin-bottom:1.25rem;">
+    <div class="card-header" style="padding:.75rem 1.25rem;border-bottom:1px solid var(--border);">
+      <div class="card-header-icon t6-icon">∑</div>
+      <div><div class="card-title">Sumas necesarias (n = ${s.n})</div></div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:.5rem;padding:1rem 1.25rem;">`;
+
+  const sums = [
+    ['n', s.n], ['Σxᵢ', s.sx], ['Σyᵢ', s.sy],
+    ['Σxᵢ²', s.sx2], ['Σxᵢ³', s.sx3], ['Σxᵢ⁴', s.sx4],
+    ['ΣxᵢYᵢ', s.sxy], ['Σxᵢ²Yᵢ', s.sx2y],
+  ];
+  sums.forEach(([label, val]) => {
+    html += `<div style="background:${T6_LIGHT};border:1px solid ${T6_COLOR}22;border-radius:var(--radius-sm);
+                          padding:.6rem .875rem;">
+      <div style="font-family:var(--font-main);font-size:.72rem;color:${T6_DARK};font-weight:600;">${label}</div>
+      <div style="font-family:var(--font-mono);font-size:.95rem;font-weight:700;color:${T6_DARK};">${t6Fmt(val, 4)}</div>
+    </div>`;
+  });
+  html += `</div></div>
+
+  <!-- Sistema matricial -->
+  <div class="card t6-step-card" style="margin-bottom:1.25rem;border-left:5px solid ${T6_COLOR};">
+    <div class="card-header">
+      <div class="card-header-icon t6-icon">⚙</div>
+      <div>
+        <div class="card-title">Sistema de ecuaciones normales</div>
+        <div class="card-subtitle">Ax = b donde las incógnitas son β₀, β₁, β₂</div>
+      </div>
+    </div>
+    <div class="t6-step-body">
+      <div style="font-family:var(--font-main);font-size:.85rem;color:var(--gray-600);margin-bottom:.75rem;">
+        Modelo: Y = β₀ + β₁X + β₂X²
+      </div>
+      <div style="overflow-x:auto;">
+      <table class="t6-system-table">
+        <tbody>`;
+
+  const rows = [
+    [`${t6Fmt(s.n,0)}·β₀`, `${t6Fmt(s.sx,4)}·β₁`, `${t6Fmt(s.sx2,4)}·β₂`, `= ${t6Fmt(s.sy,4)}`],
+    [`${t6Fmt(s.sx,4)}·β₀`, `${t6Fmt(s.sx2,4)}·β₁`, `${t6Fmt(s.sx3,4)}·β₂`, `= ${t6Fmt(s.sxy,4)}`],
+    [`${t6Fmt(s.sx2,4)}·β₀`, `${t6Fmt(s.sx3,4)}·β₁`, `${t6Fmt(s.sx4,4)}·β₂`, `= ${t6Fmt(s.sx2y,4)}`],
+  ];
+  rows.forEach((row, i) => {
+    html += `<tr>`;
+    row.forEach((cell, j) => {
+      const sep = j > 0 && j < 3 ? ' + ' : '';
+      html += `<td style="padding:.4rem .65rem;font-family:var(--font-mono);font-size:.82rem;">
+        ${sep}${cell}</td>`;
+    });
+    html += `</tr>`;
+  });
+
+  html += `</tbody></table></div>
+    </div>
+  </div>
+
+  <!-- Matriz ampliada inicial -->
+  <div class="card t6-step-card" style="margin-bottom:1.25rem;border-left:5px solid ${T6_ACCENT};">
+    <div class="card-header">
+      <div class="card-header-icon" style="background:${T6_ACCENT};width:38px;height:38px;border-radius:10px;
+        display:flex;align-items:center;justify-content:center;font-weight:700;color:#fff;font-size:.9rem;">M</div>
+      <div>
+        <div class="card-title">Matriz ampliada [A | b]</div>
+        <div class="card-subtitle">Lista para aplicar eliminación de Gauss-Jordan</div>
+      </div>
+    </div>
+    <div class="t6-step-body" style="overflow-x:auto;">
+      ${t6MatrixHtml(res.M0, ['β₀','β₁','β₂','b'])}
+    </div>
+  </div>
+
+  <div style="margin-top:.75rem;text-align:right;">
+    <button class="btn t6-btn-primary" onclick="t6GoTo('t6-pol-gauss')">Siguiente: Gauss-Jordan →</button>
+  </div>`;
+  sec.innerHTML = html;
+}
+
+/** Helper: renderiza matriz como tabla */
+function t6MatrixHtml(M, headers) {
+  let h = `<table style="border-collapse:separate;border-spacing:4px;font-family:var(--font-mono);font-size:.82rem;">`;
+  if (headers) {
+    h += `<thead><tr>${headers.map((hd,i) => `<th style="padding:.3rem .7rem;background:${T6_LIGHT};
+      color:${T6_DARK};border-radius:4px;${i===headers.length-1?'border-left:2px solid '+T6_COLOR+';':''}">${hd}</th>`).join('')}</tr></thead>`;
+  }
+  h += `<tbody>`;
+  M.forEach(row => {
+    h += `<tr>${row.map((v,j) => `<td style="padding:.35rem .7rem;background:var(--gray-50);
+      border-radius:4px;text-align:right;${j===row.length-1?'border-left:2px solid '+T6_COLOR+'44;font-weight:700;color:'+T6_DARK+';':''}">
+      ${Math.abs(v) > 1000 || (Math.abs(v) < 0.001 && v !== 0) ? v.toExponential(4) : t6Fmt(v,4)}</td>`).join('')}</tr>`;
+  });
+  h += `</tbody></table>`;
+  return h;
+}
+
+/** Sección 6: Pasos de Gauss-Jordan */
+function t6RenderPolGauss(res) {
+  const sec = document.getElementById('t6-pol-gauss');
+  if (!sec) return;
+
+  let html = `
+  <div class="page-header">
+    <h2>Regresión Polinomial — Eliminación de Gauss-Jordan</h2>
+    <p>Proceso de reducción paso a paso hasta obtener la matriz identidad</p>
+  </div>`;
+
+  res.steps.forEach((step, i) => {
+    const isLast = i === res.steps.length - 1;
+    html += `
+    <div class="card t6-step-card" style="margin-bottom:1rem;border-left:5px solid ${isLast ? '#10b981' : T6_COLOR};">
+      <div class="card-header" style="padding:.6rem 1.25rem;">
+        <div class="card-header-icon" style="background:${isLast?'#10b981':T6_COLOR};width:32px;height:32px;
+          border-radius:8px;display:flex;align-items:center;justify-content:center;
+          color:#fff;font-size:.78rem;font-weight:700;flex-shrink:0;">${i}</div>
+        <div style="font-family:var(--font-mono);font-size:.85rem;color:var(--gray-700);">${step.label}</div>
+      </div>
+      <div class="t6-step-body" style="overflow-x:auto;">
+        ${t6MatrixHtml(step.M, null)}
+      </div>
+    </div>`;
+  });
+
+  html += `
+  <div style="margin-top:.75rem;display:flex;gap:.75rem;justify-content:flex-end;flex-wrap:wrap;">
+    <button class="btn btn-secondary" onclick="t6GoTo('t6-pol-sistema')">← Sistema</button>
+    <button class="btn t6-btn-primary" onclick="t6GoTo('t6-pol-resultado')">Siguiente: Modelo y R² →</button>
+  </div>`;
+  sec.innerHTML = html;
+}
+
+/** Sección 7: Resultado polinomial + R² */
+function t6RenderPolResultado(res, lx, ly) {
+  const sec = document.getElementById('t6-pol-resultado');
+  if (!sec) return;
+
+  const R2pct = (res.R2 * 100).toFixed(2);
+  const signB1 = res.b1 >= 0 ? `+ ${t6FmtCoef(res.b1)}` : `− ${t6FmtCoef(Math.abs(res.b1))}`;
+  const signB2 = res.b2 >= 0 ? `+ ${t6FmtCoef(res.b2)}` : `− ${t6FmtCoef(Math.abs(res.b2))}`;
+
+  let html = `
+  <div class="page-header">
+    <h2>Regresión Polinomial — Modelo y Análisis</h2>
+    <p>Coeficientes β₀, β₁, β₂ · Coeficiente de determinación R² · Residuos</p>
+  </div>
+
+  <!-- Coeficientes -->
+  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:.875rem;margin-bottom:1.25rem;">
+    ${['β₀','β₁','β₂'].map((label, i) => {
+      const val = [res.b0, res.b1, res.b2][i];
+      const col = [T6_COLOR, T6_ACCENT, '#8b5cf6'][i];
+      return `<div class="t6-metric-card" style="border-left-color:${col};">
+        <div class="t6-metric-label">${label} (${['intercepto','pendiente','cuadrático'][i]})</div>
+        <div class="t6-metric-val" style="color:${col};">${t6Fmt(val, 8)}</div>
+      </div>`;
+    }).join('')}
+    <div class="t6-metric-card" style="border-left-color:#10b981;">
+      <div class="t6-metric-label">R²</div>
+      <div class="t6-metric-val" style="color:#10b981;">${t6Fmt(res.R2, 6)}</div>
+      <div class="t6-metric-sub">El ${R2pct}% de la variabilidad explicada</div>
+    </div>
+  </div>
+
+  <!-- Modelo final -->
+  <div class="card" style="margin-bottom:1.25rem;background:linear-gradient(135deg,${T6_LIGHT},#f0fdf4);border:2px solid ${T6_COLOR}44;">
+    <div class="card-header">
+      <div class="card-header-icon t6-icon">🎯</div>
+      <div><div class="card-title">Modelo de Regresión Polinomial Cuadrático</div></div>
+    </div>
+    <div style="padding:.5rem 1.25rem 1.25rem;font-family:var(--font-mono);font-size:1.05rem;text-align:center;">
+      <div style="margin-bottom:.5rem;color:var(--gray-500);font-size:.8rem;font-family:var(--font-main);">Ecuación del modelo:</div>
+      <div style="font-size:1.25rem;font-weight:700;color:${T6_DARK};">
+        Ŷ = ${t6FmtCoef(res.b0)} ${signB1}·X ${signB2}·X²
+      </div>
+    </div>
+  </div>
+
+  <!-- Tabla de predicciones y residuos -->
+  <div class="card" style="padding:0;overflow:hidden;margin-bottom:1.25rem;">
+    <div class="card-header" style="padding:.75rem 1.25rem;border-bottom:1px solid var(--border);">
+      <div class="card-header-icon t6-icon">📋</div>
+      <div>
+        <div class="card-title">Predicciones y residuos</div>
+        <div class="card-subtitle">eᵢ = yᵢ − ŷᵢ</div>
+      </div>
+    </div>
+    <div style="overflow-x:auto;">
+    <table style="width:100%;border-collapse:collapse;font-family:var(--font-mono);font-size:.8rem;">
+      <thead>
+        <tr style="background:${T6_LIGHT};">
+          <th style="padding:.45rem .75rem;color:${T6_DARK};border-bottom:2px solid ${T6_COLOR}33;">i</th>
+          <th style="padding:.45rem .75rem;color:${T6_DARK};border-bottom:2px solid ${T6_COLOR}33;">xᵢ</th>
+          <th style="padding:.45rem .75rem;color:${T6_DARK};border-bottom:2px solid ${T6_COLOR}33;">yᵢ</th>
+          <th style="padding:.45rem .75rem;color:${T6_DARK};border-bottom:2px solid ${T6_COLOR}33;">ŷᵢ</th>
+          <th style="padding:.45rem .75rem;color:${T6_DARK};border-bottom:2px solid ${T6_COLOR}33;">eᵢ</th>
+          <th style="padding:.45rem .75rem;color:${T6_DARK};border-bottom:2px solid ${T6_COLOR}33;">eᵢ²</th>
+        </tr>
+      </thead>
+      <tbody>`;
+
+  let sumE2 = 0;
+  res.pred.forEach((p, i) => {
+    const e2 = p.e * p.e; sumE2 += e2;
+    const ec = p.e >= 0 ? T6_COLOR : '#ef4444';
+    html += `<tr style="${i%2===1?'background:var(--gray-50)':''}">
+      <td style="text-align:center;padding:.35rem .75rem;">${i+1}</td>
+      <td style="text-align:right;padding:.35rem .75rem;">${t6Fmt(p.x,4)}</td>
+      <td style="text-align:right;padding:.35rem .75rem;">${t6Fmt(p.y,4)}</td>
+      <td style="text-align:right;padding:.35rem .75rem;">${t6Fmt(p.yhat,6)}</td>
+      <td style="text-align:right;padding:.35rem .75rem;color:${ec};font-weight:600;">${t6Fmt(p.e,6)}</td>
+      <td style="text-align:right;padding:.35rem .75rem;">${t6Fmt(e2,6)}</td>
+    </tr>`;
+  });
+
+  html += `
+      <tr style="background:${T6_LIGHT};font-weight:700;border-top:2px solid ${T6_COLOR}33;">
+        <td colspan="5" style="padding:.45rem .75rem;color:${T6_DARK};">Σeᵢ² (SR²)</td>
+        <td style="text-align:right;padding:.45rem .75rem;color:${T6_DARK};">${t6Fmt(sumE2,6)}</td>
+      </tr>
+    </tbody></table></div>
+  </div>
+
+  <div style="margin-top:.75rem;display:flex;gap:.75rem;justify-content:flex-end;flex-wrap:wrap;">
+    <button class="btn btn-secondary" onclick="t6GoTo('t6-pol-gauss')">← Gauss-Jordan</button>
+    <button class="btn t6-btn-primary" onclick="t6GoTo('t6-input')">🔁 Nuevos datos</button>
+  </div>`;
+  sec.innerHTML = html;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   FLUJO PRINCIPAL — BOTÓN CALCULAR
+══════════════════════════════════════════════════════════════ */
+document.addEventListener('DOMContentLoaded', () => {
+
+  /* Inicializar tabla con 4 filas vacías */
+  t6State.data = Array.from({ length: 4 }, () => ({ x: 0, y: 0 }));
+  t6RenderDataTable();
+
+  /* Navegación interna T6 */
+  document.querySelectorAll('.t6-nav[data-t6]').forEach(el => {
+    el.addEventListener('click', () => t6GoTo(el.getAttribute('data-t6')));
+  });
+
+  /* Agregar / quitar filas */
+  document.getElementById('btnT6AddRow')?.addEventListener('click', t6AddRow);
+  document.getElementById('btnT6RemRow')?.addEventListener('click', t6RemRow);
+
+  /* Ejemplo clase — Publicidad (foto 7) */
+  document.getElementById('btnT6Ejemplo')?.addEventListener('click', () => {
+    t6State.data = [
+      { x: 1, y: 2 }, { x: 2, y: 4 }, { x: 3, y: 5 }, { x: 6, y: 11 }
+    ];
+    document.getElementById('t6LabelX').value = 'Inversión en publicidad (miles $)';
+    document.getElementById('t6LabelY').value = 'Ventas obtenidas (miles $)';
+    document.querySelector('input[name="t6Mode"][value="lineal"]').checked = true;
+    t6RenderDataTable();
+    clearAlert('t6Alert');
+    showAlert('t6Alert','info','📋 Ejemplo de clase cargado — publicidad vs ventas. Presiona ▶ Calcular.');
+  });
+
+  /* Ejemplo polinomial (foto 8) */
+  document.getElementById('btnT6EjemploPol')?.addEventListener('click', () => {
+    t6State.data = [
+      {x:4,y:4.84},{x:5,y:5.99},{x:6,y:6.67},{x:7,y:5.42},{x:8,y:7.88},
+      {x:9,y:6.84},{x:10,y:8.26},{x:11,y:8.95},{x:12,y:10.71},{x:13,y:9.83},{x:14,y:10.52}
+    ];
+    document.getElementById('t6LabelX').value = 'X';
+    document.getElementById('t6LabelY').value = 'Y';
+    document.querySelector('input[name="t6Mode"][value="polinomial"]').checked = true;
+    t6RenderDataTable();
+    clearAlert('t6Alert');
+    showAlert('t6Alert','info','📋 Ejemplo polinomial de clase cargado (27/05/26). Presiona ▶ Calcular.');
+  });
+
+  /* Calcular */
+  document.getElementById('btnT6Calcular')?.addEventListener('click', () => {
+    clearAlert('t6Alert');
+    clearAlert('t6AlertGlobal');
+    const pts  = t6ReadData();
+    const mode = document.querySelector('input[name="t6Mode"]:checked')?.value || 'lineal';
+    const lx   = document.getElementById('t6LabelX')?.value?.trim() || 'X';
+    const ly   = document.getElementById('t6LabelY')?.value?.trim() || 'Y';
+
+    if (pts.length < 3) { showAlert('t6Alert','danger','Se necesitan al menos 3 puntos.'); return; }
+    if ((mode === 'polinomial' || mode === 'ambos') && pts.length < 4) {
+      showAlert('t6Alert','danger','La regresión polinomial necesita al menos 4 puntos.'); return;
+    }
+
+    try {
+      t6State.mode = mode; t6State.labelX = lx; t6State.labelY = ly;
+
+      if (mode === 'lineal' || mode === 'ambos') {
+        t6State.lineal = t6RegLineal(pts);
+        t6RenderLinTabla(t6State.lineal, pts, lx, ly);
+        t6RenderLinCoef(t6State.lineal);
+        t6RenderLinError(t6State.lineal, pts);
+      }
+      if (mode === 'polinomial' || mode === 'ambos') {
+        t6State.pol = t6RegPolinomial(pts);
+        t6RenderPolSistema(t6State.pol);
+        t6RenderPolGauss(t6State.pol);
+        t6RenderPolResultado(t6State.pol, lx, ly);
+      }
+
+      /* Marcar download como listo — se mostrará junto a la sección activa */
+      const dlBar = document.getElementById('t6-download-bar');
+      if (dlBar) { dlBar.dataset.ready = '1'; }
+
+      /* Inicializar gráfica lineal */
+      if (mode === 'lineal' || mode === 'ambos') {
+        t6LinReset();
+        setTimeout(() => { t6InitLinGraph(); t6DrawLin(); }, 100);
+        t6GoTo('t6-lin-tabla');
+        showAlert('t6AlertGlobal','success',
+          `✓ Regresión Lineal: Ŷ = ${t6FmtCoef(t6State.lineal.beta0)} + ${t6FmtCoef(t6State.lineal.beta1)}·X · R² = ${t6State.lineal.R2.toFixed(6)}`);
+      } else {
+        t6GoTo('t6-pol-sistema');
+        showAlert('t6AlertGlobal','success',
+          `✓ Regresión Polinomial: Ŷ = ${t6FmtCoef(t6State.pol.b0)} + ${t6FmtCoef(t6State.pol.b1)}·X + ${t6FmtCoef(t6State.pol.b2)}·X² · R² = ${t6State.pol.R2.toFixed(6)}`);
+      }
+
+    } catch(e) { showAlert('t6Alert','danger','Error: ' + e.message); }
+  });
+
+  window.addEventListener('resize', () => {
+    if (t6State.lineal) t6DrawLin();
+  });
+});
+
+/* ══════════════════════════════════════════════════════════════
+   EXPORTACIÓN EXCEL T6
+══════════════════════════════════════════════════════════════ */
+(function patchT6Export() {
+  document.addEventListener('DOMContentLoaded', () => {
+    if (typeof numerixExport === 'undefined') return;
+    numerixExport.t6 = function() {
+      const lin = t6State.lineal, pol = t6State.pol;
+      if (!lin && !pol) { alert('Ejecuta el cálculo primero.'); return; }
+      const pts = t6State.data;
+      const wb  = XLSX.utils.book_new();
+
+      if (lin) {
+        /* Hoja lineal */
+        const hdrL = ['i','xi','yi','xi²','xi·yi','ŷi','ei','ei²'];
+        const rowsL = pts.map((p,i) => {
+          const yhat = lin.beta0 + lin.beta1 * p.x;
+          const e    = p.y - yhat;
+          return [i+1, p.x, p.y, p.x*p.x, p.x*p.y, yhat, e, e*e];
+        });
+        const sumRow = ['Σ', lin.sx, lin.sy, lin.sx2, lin.sxy,'','', lin.SRR];
+        const blank  = [];
+        const info   = [
+          ['NUMERIX — Regresión Lineal','','© 2026 Fernando Granja & Alejandra Tinoco'],
+          [], ['n', lin.n], ['β₁', lin.beta1], ['β₀', lin.beta0],
+          ['Modelo', `Y = ${t6FmtCoef(lin.beta0)} + ${t6FmtCoef(lin.beta1)}·X`],
+          ['R²', lin.R2], ['r', lin.r], ['Sy/x', lin.Syx],
+        ];
+        XLSX.utils.book_append_sheet(wb,
+          XLSX.utils.aoa_to_sheet([...info, blank, [hdrL], ...rowsL, sumRow]),
+          'Regresion Lineal');
+      }
+
+      if (pol) {
+        /* Hoja polinomial */
+        const hdrP = ['i','xi','yi','xi²','xi³','xi⁴','xi·yi','xi²·yi','ŷi','ei','ei²'];
+        const rowsP = pts.map((p,i) => {
+          const yhat = pol.b0 + pol.b1*p.x + pol.b2*p.x*p.x;
+          const e    = p.y - yhat;
+          return [i+1, p.x, p.y, p.x**2, p.x**3, p.x**4, p.x*p.y, p.x**2*p.y, yhat, e, e*e];
+        });
+        const infoP = [
+          ['NUMERIX — Regresión Polinomial','','© 2026 Fernando Granja & Alejandra Tinoco'],
+          [], ['n', pol.n], ['β₀', pol.b0], ['β₁', pol.b1], ['β₂', pol.b2],
+          ['Modelo', `Y = ${t6FmtCoef(pol.b0)} + ${t6FmtCoef(pol.b1)}·X + ${t6FmtCoef(pol.b2)}·X²`],
+          ['R²', pol.R2],
+        ];
+        XLSX.utils.book_append_sheet(wb,
+          XLSX.utils.aoa_to_sheet([...infoP, [], [hdrP], ...rowsP]),
+          'Regresion Polinomial');
+      }
+
+      XLSX.writeFile(wb, `NUMERIX_T6_AjusteCurvas.xlsx`);
+    };
+  });
+})();
+
+
+/* ══════════════════════════════════════════════════════════════
+   TEMA 7 — INTERPOLACIÓN POLINOMIAL
+   Newton por Diferencias Divididas · Lagrange
+   © 2026 Fernando Granja & Alejandra Tinoco
+══════════════════════════════════════════════════════════════ */
+
+const T7_COLOR  = '#7c3aed';   /* violeta */
+const T7_LIGHT  = '#ede9fe';
+const T7_DARK   = '#4c1d95';
+const T7_NEWTON = '#0ea5e9';   /* azul para Newton */
+const T7_LAG    = '#f59e0b';   /* ámbar para Lagrange */
+
+/* ── Estado T7 ──────────────────────────────────────────────── */
+const t7State = {
+  data:    [],       /* [{x, y}] */
+  xPred:   null,
+  mode:    'ambos',
+  newton:  null,     /* resultado Newton */
+  lagrange: null,    /* resultado Lagrange */
+  graph:   { canvas:null, ctx:null, xMin:-4, xMax:4, yMin:-10, yMax:10,
+             dragging:false, lastMouse:{x:0,y:0}, hoverOn:false }
+};
+
+/* ══════════════════════════════════════════════════════════════
+   NAVEGACIÓN INTERNA T7
+══════════════════════════════════════════════════════════════ */
+function t7GoTo(secId) {
+  document.querySelectorAll('.t7-sec').forEach(s => s.style.display = 'none');
+  document.querySelectorAll('.t7-nav').forEach(n => n.classList.remove('active'));
+  const sec = document.getElementById(secId);
+  if (sec) sec.style.display = 'block';
+  document.querySelectorAll(`[data-t7="${secId}"]`).forEach(el => el.classList.add('active'));
+  /* Mantener download bar si ya hay resultados */
+  const dl = document.getElementById('t7-download-bar');
+  if (dl && dl.dataset.ready === '1' && secId !== 't7-input') dl.style.display = 'block';
+}
+window.t7GoTo = t7GoTo;
+
+/* ══════════════════════════════════════════════════════════════
+   TABLA DE DATOS DINÁMICA
+══════════════════════════════════════════════════════════════ */
+function t7RenderDataTable() {
+  const tbody = document.getElementById('t7DataBody');
+  if (!tbody) return;
+  tbody.innerHTML = t7State.data.map((pt, i) => `
+    <tr>
+      <td style="text-align:center;font-family:var(--font-mono);font-size:.8rem;
+                 color:var(--gray-400);">${i}</td>
+      <td><input type="number" class="t6-cell-input" id="t7_x_${i}"
+          value="${pt.x}" step="any" onchange="t7UpdateCell(${i},'x',this.value)" /></td>
+      <td><input type="number" class="t6-cell-input" id="t7_y_${i}"
+          value="${pt.y}" step="any" onchange="t7UpdateCell(${i},'y',this.value)" /></td>
+    </tr>`).join('');
+}
+
+function t7UpdateCell(i, field, val) {
+  if (t7State.data[i]) t7State.data[i][field] = parseFloat(val) || 0;
+}
+window.t7UpdateCell = t7UpdateCell;
+
+function t7ReadData() {
+  t7State.data.forEach((pt, i) => {
+    const xEl = document.getElementById(`t7_x_${i}`);
+    const yEl = document.getElementById(`t7_y_${i}`);
+    if (xEl) pt.x = parseFloat(xEl.value) || 0;
+    if (yEl) pt.y = parseFloat(yEl.value) || 0;
+  });
+  return t7State.data.map(p => ({ x: p.x, y: p.y }));
+}
+
+/* ══════════════════════════════════════════════════════════════
+   ALGORITMO — NEWTON DIFERENCIAS DIVIDIDAS
+══════════════════════════════════════════════════════════════ */
+function t7Newton(pts, xPred) {
+  const n  = pts.length;
+  const xs = pts.map(p => p.x);
+  const ys = pts.map(p => p.y);
+
+  /* Construir tabla completa de DD [n × n] */
+  /* dd[i][0] = f(xᵢ),  dd[i][j] = f[xᵢ, …, xᵢ₊ⱼ] */
+  const dd = Array.from({ length: n }, (_, i) => new Array(n).fill(null));
+  for (let i = 0; i < n; i++) dd[i][0] = ys[i];
+
+  for (let j = 1; j < n; j++) {
+    for (let i = 0; i < n - j; i++) {
+      dd[i][j] = (dd[i + 1][j - 1] - dd[i][j - 1]) / (xs[i + j] - xs[i]);
+    }
+  }
+
+  /* Coeficientes: primera fila de cada orden */
+  const coefs = Array.from({ length: n }, (_, j) => dd[0][j]);
+
+  /* Evaluar Pₙ(xPred) por algoritmo de Horner anidado */
+  const evalNewton = (x) => {
+    let result = coefs[n - 1];
+    for (let i = n - 2; i >= 0; i--) {
+      result = result * (x - xs[i]) + coefs[i];
+    }
+    return result;
+  };
+
+  const pred = evalNewton(xPred);
+
+  /* Construir string del polinomio expandido */
+  const polyStr = t7NewtonPolyStr(coefs, xs, n);
+
+  return { n, pts, xs, ys, dd, coefs, pred, xPred, polyStr, evalFn: evalNewton };
+}
+
+/** Construye string legible del polinomio de Newton */
+function t7NewtonPolyStr(coefs, xs, n) {
+  const fmt = v => {
+    if (Math.abs(v) > 9999 || (Math.abs(v) < 0.0001 && v !== 0)) return v.toExponential(4);
+    return parseFloat(v.toFixed(6)).toString();
+  };
+  let parts = [];
+  for (let i = 0; i < n; i++) {
+    if (Math.abs(coefs[i]) < 1e-12) continue;
+    let term = fmt(coefs[i]);
+    for (let j = 0; j < i; j++) {
+      const xj = xs[j];
+      term += xj === 0 ? '·x' : xj < 0 ? `·(x+${fmt(Math.abs(xj))})` : `·(x−${fmt(xj)})`;
+    }
+    parts.push(term);
+  }
+  return parts.length ? parts.join(' + ').replace(/\+ -/g, '− ') : '0';
+}
+
+/* ══════════════════════════════════════════════════════════════
+   ALGORITMO — LAGRANGE
+══════════════════════════════════════════════════════════════ */
+function t7Lagrange(pts, xPred) {
+  const n  = pts.length;
+  const xs = pts.map(p => p.x);
+  const ys = pts.map(p => p.y);
+
+  /* Calcular cada Lᵢ(xPred) y guardar factores para mostrar */
+  const bases = xs.map((xi, i) => {
+    let num = 1, den = 1;
+    const factors = [];
+    for (let j = 0; j < n; j++) {
+      if (j === i) continue;
+      num *= (xPred - xs[j]);
+      den *= (xi - xs[j]);
+      factors.push({ xj: xs[j], xi, xPred });
+    }
+    const Li = den !== 0 ? num / den : 0;
+    return { i, xi, yi: ys[i], num, den, Li, factors, contrib: ys[i] * Li };
+  });
+
+  const pred = bases.reduce((s, b) => s + b.contrib, 0);
+
+  /* Función de evaluación para la gráfica */
+  const evalFn = (x) => {
+    let sum = 0;
+    for (let i = 0; i < n; i++) {
+      let num = 1, den = 1;
+      for (let j = 0; j < n; j++) {
+        if (j === i) continue;
+        num *= (x - xs[j]);
+        den *= (xs[i] - xs[j]);
+      }
+      sum += ys[i] * (den !== 0 ? num / den : 0);
+    }
+    return sum;
+  };
+
+  return { n, pts, xs, ys, bases, pred, xPred, evalFn };
+}
+
+/* ══════════════════════════════════════════════════════════════
+   FORMATO AUXILIAR T7
+══════════════════════════════════════════════════════════════ */
+const t7Fmt  = (v, d = 6) => isNaN(v) ? '—' : Number(v).toFixed(d);
+const t7FmtC = (v) => {
+  if (Math.abs(v) > 9999 || (Math.abs(v) < 0.0001 && v !== 0)) return v.toExponential(4);
+  return parseFloat(Number(v).toFixed(8)).toString();
+};
+
+/* ══════════════════════════════════════════════════════════════
+   RENDERIZADO — NEWTON
+══════════════════════════════════════════════════════════════ */
+
+/** Sección 1: Tabla de diferencias divididas */
+function t7RenderNewtonTabla(res) {
+  const sec = document.getElementById('t7-newton-tabla');
+  if (!sec) return;
+  const { n, xs, ys, dd } = res;
+
+  let html = `
+  <div class="page-header">
+    <h2>Newton — Tabla de Diferencias Divididas</h2>
+    <p>Construcción escalonada de las diferencias divididas f[xᵢ, …, xⱼ].<br>
+       Los coeficientes del polinomio son la <strong>primera fila diagonal</strong> (celdas resaltadas).</p>
+  </div>
+  <div class="card" style="padding:0;overflow:hidden;margin-bottom:1.25rem;">
+    <div class="card-header" style="padding:.75rem 1.25rem;border-bottom:1px solid var(--border);">
+      <div class="card-header-icon t7-icon">📋</div>
+      <div>
+        <div class="card-title">Tabla de Diferencias Divididas — ${n} puntos · Grado ${n-1} (${['','Lineal','Cuadrático','Cúbico','Cuártico','Quíntico'][n-1]||'Grado '+(n-1)})</div>
+        <div class="card-subtitle">f[xᵢ] = orden 0 · f[xᵢ,xᵢ₊₁] = orden 1 · f[xᵢ,xᵢ₊₁,xᵢ₊₂] = orden 2 …</div>
+      </div>
+    </div>
+    <div style="overflow-x:auto;">
+    <table style="width:100%;border-collapse:collapse;font-family:var(--font-mono);font-size:.78rem;">
+      <thead>
+        <tr style="background:${T7_LIGHT};">
+          <th style="padding:.5rem .75rem;color:${T7_DARK};border-bottom:2px solid ${T7_COLOR}33;">i</th>
+          <th style="padding:.5rem .75rem;color:${T7_DARK};border-bottom:2px solid ${T7_COLOR}33;">xᵢ</th>
+          <th style="padding:.5rem .75rem;color:${T7_DARK};border-bottom:2px solid ${T7_COLOR}33;">f(xᵢ) — Orden 0</th>`;
+
+  for (let j = 1; j < n; j++) {
+    html += `<th style="padding:.5rem .75rem;color:${T7_DARK};border-bottom:2px solid ${T7_COLOR}33;">
+      Orden ${j}${j === 1 ? '' : ''}</th>`;
+  }
+  html += `</tr></thead><tbody>`;
+
+  for (let i = 0; i < n; i++) {
+    html += `<tr style="${i % 2 === 1 ? 'background:var(--gray-50)' : ''}">
+      <td style="text-align:center;padding:.4rem .75rem;font-weight:700;color:${T7_COLOR};">${i}</td>
+      <td style="text-align:right;padding:.4rem .75rem;font-weight:600;">${t7Fmt(xs[i], 4)}</td>`;
+
+    for (let j = 0; j < n; j++) {
+      const val = dd[i][j];
+      const isCoef = (i === 0);    /* primera fila = coeficientes */
+      const isDiag = (i + j < n); /* dentro del triángulo válido */
+
+      if (!isDiag) {
+        html += `<td style="padding:.4rem .75rem;text-align:center;color:var(--gray-300);">—</td>`;
+      } else {
+        const bg    = isCoef ? `background:${T7_LIGHT};` : '';
+        const fw    = isCoef ? 'font-weight:700;' : '';
+        const color = isCoef ? `color:${T7_DARK};` : '';
+        const badge = isCoef ? `<span style="display:inline-block;margin-left:.3rem;
+          background:${T7_COLOR};color:#fff;font-size:.6rem;padding:.1rem .3rem;
+          border-radius:3px;vertical-align:middle;">a${j}</span>` : '';
+        html += `<td style="padding:.4rem .75rem;text-align:right;${bg}${fw}${color}">
+          ${t7Fmt(val, 6)}${badge}</td>`;
+      }
+    }
+    html += `</tr>`;
+  }
+
+  html += `</tbody></table></div>
+  </div>
+
+  <!-- Coeficientes extraídos -->
+  <div class="card" style="margin-bottom:1.25rem;background:linear-gradient(135deg,${T7_LIGHT},#f5f3ff);
+    border:2px solid ${T7_COLOR}33;">
+    <div class="card-header">
+      <div class="card-header-icon t7-icon">🔑</div>
+      <div><div class="card-title">Coeficientes del Polinomio</div>
+      <div class="card-subtitle">Primera diagonal — se usan en la fórmula de Newton</div></div>
+    </div>
+    <div style="display:flex;flex-wrap:wrap;gap:.625rem;padding:.5rem 1.25rem 1.25rem;">`;
+
+  res.coefs.forEach((c, j) => {
+    html += `<div style="border-radius:var(--radius-sm);border:2px solid ${T7_COLOR}33;
+                border-left:5px solid ${T7_COLOR};padding:.625rem .875rem;background:var(--gray-50);">
+      <div style="font-family:var(--font-main);font-size:.7rem;font-weight:700;
+                  color:${T7_DARK};text-transform:uppercase;">a${j} = f[x₀…x${j}]</div>
+      <div style="font-family:var(--font-mono);font-size:.95rem;font-weight:700;
+                  color:${T7_COLOR};">${t7Fmt(c, 8)}</div>
+    </div>`;
+  });
+
+  html += `</div></div>
+  <div style="text-align:right;">
+    <button class="btn t7-btn-primary" onclick="t7GoTo('t7-newton-pol')">
+      Siguiente: Polinomio →
+    </button>
+  </div>`;
+  sec.innerHTML = html;
+}
+
+/** Sección 2: Polinomio de Newton + evaluación */
+function t7RenderNewtonPol(res) {
+  const sec = document.getElementById('t7-newton-pol');
+  if (!sec) return;
+  const { n, xs, coefs, pred, xPred } = res;
+
+  /* Construir cada término del polinomio con sustitución */
+  let termsHtml = '';
+  for (let i = 0; i < n; i++) {
+    if (Math.abs(coefs[i]) < 1e-12) continue;
+    let termLabel = `a${i}`;
+    let factorsLabel = '';
+    for (let j = 0; j < i; j++) {
+      const xj = xs[j];
+      const sign = xj < 0 ? `+${t7Fmt(Math.abs(xj),4)}` : xj === 0 ? '' : `−${t7Fmt(xj,4)}`;
+      factorsLabel += `·(x${sign === '' ? '' : sign})`;
+    }
+
+    /* Evaluar el término en xPred */
+    let termVal = coefs[i];
+    for (let j = 0; j < i; j++) termVal *= (xPred - xs[j]);
+
+    termsHtml += `
+    <div class="t6-formula-row" style="border-left-color:${T7_COLOR};">
+      <div style="font-family:var(--font-mono);font-size:.88rem;font-weight:700;
+                  color:${T7_COLOR};min-width:40px;">T${i}:</div>
+      <div style="font-family:var(--font-mono);font-size:.85rem;flex:1;">
+        ${t7FmtC(coefs[i])}${factorsLabel}
+      </div>
+      <div style="font-family:var(--font-mono);font-size:.85rem;color:var(--gray-500);">
+        = <strong>${t7Fmt(termVal, 6)}</strong>
+      </div>
+    </div>`;
+  }
+
+  let html = `
+  <div class="page-header">
+    <h2>Newton — Polinomio ${['','Lineal','Cuadrático','Cúbico','Cuártico','Quíntico'][n-1]||'Grado '+(n-1)}</h2>
+    <p>Sustitución de coeficientes y evaluación en x = ${xPred} · Grado ${n-1}</p>
+  </div>
+
+  <!-- Forma general -->
+  <div class="card t6-step-card" style="margin-bottom:1.25rem;border-left:5px solid ${T7_COLOR};">
+    <div class="card-header">
+      <div class="card-header-icon t7-icon">Pₙ</div>
+      <div><div class="card-title">Forma General del Polinomio de Newton</div></div>
+    </div>
+    <div class="t6-step-body" style="font-family:var(--font-mono);font-size:.88rem;">
+      <div style="color:var(--gray-500);margin-bottom:.5rem;">P${n-1}(x) = a₀ + a₁(x−x₀) + a₂(x−x₀)(x−x₁) + …</div>
+      <div style="font-weight:700;color:${T7_DARK};word-break:break-all;">
+        P${n-1}(x) = ${res.polyStr}
+      </div>
+    </div>
+  </div>
+
+  <!-- Términos con valores -->
+  <div class="card" style="margin-bottom:1.25rem;">
+    <div class="card-header">
+      <div class="card-header-icon t7-icon">🔢</div>
+      <div>
+        <div class="card-title">Evaluación en x = ${xPred}</div>
+        <div class="card-subtitle">Contribución de cada término Tᵢ</div>
+      </div>
+    </div>
+    <div style="padding:.5rem 1.25rem 1rem;">${termsHtml}</div>
+  </div>
+
+  <!-- Resultado final -->
+  <div class="card" style="margin-bottom:1.25rem;background:linear-gradient(135deg,${T7_LIGHT},#f5f3ff);
+    border:2px solid ${T7_COLOR}44;">
+    <div class="card-header">
+      <div class="card-header-icon t7-icon">🎯</div>
+      <div><div class="card-title">Resultado — Newton</div></div>
+    </div>
+    <div style="padding:.5rem 1.25rem 1.25rem;text-align:center;">
+      <div style="font-family:var(--font-mono);font-size:1.4rem;font-weight:700;color:${T7_COLOR};">
+        P${n-1}(${xPred}) = <span style="color:${T7_NEWTON};">${t7Fmt(pred, 8)}</span>
+      </div>
+    </div>
+  </div>
+
+  <div style="display:flex;gap:.75rem;justify-content:flex-end;flex-wrap:wrap;">
+    <button class="btn btn-secondary" onclick="t7GoTo('t7-newton-tabla')">← Tabla DD</button>
+    <button class="btn t7-btn-primary" onclick="t7GoTo('t7-lag-bases')">Siguiente: Lagrange →</button>
+  </div>`;
+  sec.innerHTML = html;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   RENDERIZADO — LAGRANGE
+══════════════════════════════════════════════════════════════ */
+
+/** Sección 3: Bases de Lagrange Lᵢ(x) */
+function t7RenderLagBases(res) {
+  const sec = document.getElementById('t7-lag-bases');
+  if (!sec) return;
+  const { n, xs, ys, bases, xPred } = res;
+
+  let html = `
+  <div class="page-header">
+    <h2>Lagrange — Funciones Base Lᵢ(x) · Grado ${n-1}</h2>
+    <p>Cada Lᵢ(x) vale 1 en xᵢ y 0 en todos los demás puntos.<br>
+       Se evalúan en x = ${xPred}.</p>
+  </div>`;
+
+  bases.forEach(b => {
+    const COLORS = [T7_COLOR, T7_NEWTON, T7_LAG, '#ef4444', '#10b981'];
+    const col = COLORS[b.i % COLORS.length];
+
+    /* Construir string del numerador y denominador */
+    let numParts = [], denParts = [];
+    for (let j = 0; j < n; j++) {
+      if (j === b.i) continue;
+      const xj = xs[j];
+      const xjStr = xj < 0 ? `+${Math.abs(xj)}` : xj === 0 ? '' : `−${xj}`;
+      numParts.push(`(${xPred}${xjStr !== '' ? xjStr.replace('+','−').replace('−','+') : ''})`);
+
+      /* Denominador con valores reales */
+      const diff = b.xi - xj;
+      denParts.push(`(${t7FmtC(b.xi)}−${t7FmtC(xj)}) = ${t7FmtC(diff)}`);
+    }
+
+    html += `
+    <div class="card t6-step-card" style="margin-bottom:1rem;border-left:5px solid ${col};">
+      <div class="card-header">
+        <div class="card-header-icon" style="background:${col};width:38px;height:38px;
+          border-radius:10px;display:flex;align-items:center;justify-content:center;
+          color:#fff;font-weight:700;font-size:.85rem;flex-shrink:0;">L${b.i}</div>
+        <div>
+          <div class="card-title">L${b.i}(x) — punto (x${b.i} = ${b.xi}, f(x${b.i}) = ${b.yi})</div>
+        </div>
+      </div>
+      <div class="t6-step-body">
+        <!-- Fórmula simbólica -->
+        <div style="font-family:var(--font-mono);font-size:.82rem;color:var(--gray-600);margin-bottom:.25rem;">
+          L${b.i}(x) = ∏ (x−xⱼ)/(x${b.i}−xⱼ)  para j ≠ ${b.i}
+        </div>
+        <!-- Sustitución numérica -->
+        <div style="font-family:var(--font-mono);font-size:.82rem;
+                    background:var(--gray-50);border-radius:var(--radius-sm);padding:.5rem .75rem;">
+          <div style="color:var(--gray-500);margin-bottom:.3rem;">Sustituyendo x = ${xPred}:</div>
+          <div style="display:flex;flex-direction:column;gap:.2rem;">
+            <div>Numerador: <span style="color:${col};">${t7Fmt(b.num, 8)}</span></div>
+            <div>Denominador: <span style="color:${col};">${t7Fmt(b.den, 8)}</span></div>
+          </div>
+        </div>
+        <!-- Resultado L_i(xPred) -->
+        <div style="font-family:var(--font-mono);font-size:.9rem;">
+          L${b.i}(${xPred}) = ${t7Fmt(b.num,6)} / ${t7Fmt(b.den,6)} =
+          <strong style="color:${col};">${t7Fmt(b.Li, 8)}</strong>
+        </div>
+        <!-- Contribución -->
+        <div style="font-family:var(--font-mono);font-size:.85rem;color:var(--gray-600);">
+          f(x${b.i})·L${b.i}(${xPred}) = ${t7FmtC(b.yi)} · ${t7Fmt(b.Li, 6)} =
+          <strong style="color:${col};">${t7Fmt(b.contrib, 8)}</strong>
+        </div>
+      </div>
+    </div>`;
+  });
+
+  html += `
+  <div style="text-align:right;">
+    <button class="btn t7-btn-primary" onclick="t7GoTo('t7-lag-pol')">Siguiente: Polinomio →</button>
+  </div>`;
+  sec.innerHTML = html;
+}
+
+/** Sección 4: Polinomio de Lagrange + resultado final */
+function t7RenderLagPol(res, newtonRes) {
+  const sec = document.getElementById('t7-lag-pol');
+  if (!sec) return;
+  const { n, bases, pred, xPred } = res;
+
+  /* Suma de contribuciones */
+  let sumaHtml = bases.map(b => {
+    const COLORS = [T7_COLOR, T7_NEWTON, T7_LAG, '#ef4444', '#10b981'];
+    const col = COLORS[b.i % COLORS.length];
+    return `<span style="color:${col};">${t7Fmt(b.contrib, 6)}</span>`;
+  }).join(' + ');
+
+  const match = newtonRes && Math.abs(newtonRes.pred - pred) < 1e-6;
+
+  let html = `
+  <div class="page-header">
+    <h2>Lagrange — Resultado Final</h2>
+    <p>Suma ponderada de las funciones base · Evaluación en x = ${xPred}</p>
+  </div>
+
+  <!-- Fórmula suma -->
+  <div class="card t6-step-card" style="margin-bottom:1.25rem;border-left:5px solid ${T7_LAG};">
+    <div class="card-header">
+      <div class="card-header-icon" style="background:${T7_LAG};width:38px;height:38px;border-radius:10px;
+        display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;">Pₙ</div>
+      <div><div class="card-title">Suma de contribuciones f(xᵢ)·Lᵢ(${xPred})</div></div>
+    </div>
+    <div class="t6-step-body">
+      <div style="font-family:var(--font-mono);font-size:.88rem;">
+        P${n-1}(${xPred}) = ${sumaHtml}
+      </div>
+      <div style="font-family:var(--font-mono);font-size:.88rem;margin-top:.25rem;">
+        = <strong style="color:${T7_LAG};font-size:1.1rem;">${t7Fmt(pred, 8)}</strong>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tabla comparativa si hay ambos métodos -->
+  ${newtonRes ? `
+  <div class="card" style="margin-bottom:1.25rem;background:linear-gradient(135deg,${T7_LIGHT},#fffbeb);
+    border:2px solid ${match ? '#10b981' : '#ef4444'}44;">
+    <div class="card-header">
+      <div class="card-header-icon" style="background:${match?'#10b981':'#ef4444'};width:38px;height:38px;
+        border-radius:10px;display:flex;align-items:center;justify-content:center;
+        color:#fff;font-size:1.1rem;">
+        ${match ? '✓' : '⚠'}
+      </div>
+      <div>
+        <div class="card-title">Comparación Newton vs Lagrange</div>
+        <div class="card-subtitle">${match ? 'Ambos métodos producen el mismo resultado ✓' : 'Diferencia detectada — revisar datos'}</div>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;padding:.5rem 1.25rem 1.25rem;">
+      <div style="background:${T7_LIGHT};border-radius:var(--radius-sm);padding:.875rem;text-align:center;">
+        <div style="font-size:.72rem;font-weight:700;color:${T7_DARK};text-transform:uppercase;margin-bottom:.25rem;">
+          Newton — P${n-1}(${xPred})
+        </div>
+        <div style="font-family:var(--font-mono);font-size:1rem;font-weight:700;color:${T7_NEWTON};">
+          ${t7Fmt(newtonRes.pred, 8)}
+        </div>
+      </div>
+      <div style="background:#fffbeb;border-radius:var(--radius-sm);padding:.875rem;text-align:center;">
+        <div style="font-size:.72rem;font-weight:700;color:#92400e;text-transform:uppercase;margin-bottom:.25rem;">
+          Lagrange — P${n-1}(${xPred})
+        </div>
+        <div style="font-family:var(--font-mono);font-size:1rem;font-weight:700;color:${T7_LAG};">
+          ${t7Fmt(pred, 8)}
+        </div>
+      </div>
+    </div>
+  </div>` : `
+  <!-- Solo Lagrange -->
+  <div class="card" style="margin-bottom:1.25rem;background:linear-gradient(135deg,${T7_LIGHT},#fffbeb);
+    border:2px solid ${T7_LAG}44;">
+    <div class="card-header">
+      <div class="card-header-icon" style="background:${T7_LAG};width:38px;height:38px;border-radius:10px;
+        display:flex;align-items:center;justify-content:center;color:#fff;font-size:1.1rem;">🎯</div>
+      <div><div class="card-title">Resultado Final — Lagrange</div></div>
+    </div>
+    <div style="padding:.5rem 1.25rem 1.25rem;text-align:center;">
+      <div style="font-family:var(--font-mono);font-size:1.4rem;font-weight:700;color:${T7_LAG};">
+        P${n-1}(${xPred}) = ${t7Fmt(pred, 8)}
+      </div>
+    </div>
+  </div>`}
+
+  <div style="display:flex;gap:.75rem;justify-content:flex-end;flex-wrap:wrap;">
+    <button class="btn btn-secondary" onclick="t7GoTo('t7-lag-bases')">← Bases Lᵢ</button>
+    <button class="btn t7-btn-primary" onclick="t7GoTo('t7-grafica');setTimeout(t7DrawGraph,80);">
+      📈 Ver Gráfica →
+    </button>
+  </div>`;
+  sec.innerHTML = html;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   GRÁFICA INTERACTIVA T7
+══════════════════════════════════════════════════════════════ */
+function t7InitGraph() {
+  const g = t7State.graph;
+  const c = document.getElementById('t7Canvas');
+  if (!c || g.canvas) return;
+  g.canvas = c; g.ctx = c.getContext('2d');
+
+  const resize = () => {
+    const w = c.parentElement.clientWidth || 700;
+    c.width = w; c.height = Math.max(340, Math.round(w * 0.52));
+    t7DrawGraph();
+  };
+  resize();
+  window.addEventListener('resize', resize);
+
+  c.addEventListener('mousedown', e => { g.dragging = true; g.lastMouse = { x: e.clientX, y: e.clientY }; c.style.cursor='grabbing'; });
+  c.addEventListener('mouseup',   () => { g.dragging = false; c.style.cursor='crosshair'; });
+  c.addEventListener('mouseleave',() => { g.dragging = false; g.hoverOn = false; c.style.cursor='crosshair';
+    const tip = document.getElementById('t7Tooltip'); if (tip) tip.style.display='none'; t7DrawGraph(); });
+  c.addEventListener('mousemove', e => {
+    const rect = c.getBoundingClientRect();
+    const px = (e.clientX - rect.left) * (c.width / rect.width);
+    const py = (e.clientY - rect.top)  * (c.height / rect.height);
+    const mw = t7ToWorld(px, py);
+    g.hoverOn = true;
+    const coord = document.getElementById('t7Coords');
+    if (coord) coord.innerHTML = `x = ${mw.x.toFixed(3)} &nbsp; y = ${mw.y.toFixed(3)}`;
+    if (g.dragging) {
+      const dx = (e.clientX - g.lastMouse.x) / rect.width  * (g.xMax - g.xMin);
+      const dy = (e.clientY - g.lastMouse.y) / rect.height * (g.yMax - g.yMin);
+      g.xMin -= dx; g.xMax -= dx; g.yMin += dy; g.yMax += dy;
+      g.lastMouse = { x: e.clientX, y: e.clientY };
+    }
+    t7DrawGraph();
+  });
+  c.addEventListener('wheel', e => {
+    e.preventDefault();
+    const f = e.deltaY > 0 ? 1.12 : 0.89;
+    const rect = c.getBoundingClientRect();
+    const { x: wx, y: wy } = t7ToWorld(
+      (e.clientX - rect.left) * (c.width / rect.width),
+      (e.clientY - rect.top)  * (c.height / rect.height)
+    );
+    g.xMin = wx + (g.xMin-wx)*f; g.xMax = wx + (g.xMax-wx)*f;
+    g.yMin = wy + (g.yMin-wy)*f; g.yMax = wy + (g.yMax-wy)*f;
+    t7DrawGraph();
+  }, { passive:false });
+}
+
+function t7ToCanvas(wx, wy) {
+  const g = t7State.graph;
+  const PAD = { t:24, r:24, b:44, l:60 };
+  const W = g.canvas.width, H = g.canvas.height;
+  return {
+    x: PAD.l + (wx - g.xMin) / (g.xMax - g.xMin) * (W - PAD.l - PAD.r),
+    y: PAD.t + (1 - (wy - g.yMin) / (g.yMax - g.yMin)) * (H - PAD.t - PAD.b)
+  };
+}
+function t7ToWorld(px, py) {
+  const g = t7State.graph;
+  const PAD = { t:24, r:24, b:44, l:60 };
+  const W = g.canvas.width, H = g.canvas.height;
+  return {
+    x: g.xMin + (px - PAD.l) / (W - PAD.l - PAD.r) * (g.xMax - g.xMin),
+    y: g.yMin + (1 - (py - PAD.t) / (H - PAD.t - PAD.b)) * (g.yMax - g.yMin)
+  };
+}
+
+function t7DrawGraph() {
+  const g  = t7State.graph;
+  const nr = t7State.newton;
+  const lr = t7State.lagrange;
+  const evalFn = nr?.evalFn || lr?.evalFn;
+  if (!g.canvas || !evalFn) return;
+
+  const isDark = document.body.classList.contains('dark-mode');
+  const W = g.canvas.width, H = g.canvas.height;
+  const ctx = g.ctx;
+  const PAD = { t:24, r:24, b:44, l:60 };
+  const PW = W-PAD.l-PAD.r, PH = H-PAD.t-PAD.b;
+  const niceStep = (range, tgt) => {
+    const r = range/tgt, m = Math.pow(10, Math.floor(Math.log10(r)));
+    const n2 = r/m; return (n2<1.5?1:n2<3.5?2:n2<7.5?5:10)*m;
+  };
+
+  ctx.fillStyle = isDark ? '#0f172a' : '#fff';
+  ctx.fillRect(0, 0, W, H);
+
+  /* Grid */
+  const xSt = niceStep(g.xMax-g.xMin, 10), ySt = niceStep(g.yMax-g.yMin, 8);
+  ctx.strokeStyle = isDark ? 'rgba(148,163,184,.08)' : '#f1f5f9'; ctx.lineWidth=1;
+  for (let gx = Math.ceil(g.xMin/xSt)*xSt; gx<=g.xMax; gx+=xSt) {
+    const {x:px}=t7ToCanvas(gx,0); ctx.beginPath(); ctx.moveTo(px,PAD.t); ctx.lineTo(px,PAD.t+PH); ctx.stroke();
+  }
+  for (let gy = Math.ceil(g.yMin/ySt)*ySt; gy<=g.yMax; gy+=ySt) {
+    const {y:py}=t7ToCanvas(0,gy); ctx.beginPath(); ctx.moveTo(PAD.l,py); ctx.lineTo(PAD.l+PW,py); ctx.stroke();
+  }
+
+  /* Ejes */
+  ctx.strokeStyle = isDark?'rgba(148,163,184,.3)':'#cbd5e1'; ctx.lineWidth=1.5;
+  const {y:axY}=t7ToCanvas(0,0), {x:axX}=t7ToCanvas(0,0);
+  if (g.yMin<=0&&g.yMax>=0) { ctx.beginPath(); ctx.moveTo(PAD.l,axY); ctx.lineTo(PAD.l+PW,axY); ctx.stroke(); }
+  if (g.xMin<=0&&g.xMax>=0) { ctx.beginPath(); ctx.moveTo(axX,PAD.t); ctx.lineTo(axX,PAD.t+PH); ctx.stroke(); }
+
+  /* Labels ejes */
+  ctx.fillStyle = isDark?'rgba(148,163,184,.6)':'#94a3b8';
+  ctx.font='10px "JetBrains Mono",monospace'; ctx.textAlign='center'; ctx.textBaseline='middle';
+  const lbY=Math.max(PAD.t+10,Math.min(PAD.t+PH-4,axY+16));
+  const lbX=Math.max(PAD.l+28,Math.min(PAD.l+PW-4,axX-8));
+  for (let gx=Math.ceil(g.xMin/xSt)*xSt; gx<=g.xMax; gx+=xSt) {
+    if (Math.abs(gx)<xSt*.01) continue;
+    const {x:px}=t7ToCanvas(gx,0); ctx.fillText(gx%1===0?gx:gx.toFixed(1), px, lbY);
+  }
+  ctx.textAlign='right';
+  for (let gy=Math.ceil(g.yMin/ySt)*ySt; gy<=g.yMax; gy+=ySt) {
+    if (Math.abs(gy)<ySt*.01) continue;
+    const {y:py}=t7ToCanvas(0,gy); ctx.fillText(gy%1===0?gy:gy.toFixed(1), lbX, py);
+  }
+  ctx.textBaseline='alphabetic';
+
+  /* Curva del polinomio interpolante */
+  const STEPS = 300;
+  const dx = (g.xMax - g.xMin) / STEPS;
+  const colors = nr && lr ? [T7_NEWTON, T7_LAG] : [T7_COLOR];
+  const fns    = nr && lr ? [nr.evalFn, lr.evalFn] : [evalFn];
+  const labels = nr && lr ? ['Newton','Lagrange'] : [nr ? 'Newton' : 'Lagrange'];
+  const dashes = [[], [5,3]];
+
+  fns.forEach((fn, fi) => {
+    ctx.beginPath(); ctx.strokeStyle = colors[fi]; ctx.lineWidth=2.5;
+    if (dashes[fi].length) ctx.setLineDash(dashes[fi]); else ctx.setLineDash([]);
+    let first = true;
+    for (let k=0; k<=STEPS; k++) {
+      const wx = g.xMin + k*dx;
+      try {
+        const wy = fn(wx);
+        if (!isFinite(wy) || Math.abs(wy)>1e6) { first=true; continue; }
+        const {x:px,y:py}=t7ToCanvas(wx,wy);
+        if (first) { ctx.moveTo(px,py); first=false; } else ctx.lineTo(px,py);
+      } catch(e) { first=true; }
+    }
+    ctx.stroke(); ctx.setLineDash([]);
+  });
+
+  /* Puntos de datos */
+  const pts = t7State.data;
+  pts.forEach(p => {
+    const {x:px,y:py}=t7ToCanvas(p.x,p.y);
+    if (px<PAD.l-8||px>PAD.l+PW+8||py<PAD.t-8||py>PAD.t+PH+8) return;
+    ctx.beginPath(); ctx.arc(px,py,5.5,0,Math.PI*2);
+    ctx.fillStyle=T7_COLOR; ctx.fill();
+    ctx.strokeStyle='#fff'; ctx.lineWidth=1.5; ctx.stroke();
+    /* Etiqueta del punto */
+    ctx.fillStyle=isDark?'#e2e8f0':'#374151';
+    ctx.font='10px "JetBrains Mono",monospace'; ctx.textAlign='center';
+    ctx.fillText(`(${p.x},${p.y})`,px,py-10);
+  });
+
+  /* Punto predicho */
+  const xP = t7State.xPred;
+  const yP = evalFn(xP);
+  if (isFinite(yP)) {
+    const {x:ppx,y:ppy}=t7ToCanvas(xP,yP);
+    ctx.beginPath(); ctx.arc(ppx,ppy,7,0,Math.PI*2);
+    ctx.fillStyle='#ef4444'; ctx.fill();
+    ctx.strokeStyle='#fff'; ctx.lineWidth=2; ctx.stroke();
+    ctx.fillStyle='#ef4444'; ctx.font='bold 11px "Poppins",sans-serif'; ctx.textAlign='center';
+    ctx.fillText(`P(${xP})=${yP.toFixed(4)}`,ppx,ppy-13);
+  }
+
+  /* Leyenda */
+  ctx.font='11px "Poppins",sans-serif'; ctx.textBaseline='middle';
+  const ly=PAD.t+14; let lx=PAD.l+8;
+  ctx.fillStyle=T7_COLOR; ctx.beginPath(); ctx.arc(lx+5,ly,5,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle=isDark?'#e2e8f0':'#374151'; ctx.textAlign='left';
+  ctx.fillText('Datos', lx+14, ly); lx+=70;
+  fns.forEach((fn,fi) => {
+    ctx.strokeStyle=colors[fi]; ctx.lineWidth=2.5;
+    if (dashes[fi].length) ctx.setLineDash(dashes[fi]); else ctx.setLineDash([]);
+    ctx.beginPath(); ctx.moveTo(lx,ly); ctx.lineTo(lx+22,ly); ctx.stroke(); ctx.setLineDash([]);
+    ctx.fillStyle=isDark?'#e2e8f0':'#374151'; ctx.fillText(labels[fi], lx+27, ly);
+    lx += 90;
+  });
+  ctx.beginPath(); ctx.arc(lx+5,ly,5,0,Math.PI*2); ctx.fillStyle='#ef4444'; ctx.fill();
+  ctx.fillStyle=isDark?'#e2e8f0':'#374151'; ctx.fillText(`x=${xP}`, lx+14, ly);
+  ctx.textBaseline='alphabetic';
+
+  /* Watermark */
+  ctx.fillStyle=isDark?'rgba(124,58,237,.15)':'rgba(148,163,184,.4)';
+  ctx.font='600 11px "Poppins",sans-serif'; ctx.textAlign='right'; ctx.textBaseline='bottom';
+  ctx.fillText('NUMERIX © 2026',W-10,H-8); ctx.textBaseline='alphabetic';
+}
+window.t7DrawGraph = t7DrawGraph;
+
+function t7Zoom(f) {
+  const g=t7State.graph;
+  const cx=(g.xMin+g.xMax)/2, cy=(g.yMin+g.yMax)/2;
+  const hw=(g.xMax-g.xMin)/2*f, hh=(g.yMax-g.yMin)/2*f;
+  g.xMin=cx-hw; g.xMax=cx+hw; g.yMin=cy-hh; g.yMax=cy+hh;
+  t7DrawGraph();
+}
+window.t7Zoom = t7Zoom;
+
+function t7ResetView() {
+  const pts=t7State.data;
+  if (!pts.length) return;
+  const xs=pts.map(p=>p.x), ys=pts.map(p=>p.y);
+  const xr=Math.max(...xs)-Math.min(...xs)||2;
+  const yr=Math.max(...ys)-Math.min(...ys)||2;
+  const g=t7State.graph;
+  g.xMin=Math.min(...xs)-xr*.2; g.xMax=Math.max(...xs)+xr*.2;
+  g.yMin=Math.min(...ys)-yr*.3; g.yMax=Math.max(...ys)+yr*.3;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   FLUJO PRINCIPAL — BOTÓN INTERPOLAR
+══════════════════════════════════════════════════════════════ */
+document.addEventListener('DOMContentLoaded', () => {
+
+  /* Inicializar tabla con 3 filas */
+  t7State.data = [{x:-3,y:-2},{x:0,y:4},{x:1,y:2}];
+  t7RenderDataTable();
+
+  /* Navegación interna */
+  document.querySelectorAll('.t7-nav[data-t7]').forEach(el => {
+    el.addEventListener('click', () => t7GoTo(el.getAttribute('data-t7')));
+  });
+
+  /* Agregar / quitar filas */
+  document.getElementById('btnT7AddRow')?.addEventListener('click', () => {
+    t7State.data.push({ x: 0, y: 0 });
+    t7RenderDataTable();
+  });
+  document.getElementById('btnT7RemRow')?.addEventListener('click', () => {
+    if (t7State.data.length > 2) { t7State.data.pop(); t7RenderDataTable(); }
+  });
+
+  /* Ejemplo Newton (fotos 10-12: tabla de DD) */
+  document.getElementById('btnT7EjNewton')?.addEventListener('click', () => {
+    t7State.data = [{x:-3,y:-2},{x:0,y:4},{x:1,y:2}];
+    document.getElementById('t7XPred').value = '-1.5';
+    document.getElementById('t7Grado').value = '2';
+    document.querySelector('input[name="t7Mode"][value="ambos"]').checked = true;
+    t7RenderDataTable();
+    if (typeof t7UpdateGradoHint === 'function') t7UpdateGradoHint();
+    const gh = document.getElementById('t7GradoHint');
+    if (gh) gh.textContent = 'Modelo Cuadrático — usará los primeros 3 puntos de la tabla';
+    clearAlert('t7Alert');
+    showAlert('t7Alert','info','📋 Ejemplo Newton/Lagrange (cuadrático, 3 puntos). Presiona ▶ Interpolar.');
+  });
+
+  /* Ejemplo Lagrange (fotos 13-16: puntos (1,3) y (2,6)) */
+  document.getElementById('btnT7EjLag')?.addEventListener('click', () => {
+    t7State.data = [{x:1,y:3},{x:2,y:6}];
+    document.getElementById('t7XPred').value = '1.5';
+    document.getElementById('t7Grado').value = '1';
+    document.querySelector('input[name="t7Mode"][value="lagrange"]').checked = true;
+    t7RenderDataTable();
+    const gh = document.getElementById('t7GradoHint');
+    if (gh) gh.textContent = 'Modelo Lineal — usará los primeros 2 puntos de la tabla';
+    clearAlert('t7Alert');
+    showAlert('t7Alert','info','📋 Ejemplo Lagrange de clase — 2 puntos, grado 1. Presiona ▶ Interpolar.');
+  });
+
+  /* Mostrar/ocultar campos extra de Splines según modo */
+  const t7ModeRadios = document.querySelectorAll('input[name="t7Mode"]');
+  const t7SplExtra   = document.getElementById('t7SplExtra');
+  const t7UpdateMode = () => {
+    const mode = document.querySelector('input[name="t7Mode"]:checked')?.value;
+    if (t7SplExtra) t7SplExtra.style.display = mode === 'splines' ? 'block' : 'none';
+    /* Cambiar label del botón calcular */
+    const btn = document.getElementById('btnT7Calcular');
+    if (btn) btn.textContent = mode === 'splines' ? '▶ Construir Spline' : '▶ Interpolar';
+  };
+  t7ModeRadios.forEach(r => r.addEventListener('change', t7UpdateMode));
+  window.t7UpdateMode = t7UpdateMode;
+  t7UpdateMode();
+
+  /* Actualizar hint de grado dinámicamente */
+  const t7GradoSel = document.getElementById('t7Grado');
+  const t7GradoHint = document.getElementById('t7GradoHint');
+  const t7UpdateGradoHint = () => {
+    const g = parseInt(t7GradoSel?.value || 3);
+    const pts = g + 1;
+    const nombres = ['','Lineal','Cuadrático','Cúbico','Cuártico','Quíntico'];
+    if (t7GradoHint) t7GradoHint.textContent =
+      `Modelo ${nombres[g] || 'Grado '+g} — usará los primeros ${pts} punto${pts>1?'s':''} de la tabla`;
+  };
+  t7GradoSel?.addEventListener('change', t7UpdateGradoHint);
+  t7UpdateGradoHint();
+
+  /* Botón Interpolar */
+  document.getElementById('btnT7Calcular')?.addEventListener('click', () => {
+    clearAlert('t7Alert');
+    clearAlert('t7AlertGlobal');
+
+    const pts   = t7ReadData();
+    const xPred = parseFloat(document.getElementById('t7XPred')?.value);
+    const mode  = document.querySelector('input[name="t7Mode"]:checked')?.value || 'ambos';
+
+    /* ── Si modo = splines, derivar al flujo de Trazadores ── */
+    if (mode === 'splines') {
+      const xEvalSpl = parseFloat(document.getElementById('splXEval')?.value);
+      if (pts.length < 3) { showAlert('t7Alert','danger','El spline cúbico necesita al menos 3 puntos.'); return; }
+      if (isNaN(xEvalSpl)) { showAlert('t7Alert','danger','Ingresa el valor de x a evaluar para el spline.'); return; }
+      const ptsSorted = [...pts].sort((a,b) => a.x - b.x);
+      /* Verificar xᵢ distintos */
+      for (let i=1; i<ptsSorted.length; i++) {
+        if (ptsSorted[i].x <= ptsSorted[i-1].x) {
+          showAlert('t7Alert','danger','Los xᵢ deben ser distintos entre sí.'); return;
+        }
+      }
+      if (xEvalSpl < ptsSorted[0].x || xEvalSpl > ptsSorted[ptsSorted.length-1].x) {
+        showAlert('t7Alert','warning',`⚠ x = ${xEvalSpl} está fuera del rango [${ptsSorted[0].x}, ${ptsSorted[ptsSorted.length-1].x}].`);
+      }
+      try {
+        splState.data   = ptsSorted;
+        const res = splCompute(ptsSorted, xEvalSpl);
+        splState.result = res;
+        splRenderHi(res);
+        splRenderSistema(res);
+        splRenderCoef(res);
+        splRenderEval(res);
+        splResetView();
+        t7GoTo('t7-splines-hi');
+        const dl = document.getElementById('t7-download-bar');
+        if (dl) { dl.dataset.ready = '1'; dl.style.display = 'block'; }
+        showAlert('t7AlertGlobal','success',
+          `✓ Spline Cúbico Natural — ${res.n} tramos · S(${xEvalSpl}) = ${t7Fmt(res.yEval,8)} · Tramo S${res.tramIdx}`);
+      } catch(e) { showAlert('t7Alert','danger','Error: ' + e.message); }
+      return;
+    }
+
+    const grado  = parseInt(document.getElementById('t7Grado')?.value || 3);
+    const nPts   = grado + 1;   /* puntos necesarios = grado + 1 */
+
+    if (pts.length < 2) { showAlert('t7Alert','danger','Se necesitan al menos 2 puntos.'); return; }
+    if (pts.length < nPts) {
+      showAlert('t7Alert','danger',
+        `Para un polinomio de grado ${grado} se necesitan ${nPts} puntos. Tienes ${pts.length} — agrega más puntos o reduce el grado.`);
+      return;
+    }
+    if (isNaN(xPred)) { showAlert('t7Alert','danger','Ingresa el valor de x a predecir.'); return; }
+
+    /* Tomar solo los primeros nPts puntos */
+    const ptsUsados = pts.slice(0, nPts);
+
+    /* Verificar xᵢ distintos entre los puntos usados */
+    const xs = ptsUsados.map(p => p.x);
+    const xSet = new Set(xs.map(v => v.toFixed(10)));
+    if (xSet.size !== ptsUsados.length) {
+      showAlert('t7Alert','danger','Los valores de xᵢ deben ser distintos entre sí.'); return;
+    }
+
+    try {
+      t7State.xPred = xPred;
+      t7State.grado = grado;
+      t7State.newton   = null;
+      t7State.lagrange = null;
+
+      if (mode === 'newton' || mode === 'ambos') {
+        t7State.newton = t7Newton(ptsUsados, xPred);
+        t7RenderNewtonTabla(t7State.newton);
+        t7RenderNewtonPol(t7State.newton);
+      }
+      if (mode === 'lagrange' || mode === 'ambos') {
+        t7State.lagrange = t7Lagrange(ptsUsados, xPred);
+        t7RenderLagBases(t7State.lagrange);
+        t7RenderLagPol(t7State.lagrange, t7State.newton);
+      }
+
+      /* Download bar */
+      const dl = document.getElementById('t7-download-bar');
+      if (dl) dl.dataset.ready = '1';
+
+      /* Resetear vista gráfica con puntos usados */
+      t7State.data = ptsUsados;
+      t7ResetView();
+
+      /* Navegar a primera sección relevante */
+      if (mode === 'newton' || mode === 'ambos') {
+        t7GoTo('t7-newton-tabla');
+      } else {
+        t7GoTo('t7-lag-bases');
+      }
+
+      /* Alert global */
+      const resVal = t7State.newton?.pred ?? t7State.lagrange?.pred;
+      const nombres = ['','Lineal','Cuadrático','Cúbico','Cuártico','Quíntico'];
+      showAlert('t7AlertGlobal','success',
+        `✓ Modelo ${nombres[grado]||'Grado '+grado} — P${grado}(${xPred}) = ${t7Fmt(resVal,8)} · usando ${nPts} puntos`);
+
+    } catch(e) { showAlert('t7Alert','danger','Error: ' + e.message); }
+  });
+
+  window.addEventListener('resize', () => { if (t7State.newton || t7State.lagrange) t7DrawGraph(); });
+});
+
+/* ══════════════════════════════════════════════════════════════
+   EXPORTACIÓN EXCEL T7
+══════════════════════════════════════════════════════════════ */
+(function patchT7Export() {
+  document.addEventListener('DOMContentLoaded', () => {
+    if (typeof numerixExport === 'undefined') return;
+    numerixExport.t7 = function() {
+      const nr = t7State.newton, lr = t7State.lagrange;
+      if (!nr && !lr) { alert('Ejecuta la interpolación primero.'); return; }
+      const pts = t7State.data;
+      const wb  = XLSX.utils.book_new();
+
+      if (nr) {
+        /* Hoja Newton: tabla de DD */
+        const { n, xs, ys, dd, coefs, pred, xPred } = nr;
+        const hdrDD = ['i','xi','f(xi)', ...Array.from({length:n-1},(_,j)=>`Orden ${j+1}`)];
+        const rowsDD = xs.map((xi,i) => {
+          const row = [i, xi, ys[i]];
+          for (let j=1; j<n; j++) row.push(dd[i][j] !== null && i+j < n ? dd[i][j] : '');
+          return row;
+        });
+        const info = [
+          ['NUMERIX — Newton Diferencias Divididas','','© 2026 Fernando Granja & Alejandra Tinoco'],
+          [], ['n puntos', n], ['Grado', n-1], ['x predecir', xPred],
+          ['P(x)', pred],
+          [], ['Coeficientes:'], ...coefs.map((c,j)=>[`a${j}`,c]),
+        ];
+        XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([...info,[],[hdrDD],...rowsDD]), 'Newton DD');
+      }
+
+      if (lr) {
+        /* Hoja Lagrange: bases */
+        const { n, xs, ys, bases, pred, xPred } = lr;
+        const hdrL = ['i','xi','f(xi)','Li(x)','f(xi)*Li(x)'];
+        const rowsL = bases.map(b => [b.i, b.xi, b.yi, b.Li, b.contrib]);
+        const sumR  = ['','','Suma P(x)','',pred];
+        const infoL = [
+          ['NUMERIX — Lagrange','','© 2026 Fernando Granja & Alejandra Tinoco'],
+          [], ['n puntos', n], ['Grado', n-1], ['x predecir', xPred], ['P(x)', pred],
+        ];
+        XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([...infoL,[],[hdrL],...rowsL,sumR]), 'Lagrange');
+      }
+
+      XLSX.writeFile(wb, `NUMERIX_T7_Interpolacion.xlsx`);
+    };
+  });
+})();
+
+
+/* ══════════════════════════════════════════════════════════════
+   TRAZADORES CÚBICOS NATURALES (CUBIC SPLINES)
+   Integrado en T7 — Interpolación Polinomial
+   © 2026 Fernando Granja & Alejandra Tinoco
+══════════════════════════════════════════════════════════════ */
+
+const SPL_COLORS = ['#7c3aed','#0ea5e9','#10b981','#f59e0b','#ef4444','#8b5cf6','#06b6d4','#f97316'];
+
+/* ── Estado Spline ──────────────────────────────────────────── */
+const splState = {
+  data:   [],     /* [{x,y}] ordenados */
+  xEval:  null,
+  result: null,   /* {n, xs, ys, hs, Ms, splines, xEval, yEval, tramIdx} */
+  graph:  { canvas:null, ctx:null, xMin:-1, xMax:11, yMin:-1, yMax:12,
+            dragging:false, lastMouse:{x:0,y:0}, hoverOn:false }
+};
+
+/* ══════════════════════════════════════════════════════════════
+   TABLA DE DATOS DINÁMICA
+══════════════════════════════════════════════════════════════ */
+function splRenderTable() {
+  const tb = document.getElementById('splDataBody');
+  if (!tb) return;
+  tb.innerHTML = splState.data.map((p, i) => `
+    <tr>
+      <td style="text-align:center;font-family:var(--font-mono);font-size:.8rem;
+                 color:var(--gray-400);">${i}</td>
+      <td><input type="number" class="t6-cell-input" id="spl_x_${i}"
+          value="${p.x}" step="any" onchange="splUpdateCell(${i},'x',this.value)"/></td>
+      <td><input type="number" class="t6-cell-input" id="spl_y_${i}"
+          value="${p.y}" step="any" onchange="splUpdateCell(${i},'y',this.value)"/></td>
+    </tr>`).join('');
+}
+function splUpdateCell(i,f,v){ if(splState.data[i]) splState.data[i][f]=parseFloat(v)||0; }
+window.splUpdateCell = splUpdateCell;
+
+function splReadData() {
+  splState.data.forEach((p,i) => {
+    const xe = document.getElementById(`spl_x_${i}`);
+    const ye = document.getElementById(`spl_y_${i}`);
+    if(xe) p.x = parseFloat(xe.value)||0;
+    if(ye) p.y = parseFloat(ye.value)||0;
+  });
+  /* Ordenar por x ascendente */
+  return [...splState.data].sort((a,b) => a.x - b.x);
+}
+
+/* ══════════════════════════════════════════════════════════════
+   ALGORITMO — SPLINE CÚBICO NATURAL
+   Notación: n+1 puntos → n tramos → índices 0..n
+   Mᵢ = S''(xᵢ) = segunda derivada en el nodo i
+   Condición natural: M₀ = Mₙ = 0
+══════════════════════════════════════════════════════════════ */
+function splCompute(pts, xEval) {
+  const n  = pts.length - 1;   /* número de tramos */
+  const xs = pts.map(p => p.x);
+  const ys = pts.map(p => p.y);
+
+  /* ── Paso 1: hᵢ = xᵢ₊₁ − xᵢ ── */
+  const hs = Array.from({length: n}, (_,i) => xs[i+1] - xs[i]);
+
+  /* ── Paso 2: Sistema tridiagonal para M₁..Mₙ₋₁ ──
+     Sistema de n-1 ecuaciones (nodos interiores)
+     hᵢ₋₁·Mᵢ₋₁ + 2(hᵢ₋₁+hᵢ)·Mᵢ + hᵢ·Mᵢ₊₁ = 6·dᵢ
+     donde dᵢ = (yᵢ₊₁−yᵢ)/hᵢ − (yᵢ−yᵢ₋₁)/hᵢ₋₁
+     Con M₀ = Mₙ = 0 (condición natural) */
+
+  const m  = n - 1;            /* tamaño del sistema interior */
+  /* Diagonales del sistema tridiagonal */
+  const diagA = new Array(m).fill(0); /* subdiagonal */
+  const diagB = new Array(m).fill(0); /* diagonal principal */
+  const diagC = new Array(m).fill(0); /* superdiagonal */
+  const rhs   = new Array(m).fill(0); /* lado derecho */
+
+  /* Guardar sistema original para mostrarlo */
+  const sysRows = [];
+
+  for (let k = 0; k < m; k++) {
+    const i = k + 1;             /* nodo interior i=1..n-1 */
+    diagA[k] = k > 0   ? hs[i-1] : 0;
+    diagB[k] = 2 * (hs[i-1] + hs[i]);
+    diagC[k] = k < m-1 ? hs[i]   : 0;
+    rhs[k]   = 6 * ((ys[i+1] - ys[i]) / hs[i] - (ys[i] - ys[i-1]) / hs[i-1]);
+    sysRows.push({
+      i,
+      hPrev: hs[i-1], hNext: hs[i],
+      a: diagA[k], b: diagB[k], c: diagC[k], d: rhs[k]
+    });
+  }
+
+  /* ── Resolver sistema tridiagonal — Algoritmo de Thomas ── */
+  const Ms_inner = solveTridiagonal(diagA, diagB, diagC, rhs, m);
+
+  /* M completo incluyendo extremos naturales M₀=0, Mₙ=0 */
+  const Ms = [0, ...Ms_inner, 0];
+
+  /* ── Paso 3: Calcular coeficientes aᵢ,bᵢ,cᵢ,dᵢ para cada tramo ── */
+  const splines = Array.from({length: n}, (_,i) => {
+    const hi = hs[i];
+    const ai = ys[i];
+    const bi = (ys[i+1] - ys[i]) / hi - hi * (2*Ms[i] + Ms[i+1]) / 6;
+    const ci = Ms[i] / 2;
+    const di = (Ms[i+1] - Ms[i]) / (6 * hi);
+    return { i, x0: xs[i], x1: xs[i+1], ai, bi, ci, di, hi, Mi: Ms[i], Mi1: Ms[i+1] };
+  });
+
+  /* ── Paso 4: Evaluar S(xEval) en el tramo correcto ── */
+  let tramIdx = n - 1;   /* por defecto último tramo */
+  for (let i = 0; i < n; i++) {
+    if (xEval >= xs[i] && xEval <= xs[i+1]) { tramIdx = i; break; }
+  }
+  const sp = splines[tramIdx];
+  const dx = xEval - sp.x0;
+  const yEval = sp.ai + sp.bi*dx + sp.ci*dx*dx + sp.di*dx*dx*dx;
+
+  /* Guardar pasos de resolución Thomas */
+  const thomasSteps = solveTridiagonalSteps(diagA.slice(), diagB.slice(), diagC.slice(), rhs.slice(), m);
+
+  return { n, pts, xs, ys, hs, Ms, splines, xEval, yEval, tramIdx, sysRows, thomasSteps };
+}
+
+/* ── Algoritmo de Thomas (eliminación tridiagonal) ── */
+function solveTridiagonal(a, b, c, d, m) {
+  const B = [...b], D = [...d];
+  /* Forward sweep */
+  for (let i = 1; i < m; i++) {
+    const w = a[i] / B[i-1];
+    B[i] -= w * c[i-1];
+    D[i] -= w * D[i-1];
+  }
+  /* Back substitution */
+  const x = new Array(m).fill(0);
+  x[m-1] = D[m-1] / B[m-1];
+  for (let i = m-2; i >= 0; i--) {
+    x[i] = (D[i] - c[i] * x[i+1]) / B[i];
+  }
+  return x;
+}
+
+/* ── Thomas con snapshots para mostrar pasos ── */
+function solveTridiagonalSteps(a, b, c, d, m) {
+  const steps = [];
+  const B = [...b], D = [...d];
+  steps.push({ label: 'Sistema original', rows: buildTriSnap(a,B,c,D,m) });
+
+  for (let i = 1; i < m; i++) {
+    const w = a[i] / B[i-1];
+    B[i] -= w * c[i-1];
+    D[i] -= w * D[i-1];
+    steps.push({ label: `Eliminación fila ${i+1}: factor w = ${w.toFixed(4)}`, rows: buildTriSnap(a,B,c,D,m) });
+  }
+
+  const x = new Array(m).fill(0);
+  x[m-1] = D[m-1] / B[m-1];
+  steps.push({ label: `Back-sub: M${m} = ${x[m-1].toFixed(6)}`, rows: buildTriSnap(a,B,c,D,m), sols: [...x] });
+
+  for (let i = m-2; i >= 0; i--) {
+    x[i] = (D[i] - c[i] * x[i+1]) / B[i];
+    steps.push({ label: `Back-sub: M${i+2} = ${x[i].toFixed(6)}`, rows: buildTriSnap(a,B,c,D,m), sols: [...x] });
+  }
+  return steps;
+}
+
+function buildTriSnap(a, b, c, d, m) {
+  return Array.from({length: m}, (_,i) => ({ a: a[i], b: b[i], c: c[i], d: d[i] }));
+}
+
+/* ══════════════════════════════════════════════════════════════
+   FORMATO
+══════════════════════════════════════════════════════════════ */
+const splFmt  = (v, d=6) => isNaN(v)?'—':Number(v).toFixed(d);
+const splFmtC = v => { if(Math.abs(v)>9999||(Math.abs(v)<0.0001&&v!==0)) return v.toExponential(4); return parseFloat(Number(v).toFixed(8)).toString(); };
+
+/* ══════════════════════════════════════════════════════════════
+   RENDERIZADO — SECCIÓN 7: Intervalos hᵢ + Mᵢ segundas derivadas
+══════════════════════════════════════════════════════════════ */
+function splRenderHi(res) {
+  const sec = document.getElementById('t7-splines-hi');
+  if (!sec) return;
+  const { n, xs, ys, hs, Ms } = res;
+
+  let html = `
+  <div class="page-header">
+    <h2>Trazadores Cúbicos — Intervalos hᵢ</h2>
+    <p>hᵢ = xᵢ₊₁ − xᵢ · Se calcula la longitud de cada subintervalo antes de armar el sistema.</p>
+  </div>
+
+  <!-- Tabla hᵢ -->
+  <div class="card" style="padding:0;overflow:hidden;margin-bottom:1.25rem;">
+    <div class="card-header" style="padding:.75rem 1.25rem;border-bottom:1px solid var(--border);">
+      <div class="card-header-icon t7-icon">hᵢ</div>
+      <div>
+        <div class="card-title">Tabla de intervalos — n = ${n} tramos · ${n+1} puntos</div>
+        <div class="card-subtitle">hᵢ = xᵢ₊₁ − xᵢ para i = 0, 1, …, n−1</div>
+      </div>
+    </div>
+    <div style="overflow-x:auto;">
+    <table style="width:100%;border-collapse:collapse;font-family:var(--font-mono);font-size:.82rem;">
+      <thead>
+        <tr style="background:${T7_LIGHT};">
+          <th style="padding:.5rem .75rem;color:${T7_DARK};border-bottom:2px solid ${T7_COLOR}33;">i</th>
+          <th style="padding:.5rem .75rem;color:${T7_DARK};border-bottom:2px solid ${T7_COLOR}33;">xᵢ</th>
+          <th style="padding:.5rem .75rem;color:${T7_DARK};border-bottom:2px solid ${T7_COLOR}33;">yᵢ</th>
+          <th style="padding:.5rem .75rem;color:${T7_DARK};border-bottom:2px solid ${T7_COLOR}33;">xᵢ₊₁</th>
+          <th style="padding:.5rem .75rem;color:${T7_DARK};border-bottom:2px solid ${T7_COLOR}33;">yᵢ₊₁</th>
+          <th style="padding:.5rem .75rem;color:${T7_DARK};border-bottom:2px solid ${T7_COLOR}33;background:${T7_LIGHT};">hᵢ = xᵢ₊₁−xᵢ</th>
+          <th style="padding:.5rem .75rem;color:${T7_DARK};border-bottom:2px solid ${T7_COLOR}33;">(yᵢ₊₁−yᵢ)/hᵢ</th>
+        </tr>
+      </thead>
+      <tbody>`;
+
+  for (let i = 0; i < n; i++) {
+    const slope = (ys[i+1]-ys[i])/hs[i];
+    html += `<tr style="${i%2===1?'background:var(--gray-50)':''}">
+      <td style="text-align:center;padding:.4rem .75rem;font-weight:700;color:${SPL_COLORS[i%SPL_COLORS.length]};">${i}</td>
+      <td style="text-align:right;padding:.4rem .75rem;">${splFmt(xs[i],4)}</td>
+      <td style="text-align:right;padding:.4rem .75rem;">${splFmt(ys[i],4)}</td>
+      <td style="text-align:right;padding:.4rem .75rem;">${splFmt(xs[i+1],4)}</td>
+      <td style="text-align:right;padding:.4rem .75rem;">${splFmt(ys[i+1],4)}</td>
+      <td style="text-align:right;padding:.4rem .75rem;font-weight:700;color:${T7_COLOR};background:${T7_LIGHT};">${splFmt(hs[i],6)}</td>
+      <td style="text-align:right;padding:.4rem .75rem;">${splFmt(slope,6)}</td>
+    </tr>`;
+  }
+  /* Fila xₙ */
+  html += `<tr style="background:var(--gray-50);">
+    <td style="text-align:center;padding:.4rem .75rem;font-weight:700;color:var(--gray-400);">${n}</td>
+    <td style="text-align:right;padding:.4rem .75rem;">${splFmt(xs[n],4)}</td>
+    <td style="text-align:right;padding:.4rem .75rem;">${splFmt(ys[n],4)}</td>
+    <td colspan="4" style="padding:.4rem .75rem;color:var(--gray-400);font-size:.75rem;">— último nodo —</td>
+  </tr>`;
+
+  html += `</tbody></table></div></div>
+
+  <!-- Condición natural -->
+  <div class="card" style="margin-bottom:1.25rem;background:linear-gradient(135deg,${T7_LIGHT},#f5f3ff);border:2px solid ${T7_COLOR}33;">
+    <div class="card-header">
+      <div class="card-header-icon t7-icon">🔑</div>
+      <div>
+        <div class="card-title">Condición Natural (Spline Natural)</div>
+        <div class="card-subtitle">La segunda derivada es cero en los extremos → los extremos no tienen curvatura</div>
+      </div>
+    </div>
+    <div style="padding:.75rem 1.25rem 1.25rem;display:flex;gap:1.5rem;flex-wrap:wrap;">
+      <div style="font-family:var(--font-mono);font-size:1rem;font-weight:700;color:${T7_COLOR};">
+        M₀ = S''(x₀) = <span style="color:#10b981;">0</span>
+      </div>
+      <div style="font-family:var(--font-mono);font-size:1rem;font-weight:700;color:${T7_COLOR};">
+        M${n} = S''(x${n}) = <span style="color:#10b981;">0</span>
+      </div>
+    </div>
+  </div>
+
+  <div style="text-align:right;">
+    <button class="btn t7-btn-primary" onclick="t7GoTo('t7-splines-sistema')">
+      Siguiente: Sistema tridiagonal →
+    </button>
+  </div>`;
+  sec.innerHTML = html;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   RENDERIZADO — SECCIÓN 8: Sistema tridiagonal + resolución Thomas
+══════════════════════════════════════════════════════════════ */
+function splRenderSistema(res) {
+  const sec = document.getElementById('t7-splines-sistema');
+  if (!sec) return;
+  const { n, sysRows, thomasSteps, Ms } = res;
+
+  let html = `
+  <div class="page-header">
+    <h2>Trazadores Cúbicos — Sistema Tridiagonal</h2>
+    <p>Se plantea un sistema de ${n-1} ecuaciones para las segundas derivadas interiores M₁…M${n-1}.<br>
+       Se resuelve con el <strong>Algoritmo de Thomas</strong> (eliminación tridiagonal eficiente).</p>
+  </div>
+
+  <!-- Ecuación general -->
+  <div class="card t6-step-card" style="margin-bottom:1.25rem;border-left:5px solid ${T7_COLOR};">
+    <div class="card-header">
+      <div class="card-header-icon t7-icon">∑</div>
+      <div>
+        <div class="card-title">Ecuación General del Sistema</div>
+        <div class="card-subtitle">Para cada nodo interior i = 1, 2, …, n−1</div>
+      </div>
+    </div>
+    <div class="t6-step-body">
+      <div style="font-family:var(--font-mono);font-size:.88rem;color:${T7_DARK};font-weight:600;">
+        hᵢ₋₁·Mᵢ₋₁ + 2(hᵢ₋₁+hᵢ)·Mᵢ + hᵢ·Mᵢ₊₁ = 6·[(yᵢ₊₁−yᵢ)/hᵢ − (yᵢ−yᵢ₋₁)/hᵢ₋₁]
+      </div>
+      <div style="font-family:var(--font-main);font-size:.8rem;color:var(--gray-500);margin-top:.25rem;">
+        Con M₀ = 0 y M${n} = 0 (condición natural)
+      </div>
+    </div>
+  </div>
+
+  <!-- Sistema numérico -->
+  <div class="card" style="padding:0;overflow:hidden;margin-bottom:1.25rem;">
+    <div class="card-header" style="padding:.75rem 1.25rem;border-bottom:1px solid var(--border);">
+      <div class="card-header-icon t7-icon">📋</div>
+      <div>
+        <div class="card-title">Sistema numérico [tridiagonal | b] — ${n-1} ecuaciones</div>
+        <div class="card-subtitle">Incógnitas: M₁${n>2?', M₂'+( n>3?'...':'')+(n>2?', M'+(n-1):''):''}  (M₀=M${n}=0)</div>
+      </div>
+    </div>
+    <div style="overflow-x:auto;padding:1rem 1.25rem;">
+    <table style="border-collapse:separate;border-spacing:3px;font-family:var(--font-mono);font-size:.82rem;">
+      <thead>
+        <tr>
+          <th style="padding:.4rem .65rem;background:${T7_LIGHT};color:${T7_DARK};border-radius:4px;">Ec.</th>
+          <th style="padding:.4rem .65rem;background:${T7_LIGHT};color:${T7_DARK};border-radius:4px;">Sub-diag (hᵢ₋₁)</th>
+          <th style="padding:.4rem .65rem;background:${T7_LIGHT};color:${T7_DARK};border-radius:4px;">Diag. princ 2(hᵢ₋₁+hᵢ)</th>
+          <th style="padding:.4rem .65rem;background:${T7_LIGHT};color:${T7_DARK};border-radius:4px;">Super-diag (hᵢ)</th>
+          <th style="padding:.4rem .65rem;background:${T7_LIGHT};color:${T7_DARK};border-radius:4px;border-left:2px solid ${T7_COLOR}44;">RHS</th>
+        </tr>
+      </thead>
+      <tbody>`;
+
+  sysRows.forEach((r,k) => {
+    html += `<tr>
+      <td style="padding:.35rem .65rem;background:${T7_LIGHT};border-radius:4px;font-weight:700;color:${T7_COLOR};">E${k+1} (M${r.i})</td>
+      <td style="padding:.35rem .65rem;background:var(--gray-50);border-radius:4px;text-align:right;">${r.a !== 0 ? splFmt(r.a,4) : '—'}</td>
+      <td style="padding:.35rem .65rem;background:var(--gray-50);border-radius:4px;text-align:right;font-weight:700;">${splFmt(r.b,4)}</td>
+      <td style="padding:.35rem .65rem;background:var(--gray-50);border-radius:4px;text-align:right;">${r.c !== 0 ? splFmt(r.c,4) : '—'}</td>
+      <td style="padding:.35rem .65rem;background:var(--gray-50);border-radius:4px;text-align:right;font-weight:700;color:${T7_DARK};border-left:2px solid ${T7_COLOR}44;">${splFmt(r.d,6)}</td>
+    </tr>`;
+  });
+  html += `</tbody></table></div></div>
+
+  <!-- Pasos Thomas -->
+  <div class="card t6-step-card" style="margin-bottom:1.25rem;border-left:5px solid #0ea5e9;">
+    <div class="card-header">
+      <div class="card-header-icon" style="background:#0ea5e9;width:38px;height:38px;border-radius:10px;
+        display:flex;align-items:center;justify-content:center;color:#fff;font-size:.78rem;font-weight:700;">T</div>
+      <div>
+        <div class="card-title">Algoritmo de Thomas — Eliminación progresiva</div>
+        <div class="card-subtitle">Resolución eficiente O(n) del sistema tridiagonal</div>
+      </div>
+    </div>
+    <div style="padding:.75rem 1.25rem 1.25rem;display:flex;flex-direction:column;gap:.75rem;">`;
+
+  thomasSteps.forEach((step, si) => {
+    const isLast = si === thomasSteps.length - 1;
+    html += `
+    <div style="border-radius:var(--radius-sm);border:1px solid var(--border);
+                border-left:4px solid ${isLast?'#10b981':'#0ea5e9'};
+                padding:.5rem .875rem;background:var(--gray-50);">
+      <div style="font-family:var(--font-main);font-size:.75rem;font-weight:700;
+                  color:${isLast?'#065f46':'#0c4a6e'};margin-bottom:.3rem;">
+        Paso ${si}: ${step.label}
+      </div>
+      <div style="font-family:var(--font-mono);font-size:.75rem;color:var(--gray-600);">
+        [${step.rows.map(r=>`${splFmt(r.b,4)}M|${splFmt(r.d,4)}`).join('  ·  ')}]
+        ${step.sols ? ' → M = ['+step.sols.map(v=>splFmt(v,6)).join(', ')+']' : ''}
+      </div>
+    </div>`;
+  });
+
+  /* Soluciones M finales */
+  html += `</div></div>
+
+  <!-- Mᵢ resultantes -->
+  <div class="card" style="margin-bottom:1.25rem;background:linear-gradient(135deg,${T7_LIGHT},#f5f3ff);border:2px solid ${T7_COLOR}44;">
+    <div class="card-header">
+      <div class="card-header-icon t7-icon">✓</div>
+      <div><div class="card-title">Segundas Derivadas Mᵢ = S''(xᵢ)</div></div>
+    </div>
+    <div style="display:flex;flex-wrap:wrap;gap:.625rem;padding:.5rem 1.25rem 1.25rem;">`;
+
+  Ms.forEach((m,i) => {
+    const isNatural = i===0 || i===Ms.length-1;
+    html += `<div style="border-radius:var(--radius-sm);border:2px solid ${T7_COLOR}33;
+                border-left:5px solid ${isNatural?'#10b981':T7_COLOR};
+                padding:.5rem .875rem;background:var(--gray-50);min-width:120px;">
+      <div style="font-size:.7rem;font-weight:700;color:${isNatural?'#065f46':T7_DARK};
+                  font-family:var(--font-main);text-transform:uppercase;">
+        M${i}${isNatural?' (natural)':''}
+      </div>
+      <div style="font-family:var(--font-mono);font-size:.9rem;font-weight:700;
+                  color:${isNatural?'#10b981':T7_COLOR};">
+        ${splFmt(m,8)}
+      </div>
+    </div>`;
+  });
+
+  html += `</div></div>
+  <div style="display:flex;gap:.75rem;justify-content:flex-end;flex-wrap:wrap;">
+    <button class="btn btn-secondary" onclick="t7GoTo('t7-splines-hi')">← Intervalos hᵢ</button>
+    <button class="btn t7-btn-primary" onclick="t7GoTo('t7-splines-coef')">Siguiente: Coeficientes →</button>
+  </div>`;
+  sec.innerHTML = html;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   RENDERIZADO — SECCIÓN 9: Coeficientes aᵢ,bᵢ,cᵢ,dᵢ
+══════════════════════════════════════════════════════════════ */
+function splRenderCoef(res) {
+  const sec = document.getElementById('t7-splines-coef');
+  if (!sec) return;
+  const { n, splines } = res;
+
+  let html = `
+  <div class="page-header">
+    <h2>Trazadores Cúbicos — Coeficientes por Tramo</h2>
+    <p>Para cada tramo i: Sᵢ(x) = aᵢ + bᵢ(x−xᵢ) + cᵢ(x−xᵢ)² + dᵢ(x−xᵢ)³</p>
+  </div>
+
+  <!-- Fórmulas de coeficientes -->
+  <div class="card t6-step-card" style="margin-bottom:1.25rem;border-left:5px solid ${T7_COLOR};">
+    <div class="card-header">
+      <div class="card-header-icon t7-icon">📐</div>
+      <div><div class="card-title">Fórmulas de los coeficientes</div></div>
+    </div>
+    <div class="t6-step-body" style="font-family:var(--font-mono);font-size:.82rem;gap:.4rem;">
+      <div>aᵢ = yᵢ</div>
+      <div>bᵢ = (yᵢ₊₁−yᵢ)/hᵢ − hᵢ·(2Mᵢ + Mᵢ₊₁)/6</div>
+      <div>cᵢ = Mᵢ/2</div>
+      <div>dᵢ = (Mᵢ₊₁ − Mᵢ)/(6hᵢ)</div>
+    </div>
+  </div>
+
+  <!-- Tabla de coeficientes -->
+  <div class="card" style="padding:0;overflow:hidden;margin-bottom:1.25rem;">
+    <div class="card-header" style="padding:.75rem 1.25rem;border-bottom:1px solid var(--border);">
+      <div class="card-header-icon t7-icon">📋</div>
+      <div>
+        <div class="card-title">Tabla de coeficientes — ${n} tramos</div>
+        <div class="card-subtitle">Sᵢ(x) = aᵢ + bᵢ(x−xᵢ) + cᵢ(x−xᵢ)² + dᵢ(x−xᵢ)³</div>
+      </div>
+    </div>
+    <div style="overflow-x:auto;">
+    <table style="width:100%;border-collapse:collapse;font-family:var(--font-mono);font-size:.78rem;">
+      <thead>
+        <tr style="background:${T7_LIGHT};">
+          <th style="padding:.5rem .75rem;color:${T7_DARK};border-bottom:2px solid ${T7_COLOR}33;">Tramo</th>
+          <th style="padding:.5rem .75rem;color:${T7_DARK};border-bottom:2px solid ${T7_COLOR}33;">Intervalo</th>
+          <th style="padding:.5rem .75rem;color:${T7_DARK};border-bottom:2px solid ${T7_COLOR}33;">aᵢ</th>
+          <th style="padding:.5rem .75rem;color:${T7_DARK};border-bottom:2px solid ${T7_COLOR}33;">bᵢ</th>
+          <th style="padding:.5rem .75rem;color:${T7_DARK};border-bottom:2px solid ${T7_COLOR}33;">cᵢ</th>
+          <th style="padding:.5rem .75rem;color:${T7_DARK};border-bottom:2px solid ${T7_COLOR}33;">dᵢ</th>
+        </tr>
+      </thead>
+      <tbody>`;
+
+  splines.forEach((sp, i) => {
+    const col = SPL_COLORS[i % SPL_COLORS.length];
+    html += `<tr style="${i%2===1?'background:var(--gray-50)':''}">
+      <td style="padding:.4rem .75rem;font-weight:700;color:${col};">S${i}(x)</td>
+      <td style="padding:.4rem .75rem;">[${splFmt(sp.x0,4)}, ${splFmt(sp.x1,4)}]</td>
+      <td style="padding:.4rem .75rem;text-align:right;">${splFmt(sp.ai,8)}</td>
+      <td style="padding:.4rem .75rem;text-align:right;">${splFmt(sp.bi,8)}</td>
+      <td style="padding:.4rem .75rem;text-align:right;">${splFmt(sp.ci,8)}</td>
+      <td style="padding:.4rem .75rem;text-align:right;">${splFmt(sp.di,8)}</td>
+    </tr>`;
+  });
+
+  html += `</tbody></table></div></div>
+
+  <!-- Polinomios explícitos -->
+  <div class="card" style="margin-bottom:1.25rem;">
+    <div class="card-header">
+      <div class="card-header-icon t7-icon">Sᵢ</div>
+      <div><div class="card-title">Polinomios cúbicos explícitos por tramo</div></div>
+    </div>
+    <div style="padding:.75rem 1.25rem 1.25rem;display:flex;flex-direction:column;gap:.5rem;">`;
+
+  splines.forEach((sp, i) => {
+    const col = SPL_COLORS[i % SPL_COLORS.length];
+    const x0s = sp.x0 === 0 ? '' : sp.x0 < 0 ? `+${splFmtC(Math.abs(sp.x0))}` : `−${splFmtC(sp.x0)}`;
+    const signB = sp.bi >= 0 ? `+ ${splFmtC(sp.bi)}` : `− ${splFmtC(Math.abs(sp.bi))}`;
+    const signC = sp.ci >= 0 ? `+ ${splFmtC(sp.ci)}` : `− ${splFmtC(Math.abs(sp.ci))}`;
+    const signD = sp.di >= 0 ? `+ ${splFmtC(sp.di)}` : `− ${splFmtC(Math.abs(sp.di))}`;
+    html += `
+    <div style="border-left:4px solid ${col};padding:.5rem .875rem;background:var(--gray-50);
+                border-radius:0 var(--radius-sm) var(--radius-sm) 0;
+                font-family:var(--font-mono);font-size:.78rem;">
+      <span style="color:${col};font-weight:700;">S${i}(x)</span>
+      <span style="color:var(--gray-400);font-size:.7rem;"> [${splFmt(sp.x0,4)} ≤ x ≤ ${splFmt(sp.x1,4)}]</span><br>
+      <span style="color:var(--gray-600);">
+        = ${splFmtC(sp.ai)} ${signB}·(x${x0s}) ${signC}·(x${x0s})² ${signD}·(x${x0s})³
+      </span>
+    </div>`;
+  });
+
+  html += `</div></div>
+  <div style="display:flex;gap:.75rem;justify-content:flex-end;flex-wrap:wrap;">
+    <button class="btn btn-secondary" onclick="t7GoTo('t7-splines-sistema')">← Sistema</button>
+    <button class="btn t7-btn-primary" onclick="t7GoTo('t7-splines-eval')">Siguiente: Evaluación →</button>
+  </div>`;
+  sec.innerHTML = html;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   RENDERIZADO — SECCIÓN 10: Evaluación S(x)
+══════════════════════════════════════════════════════════════ */
+function splRenderEval(res) {
+  const sec = document.getElementById('t7-splines-eval');
+  if (!sec) return;
+  const { n, splines, xEval, yEval, tramIdx, Ms } = res;
+  const sp  = splines[tramIdx];
+  const col = SPL_COLORS[tramIdx % SPL_COLORS.length];
+  const dx  = xEval - sp.x0;
+
+  let html = `
+  <div class="page-header">
+    <h2>Trazadores Cúbicos — Evaluación S(${xEval})</h2>
+    <p>Se identifica el tramo correcto y se evalúa el polinomio cúbico correspondiente.</p>
+  </div>
+
+  <!-- Identificación de tramo -->
+  <div class="card t6-step-card" style="margin-bottom:1.25rem;border-left:5px solid ${col};">
+    <div class="card-header">
+      <div class="card-header-icon" style="background:${col};width:38px;height:38px;border-radius:10px;
+        display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;">S${tramIdx}</div>
+      <div>
+        <div class="card-title">Tramo seleccionado: S${tramIdx}(x)</div>
+        <div class="card-subtitle">x = ${xEval} ∈ [${splFmt(sp.x0,4)}, ${splFmt(sp.x1,4)}]</div>
+      </div>
+    </div>
+    <div class="t6-step-body">
+      <div style="font-family:var(--font-mono);font-size:.85rem;color:var(--gray-600);">
+        Identificación: ${splFmt(sp.x0,4)} ≤ ${xEval} ≤ ${splFmt(sp.x1,4)} ✓
+      </div>
+      <div style="font-family:var(--font-mono);font-size:.85rem;">
+        Δx = x − x${tramIdx} = ${xEval} − ${splFmt(sp.x0,4)} = <strong style="color:${col};">${splFmt(dx,6)}</strong>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sustitución paso a paso -->
+  <div class="card t6-step-card" style="margin-bottom:1.25rem;border-left:5px solid ${T7_COLOR};">
+    <div class="card-header">
+      <div class="card-header-icon t7-icon">🔢</div>
+      <div><div class="card-title">Sustitución numérica</div></div>
+    </div>
+    <div class="t6-step-body">
+      <div style="font-family:var(--font-mono);font-size:.82rem;color:var(--gray-500);">
+        S${tramIdx}(x) = a${tramIdx} + b${tramIdx}·Δx + c${tramIdx}·Δx² + d${tramIdx}·Δx³
+      </div>
+      <div style="font-family:var(--font-mono);font-size:.82rem;background:var(--gray-50);
+                  border-radius:var(--radius-sm);padding:.5rem .75rem;">
+        <div>a${tramIdx} = <strong>${splFmt(sp.ai,8)}</strong></div>
+        <div>b${tramIdx}·Δx = ${splFmt(sp.bi,8)} × ${splFmt(dx,6)} = <strong>${splFmt(sp.bi*dx,8)}</strong></div>
+        <div>c${tramIdx}·Δx² = ${splFmt(sp.ci,8)} × ${splFmt(dx*dx,6)} = <strong>${splFmt(sp.ci*dx*dx,8)}</strong></div>
+        <div>d${tramIdx}·Δx³ = ${splFmt(sp.di,8)} × ${splFmt(dx*dx*dx,6)} = <strong>${splFmt(sp.di*dx*dx*dx,8)}</strong></div>
+      </div>
+      <div style="font-family:var(--font-mono);font-size:.88rem;margin-top:.25rem;">
+        Suma = ${splFmt(sp.ai,6)} + ${splFmt(sp.bi*dx,6)} + ${splFmt(sp.ci*dx*dx,6)} + ${splFmt(sp.di*dx*dx*dx,6)}
+      </div>
+    </div>
+  </div>
+
+  <!-- Resultado -->
+  <div class="card" style="margin-bottom:1.25rem;background:linear-gradient(135deg,${T7_LIGHT},#f5f3ff);border:2px solid ${T7_COLOR}44;">
+    <div class="card-header">
+      <div class="card-header-icon t7-icon">🎯</div>
+      <div><div class="card-title">Resultado</div></div>
+    </div>
+    <div style="padding:.5rem 1.25rem 1.25rem;text-align:center;">
+      <div style="font-family:var(--font-mono);font-size:1.4rem;font-weight:700;color:${T7_COLOR};">
+        S(${xEval}) = S${tramIdx}(${xEval}) = <span style="color:${col};">${splFmt(yEval,8)}</span>
+      </div>
+      <div style="font-family:var(--font-main);font-size:.8rem;color:var(--gray-400);margin-top:.5rem;">
+        Evaluado con el tramo ${tramIdx} en el intervalo [${splFmt(sp.x0,4)}, ${splFmt(sp.x1,4)}]
+      </div>
+    </div>
+  </div>
+
+  <div style="display:flex;gap:.75rem;justify-content:flex-end;flex-wrap:wrap;">
+    <button class="btn btn-secondary" onclick="t7GoTo('t7-splines-coef')">← Coeficientes</button>
+    <button class="btn t7-btn-primary" onclick="t7GoTo('t7-splines-grafica');setTimeout(splDrawGraph,80);">
+      📈 Ver Gráfica →
+    </button>
+  </div>`;
+  sec.innerHTML = html;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   GRÁFICA INTERACTIVA — SPLINES
+══════════════════════════════════════════════════════════════ */
+function splInitGraph() {
+  const g = splState.graph;
+  const c = document.getElementById('splCanvas');
+  if (!c || g.canvas) return;
+  g.canvas = c; g.ctx = c.getContext('2d');
+
+  const resize = () => {
+    const w = c.parentElement.clientWidth || 700;
+    c.width = w; c.height = Math.max(340, Math.round(w * 0.52));
+    splDrawGraph();
+  };
+  resize();
+  window.addEventListener('resize', resize);
+
+  c.addEventListener('mousedown', e => { g.dragging=true; g.lastMouse={x:e.clientX,y:e.clientY}; c.style.cursor='grabbing'; });
+  c.addEventListener('mouseup',   () => { g.dragging=false; c.style.cursor='crosshair'; });
+  c.addEventListener('mouseleave',() => { g.dragging=false; g.hoverOn=false; c.style.cursor='crosshair';
+    const tip=document.getElementById('splTooltip'); if(tip) tip.style.display='none'; splDrawGraph(); });
+  c.addEventListener('mousemove', e => {
+    const rect=c.getBoundingClientRect();
+    const px=(e.clientX-rect.left)*(c.width/rect.width);
+    const py=(e.clientY-rect.top)*(c.height/rect.height);
+    const mw=splToWorld(px,py);
+    g.hoverOn=true;
+    const coord=document.getElementById('splCoords');
+    if(coord) coord.innerHTML=`x = ${mw.x.toFixed(3)} &nbsp; y = ${mw.y.toFixed(3)}`;
+    if(g.dragging){
+      const dx=(e.clientX-g.lastMouse.x)/rect.width*(g.xMax-g.xMin);
+      const dy=(e.clientY-g.lastMouse.y)/rect.height*(g.yMax-g.yMin);
+      g.xMin-=dx; g.xMax-=dx; g.yMin+=dy; g.yMax+=dy;
+      g.lastMouse={x:e.clientX,y:e.clientY};
+    }
+    splDrawGraph();
+  });
+  c.addEventListener('wheel', e => {
+    e.preventDefault();
+    const f=e.deltaY>0?1.12:0.89;
+    const rect=c.getBoundingClientRect();
+    const {x:wx,y:wy}=splToWorld((e.clientX-rect.left)*(c.width/rect.width),(e.clientY-rect.top)*(c.height/rect.height));
+    g.xMin=wx+(g.xMin-wx)*f; g.xMax=wx+(g.xMax-wx)*f;
+    g.yMin=wy+(g.yMin-wy)*f; g.yMax=wy+(g.yMax-wy)*f;
+    splDrawGraph();
+  }, {passive:false});
+}
+
+function splToCanvas(wx,wy) {
+  const g=splState.graph, PAD={t:24,r:24,b:44,l:60};
+  const W=g.canvas.width, H=g.canvas.height;
+  return {
+    x: PAD.l+(wx-g.xMin)/(g.xMax-g.xMin)*(W-PAD.l-PAD.r),
+    y: PAD.t+(1-(wy-g.yMin)/(g.yMax-g.yMin))*(H-PAD.t-PAD.b)
+  };
+}
+function splToWorld(px,py) {
+  const g=splState.graph, PAD={t:24,r:24,b:44,l:60};
+  const W=g.canvas.width, H=g.canvas.height;
+  return {
+    x: g.xMin+(px-PAD.l)/(W-PAD.l-PAD.r)*(g.xMax-g.xMin),
+    y: g.yMin+(1-(py-PAD.t)/(H-PAD.t-PAD.b))*(g.yMax-g.yMin)
+  };
+}
+
+function splDrawGraph() {
+  const g   = splState.graph;
+  const res = splState.result;
+  if (!g.canvas || !res) return;
+  const { splines, xEval, yEval, tramIdx } = res;
+
+  const isDark = document.body.classList.contains('dark-mode');
+  const W=g.canvas.width, H=g.canvas.height, ctx=g.ctx;
+  const PAD={t:24,r:24,b:44,l:60};
+  const PW=W-PAD.l-PAD.r, PH=H-PAD.t-PAD.b;
+  const niceStep = (range,tgt) => {
+    const r=range/tgt, m=Math.pow(10,Math.floor(Math.log10(r)));
+    const n=r/m; return (n<1.5?1:n<3.5?2:n<7.5?5:10)*m;
+  };
+
+  ctx.fillStyle = isDark?'#0f172a':'#fff';
+  ctx.fillRect(0,0,W,H);
+
+  /* Grid */
+  const xSt=niceStep(g.xMax-g.xMin,10), ySt=niceStep(g.yMax-g.yMin,8);
+  ctx.strokeStyle=isDark?'rgba(148,163,184,.08)':'#f1f5f9'; ctx.lineWidth=1;
+  for(let gx=Math.ceil(g.xMin/xSt)*xSt; gx<=g.xMax; gx+=xSt){
+    const{x:px}=splToCanvas(gx,0); ctx.beginPath(); ctx.moveTo(px,PAD.t); ctx.lineTo(px,PAD.t+PH); ctx.stroke();
+  }
+  for(let gy=Math.ceil(g.yMin/ySt)*ySt; gy<=g.yMax; gy+=ySt){
+    const{y:py}=splToCanvas(0,gy); ctx.beginPath(); ctx.moveTo(PAD.l,py); ctx.lineTo(PAD.l+PW,py); ctx.stroke();
+  }
+
+  /* Ejes */
+  ctx.strokeStyle=isDark?'rgba(148,163,184,.3)':'#cbd5e1'; ctx.lineWidth=1.5;
+  const{y:axY}=splToCanvas(0,0), {x:axX}=splToCanvas(0,0);
+  if(g.yMin<=0&&g.yMax>=0){ctx.beginPath();ctx.moveTo(PAD.l,axY);ctx.lineTo(PAD.l+PW,axY);ctx.stroke();}
+  if(g.xMin<=0&&g.xMax>=0){ctx.beginPath();ctx.moveTo(axX,PAD.t);ctx.lineTo(axX,PAD.t+PH);ctx.stroke();}
+
+  /* Labels */
+  ctx.fillStyle=isDark?'rgba(148,163,184,.6)':'#94a3b8';
+  ctx.font='10px "JetBrains Mono",monospace'; ctx.textAlign='center'; ctx.textBaseline='middle';
+  const lbY=Math.max(PAD.t+10,Math.min(PAD.t+PH-4,axY+16));
+  const lbX=Math.max(PAD.l+28,Math.min(PAD.l+PW-4,axX-8));
+  for(let gx=Math.ceil(g.xMin/xSt)*xSt;gx<=g.xMax;gx+=xSt){
+    if(Math.abs(gx)<xSt*.01)continue;
+    const{x:px}=splToCanvas(gx,0); ctx.fillText(gx%1===0?gx:gx.toFixed(1),px,lbY);
+  }
+  ctx.textAlign='right';
+  for(let gy=Math.ceil(g.yMin/ySt)*ySt;gy<=g.yMax;gy+=ySt){
+    if(Math.abs(gy)<ySt*.01)continue;
+    const{y:py}=splToCanvas(0,gy); ctx.fillText(gy%1===0?gy:gy.toFixed(1),lbX,py);
+  }
+  ctx.textBaseline='alphabetic';
+
+  /* Curva spline — cada tramo con su color */
+  const STEPS = 120;
+  splines.forEach((sp, si) => {
+    const col = SPL_COLORS[si % SPL_COLORS.length];
+    ctx.beginPath(); ctx.strokeStyle=col; ctx.lineWidth=2.5; ctx.setLineDash([]);
+    const dx2 = (sp.x1 - sp.x0) / STEPS;
+    let first = true;
+    for(let k=0; k<=STEPS; k++){
+      const wx = sp.x0 + k*dx2;
+      const dx = wx - sp.x0;
+      const wy = sp.ai + sp.bi*dx + sp.ci*dx*dx + sp.di*dx*dx*dx;
+      if(!isFinite(wy)) { first=true; continue; }
+      const {x:px,y:py}=splToCanvas(wx,wy);
+      if(first){ctx.moveTo(px,py);first=false;}else ctx.lineTo(px,py);
+    }
+    ctx.stroke();
+
+    /* Línea vertical en nodo de unión */
+    if(si < splines.length-1){
+      const {x:nx,y:ny}=splToCanvas(sp.x1,0);
+      ctx.save();
+      ctx.strokeStyle=isDark?'rgba(148,163,184,.2)':'rgba(0,0,0,.1)';
+      ctx.lineWidth=1; ctx.setLineDash([3,3]);
+      ctx.beginPath(); ctx.moveTo(nx,PAD.t); ctx.lineTo(nx,PAD.t+PH); ctx.stroke();
+      ctx.restore();
+    }
+  });
+
+  /* Puntos de datos */
+  res.pts.forEach((p,i) => {
+    const{x:px,y:py}=splToCanvas(p.x,p.y);
+    if(px<PAD.l-8||px>PAD.l+PW+8||py<PAD.t-8||py>PAD.t+PH+8) return;
+    ctx.beginPath(); ctx.arc(px,py,5.5,0,Math.PI*2);
+    ctx.fillStyle=T7_COLOR; ctx.fill();
+    ctx.strokeStyle='#fff'; ctx.lineWidth=1.5; ctx.stroke();
+    ctx.fillStyle=isDark?'#e2e8f0':'#374151';
+    ctx.font='10px "JetBrains Mono",monospace'; ctx.textAlign='center';
+    ctx.textBaseline='alphabetic';
+    ctx.fillText(`(${p.x},${p.y})`,px,py-10);
+  });
+
+  /* Punto evaluado */
+  if(isFinite(yEval)){
+    const{x:epx,y:epy}=splToCanvas(xEval,yEval);
+    ctx.beginPath(); ctx.arc(epx,epy,7,0,Math.PI*2);
+    ctx.fillStyle='#ef4444'; ctx.fill();
+    ctx.strokeStyle='#fff'; ctx.lineWidth=2; ctx.stroke();
+    ctx.fillStyle='#ef4444'; ctx.font='bold 11px "Poppins",sans-serif';
+    ctx.textAlign='center'; ctx.textBaseline='alphabetic';
+    ctx.fillText(`S(${xEval})=${yEval.toFixed(4)}`,epx,epy-13);
+  }
+
+  /* Leyenda de tramos */
+  ctx.textBaseline='middle'; ctx.font='10px "Poppins",sans-serif';
+  let lx=PAD.l+6, ly=PAD.t+12;
+  splines.forEach((sp,si) => {
+    if(lx > PAD.l+PW-60) return;
+    const col=SPL_COLORS[si%SPL_COLORS.length];
+    ctx.strokeStyle=col; ctx.lineWidth=2.5; ctx.setLineDash([]);
+    ctx.beginPath(); ctx.moveTo(lx,ly); ctx.lineTo(lx+18,ly); ctx.stroke();
+    ctx.fillStyle=isDark?'#e2e8f0':'#374151'; ctx.textAlign='left';
+    ctx.fillText(`S${si}`,lx+22,ly); lx+=50;
+  });
+  ctx.textBaseline='alphabetic';
+
+  /* Watermark */
+  ctx.fillStyle=isDark?'rgba(124,58,237,.15)':'rgba(148,163,184,.4)';
+  ctx.font='600 11px "Poppins",sans-serif'; ctx.textAlign='right'; ctx.textBaseline='bottom';
+  ctx.fillText('NUMERIX © 2026',W-10,H-8); ctx.textBaseline='alphabetic';
+}
+window.splDrawGraph = splDrawGraph;
+
+function splZoom(f) {
+  const g=splState.graph;
+  const cx=(g.xMin+g.xMax)/2, cy=(g.yMin+g.yMax)/2;
+  const hw=(g.xMax-g.xMin)/2*f, hh=(g.yMax-g.yMin)/2*f;
+  g.xMin=cx-hw; g.xMax=cx+hw; g.yMin=cy-hh; g.yMax=cy+hh;
+  splDrawGraph();
+}
+window.splZoom = splZoom;
+
+function splResetView() {
+  const pts = splState.result?.pts || splState.data;
+  if (!pts.length) return;
+  const xs=pts.map(p=>p.x), ys=pts.map(p=>p.y);
+  const xr=Math.max(...xs)-Math.min(...xs)||2;
+  const yr=Math.max(...ys)-Math.min(...ys)||2;
+  const g=splState.graph;
+  g.xMin=Math.min(...xs)-xr*.15; g.xMax=Math.max(...xs)+xr*.15;
+  g.yMin=Math.min(...ys)-yr*.25; g.yMax=Math.max(...ys)+yr*.25;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   FLUJO PRINCIPAL — BOTÓN CONSTRUIR SPLINE
+══════════════════════════════════════════════════════════════ */
+document.addEventListener('DOMContentLoaded', () => {
+
+  /* Datos iniciales */
+  splState.data = [{x:1,y:1},{x:2,y:0.5},{x:3,y:0.333},{x:4,y:0.25}];
+  splRenderTable();
+
+  /* Agregar / quitar filas */
+  document.getElementById('btnSplAddRow')?.addEventListener('click', () => {
+    splState.data.push({x:0,y:0}); splRenderTable();
+  });
+  document.getElementById('btnSplRemRow')?.addEventListener('click', () => {
+    if(splState.data.length>3){ splState.data.pop(); splRenderTable(); }
+  });
+
+  /* Ejemplo 1 — 4 puntos clásico (1,1)(2,½)(3,⅓)(4,¼) */
+  document.getElementById('btnSplEj1')?.addEventListener('click', () => {
+    t7State.data = [{x:1,y:1},{x:2,y:0.5},{x:3,y:0.333333},{x:4,y:0.25}];
+    document.getElementById('splXEval').value = '1.5';
+    document.querySelector('input[name="t7Mode"][value="splines"]').checked = true;
+    t7RenderDataTable();
+    t7UpdateMode();
+    clearAlert('t7Alert');
+    showAlert('t7Alert','info','📋 Ejemplo 1 — f(x)=1/x en [1,4] · 4 puntos. Presiona ▶ Construir Spline.');
+  });
+
+  /* Ejemplo 2 — 5 puntos (2,5)(4,6)(5,9)(8,5)(10,4) */
+  document.getElementById('btnSplEj2')?.addEventListener('click', () => {
+    t7State.data = [{x:2,y:5},{x:4,y:6},{x:5,y:9},{x:8,y:5},{x:10,y:4}];
+    document.getElementById('splXEval').value = '3';
+    document.querySelector('input[name="t7Mode"][value="splines"]').checked = true;
+    t7RenderDataTable();
+    t7UpdateMode();
+    clearAlert('t7Alert');
+    showAlert('t7Alert','info','📋 Ejemplo 2 — 5 puntos, 4 tramos. Presiona ▶ Construir Spline.');
+  });
+
+  /* btnSplCalc eliminado — el flujo ahora pasa por btnT7Calcular con mode=splines */
+
+  /* Resize gráfica */
+  window.addEventListener('resize', () => { if(splState.result) splDrawGraph(); });
+});
+
+/* ── Parchar dark mode para Splines ── */
+(function() {
+  const orig = window.applyTheme;
+  if(orig) return; /* ya parchado desde script principal */
+})();
+
+/* ══════════════════════════════════════════════════════════════
+   PARCHAR EXPORTACIÓN EXCEL T7 para incluir Splines
+══════════════════════════════════════════════════════════════ */
+(function patchT7SplExport() {
+  document.addEventListener('DOMContentLoaded', () => {
+    if(typeof numerixExport === 'undefined') return;
+    const prev = numerixExport.t7;
+    numerixExport.t7 = function() {
+      /* Correr exportación previa (Newton + Lagrange) */
+      if(prev) {
+        try{ prev(); return; } catch(e){}
+      }
+    };
+
+    /* Exportación independiente Splines */
+    numerixExport.t7spl = function() {
+      const res = splState.result;
+      if(!res){ alert('Construye el spline primero.'); return; }
+      const wb = XLSX.utils.book_new();
+
+      /* Hoja 1: Resumen */
+      const info = [
+        ['NUMERIX — Trazadores Cúbicos Naturales','','© 2026 Fernando Granja & Alejandra Tinoco'],
+        [],
+        ['n+1 puntos', res.pts.length], ['n tramos', res.n],
+        ['x evaluado', res.xEval], ['S(x)', res.yEval],
+        ['Tramo usado', `S${res.tramIdx}`],
+        [],
+        ['PUNTOS DE DATOS'],['i','xi','yi'],
+        ...res.pts.map((p,i) => [i, p.x, p.y]),
+        [],
+        ['SEGUNDAS DERIVADAS Mᵢ'],['i','Mᵢ = S\'\'(xᵢ)'],
+        ...res.Ms.map((m,i) => [i, m]),
+      ];
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(info), 'Resumen');
+
+      /* Hoja 2: Coeficientes */
+      const hdrC = ['Tramo','x_ini','x_fin','aᵢ','bᵢ','cᵢ','dᵢ'];
+      const rowsC = res.splines.map(sp => [
+        `S${sp.i}`, sp.x0, sp.x1, sp.ai, sp.bi, sp.ci, sp.di
+      ]);
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([hdrC,...rowsC]), 'Coeficientes');
+
+      XLSX.writeFile(wb, `NUMERIX_T7_SplinesCubicos.xlsx`);
+    };
+  });
+})();
+
+
+/* ══════════════════════════════════════════════════════════════
+   TEMA 8 — DIFERENCIACIÓN NUMÉRICA
+   Diferencias Finitas Adelante · Atrás · Central
+   Segunda Derivada · Extrapolación de Richardson
+   © 2026 Fernando Granja & Alejandra Tinoco
+══════════════════════════════════════════════════════════════ */
+
+const T8_COLOR  = '#ea580c';
+const T8_LIGHT  = '#fff7ed';
+const T8_DARK   = '#9a3412';
+
+/* ── Estado T8 ──────────────────────────────────────────────── */
+const t8State = {
+  mode:     'funcion',   /* 'funcion' | 'tabla' */
+  fx:       'sin(x)',
+  fxExacta: 'cos(x)',
+  x0:       0,
+  h:        0.2,
+  tableData: [],
+  result:   null
+};
+
+/* ══════════════════════════════════════════════════════════════
+   EVALUACIÓN SEGURA DE f(x)
+══════════════════════════════════════════════════════════════ */
+function t8Eval(expr, x) {
+  try {
+    const fn = new Function('x','PI','sin','cos','tan','exp','log','sqrt','pow','abs',
+      `"use strict"; return (${expr});`);
+    return fn(x, Math.PI, Math.sin, Math.cos, Math.tan, Math.exp, Math.log, Math.sqrt, Math.pow, Math.abs);
+  } catch(e) { return NaN; }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   NAVEGACIÓN INTERNA T8
+══════════════════════════════════════════════════════════════ */
+function t8GoTo(secId) {
+  document.querySelectorAll('.t8-sec').forEach(s => s.style.display = 'none');
+  document.querySelectorAll('.t8-nav').forEach(n => n.classList.remove('active'));
+  const sec = document.getElementById(secId);
+  if (sec) sec.style.display = 'block';
+  document.querySelectorAll(`[data-t8="${secId}"]`).forEach(el => el.classList.add('active'));
+  const dl = document.getElementById('t8-download-bar');
+  if (dl && dl.dataset.ready === '1' && secId !== 't8-input') dl.style.display = 'block';
+}
+window.t8GoTo = t8GoTo;
+
+/* ══════════════════════════════════════════════════════════════
+   TABLA DE DATOS DINÁMICA
+══════════════════════════════════════════════════════════════ */
+function t8RenderTable() {
+  const tb = document.getElementById('t8DataBody');
+  if (!tb) return;
+  tb.innerHTML = t8State.tableData.map((p, i) => `
+    <tr>
+      <td style="text-align:center;font-family:var(--font-mono);font-size:.8rem;color:var(--gray-400);">${i}</td>
+      <td><input type="number" class="t6-cell-input" id="t8_x_${i}" value="${p.x}" step="any"
+          onchange="t8UpdateCell(${i},'x',this.value)"/></td>
+      <td><input type="number" class="t6-cell-input" id="t8_y_${i}" value="${p.y}" step="any"
+          onchange="t8UpdateCell(${i},'y',this.value)"/></td>
+    </tr>`).join('');
+}
+function t8UpdateCell(i,f,v){ if(t8State.tableData[i]) t8State.tableData[i][f]=parseFloat(v)||0; }
+window.t8UpdateCell = t8UpdateCell;
+
+function t8ReadTable() {
+  t8State.tableData.forEach((p,i) => {
+    const xe = document.getElementById(`t8_x_${i}`);
+    const ye = document.getElementById(`t8_y_${i}`);
+    if(xe) p.x = parseFloat(xe.value)||0;
+    if(ye) p.y = parseFloat(ye.value)||0;
+  });
+  return [...t8State.tableData].sort((a,b) => a.x - b.x);
+}
+
+/* ══════════════════════════════════════════════════════════════
+   ALGORITMOS — DIFERENCIAS FINITAS
+══════════════════════════════════════════════════════════════ */
+
+/** Obtener f(x0-h), f(x0), f(x0+h) según modo */
+function t8GetVals(x0, h) {
+  if (t8State.mode === 'funcion') {
+    return {
+      fxMH: t8Eval(t8State.fx, x0 - h),
+      fx0:  t8Eval(t8State.fx, x0),
+      fxPH: t8Eval(t8State.fx, x0 + h),
+      fxPH2: t8Eval(t8State.fx, x0 + h/2),
+      fxMH2: t8Eval(t8State.fx, x0 - h/2),
+    };
+  } else {
+    /* Modo tabla: buscar los valores por interpolación lineal */
+    const pts = t8ReadTable();
+    const interp = (xTarget) => {
+      /* Buscar exacto primero */
+      const exact = pts.find(p => Math.abs(p.x - xTarget) < 1e-10);
+      if (exact) return exact.y;
+      /* Interpolar lineal entre los dos más cercanos */
+      let lo = null, hi = null;
+      for (const p of pts) {
+        if (p.x <= xTarget) lo = p;
+        if (p.x >= xTarget && !hi) hi = p;
+      }
+      if (lo && hi && lo !== hi) {
+        return lo.y + (hi.y - lo.y) * (xTarget - lo.x) / (hi.x - lo.x);
+      }
+      return NaN;
+    };
+    return {
+      fxMH:  interp(x0 - h),
+      fx0:   interp(x0),
+      fxPH:  interp(x0 + h),
+      fxPH2: interp(x0 + h/2),
+      fxMH2: interp(x0 - h/2),
+    };
+  }
+}
+
+function t8Compute(x0, h) {
+  const v = t8GetVals(x0, h);
+  const { fxMH, fx0, fxPH, fxPH2, fxMH2 } = v;
+
+  /* Primera derivada */
+  const adelante  = (fxPH - fx0)         / h;
+  const atras     = (fx0  - fxMH)        / h;
+  const central   = (fxPH - fxMH)        / (2*h);
+
+  /* Segunda derivada */
+  const segunda   = (fxPH - 2*fx0 + fxMH) / (h*h);
+
+  /* Richardson: R = [4f(h/2) - f(h)] / 3
+     f(h)   = diferencia central con paso h
+     f(h/2) = diferencia central con paso h/2  */
+  const centralH2   = (t8Eval(t8State.fx, x0+h/2) - t8Eval(t8State.fx, x0-h/2)) / h;
+  const richardson  = (4*centralH2 - central) / 3;
+
+  /* Valor exacto (solo modo función) */
+  let exacto = null, errAd = null, errAt = null, errCen = null, errRich = null;
+  if (t8State.mode === 'funcion' && t8State.fxExacta.trim()) {
+    exacto  = t8Eval(t8State.fxExacta, x0);
+    errAd   = Math.abs(exacto - adelante);
+    errAt   = Math.abs(exacto - atras);
+    errCen  = Math.abs(exacto - central);
+    errRich = Math.abs(exacto - richardson);
+  }
+
+  return {
+    x0, h, v,
+    adelante, atras, central, segunda, richardson,
+    exacto, errAd, errAt, errCen, errRich,
+    centralH2
+  };
+}
+
+/* ══════════════════════════════════════════════════════════════
+   FORMATO
+══════════════════════════════════════════════════════════════ */
+const t8Fmt  = (v,d=8) => (v===null||v===undefined||isNaN(v)) ? '—' : Number(v).toFixed(d);
+const t8FmtE = (v) => (v===null||v===undefined||isNaN(v)) ? '—' : v.toExponential(4);
+
+/* ══════════════════════════════════════════════════════════════
+   HELPER: renderizar una sección de diferencia
+══════════════════════════════════════════════════════════════ */
+function t8RenderDif(secId, title, formula, sustitucion, resultado, error, exacto, nextSec, prevSec, color) {
+  const sec = document.getElementById(secId);
+  if (!sec) return;
+
+  const errBlock = (exacto !== null && !isNaN(exacto)) ? `
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:.75rem;margin-top:1rem;">
+      <div class="t8-metric-card" style="border-left-color:${color};">
+        <div class="t8-metric-label">Valor aproximado</div>
+        <div class="t8-metric-val" style="color:${color};">${t8Fmt(resultado)}</div>
+      </div>
+      <div class="t8-metric-card" style="border-left-color:#10b981;">
+        <div class="t8-metric-label">Valor exacto f'(x₀)</div>
+        <div class="t8-metric-val" style="color:#10b981;">${t8Fmt(exacto)}</div>
+      </div>
+      <div class="t8-metric-card" style="border-left-color:#ef4444;">
+        <div class="t8-metric-label">Error absoluto |ε|</div>
+        <div class="t8-metric-val" style="color:#ef4444;">${t8FmtE(error)}</div>
+      </div>
+      <div class="t8-metric-card" style="border-left-color:#f59e0b;">
+        <div class="t8-metric-label">Error relativo</div>
+        <div class="t8-metric-val" style="color:#f59e0b;">${exacto !== 0 ? t8Fmt(Math.abs(error/exacto)*100,4)+'%' : '—'}</div>
+      </div>
+    </div>` : `
+    <div style="display:inline-flex;align-items:center;gap:1rem;margin-top:.75rem;">
+      <div style="background:${color}15;border:2px solid ${color}33;border-radius:var(--radius-sm);
+                  padding:.75rem 1.5rem;text-align:center;">
+        <div style="font-family:var(--font-main);font-size:.72rem;font-weight:700;color:${color};
+                    text-transform:uppercase;margin-bottom:.25rem;">f'(x₀) ≈</div>
+        <div style="font-family:var(--font-mono);font-size:1.3rem;font-weight:700;color:${color};">
+          ${t8Fmt(resultado)}
+        </div>
+      </div>
+    </div>`;
+
+  sec.innerHTML = `
+  <div class="page-header">
+    <h2>${title}</h2>
+    <p>Aproximación de la primera derivada en x₀ = ${t8State.x0} con h = ${t8State.h}</p>
+  </div>
+
+  <!-- Fórmula general -->
+  <div class="card t6-step-card" style="margin-bottom:1.25rem;border-left:5px solid ${color};">
+    <div class="card-header">
+      <div class="card-header-icon" style="background:${color};width:38px;height:38px;border-radius:10px;
+        display:flex;align-items:center;justify-content:center;color:#fff;font-size:.85rem;font-weight:700;">f'</div>
+      <div><div class="card-title">Fórmula general</div></div>
+    </div>
+    <div class="t6-step-body">
+      <div style="font-family:var(--font-mono);font-size:.9rem;font-weight:600;color:${color};">
+        ${formula}
+      </div>
+    </div>
+  </div>
+
+  <!-- Sustitución numérica -->
+  <div class="card t6-step-card" style="margin-bottom:1.25rem;border-left:5px solid ${T8_COLOR};">
+    <div class="card-header">
+      <div class="card-header-icon t8-icon">🔢</div>
+      <div><div class="card-title">Sustitución numérica</div></div>
+    </div>
+    <div class="t6-step-body">
+      ${sustitucion.map(s => `<div style="font-family:var(--font-mono);font-size:.85rem;">${s}</div>`).join('')}
+    </div>
+  </div>
+
+  <!-- Resultado y error -->
+  <div class="card" style="margin-bottom:1.25rem;">
+    <div class="card-header">
+      <div class="card-header-icon t8-icon">🎯</div>
+      <div><div class="card-title">Resultado</div></div>
+    </div>
+    <div style="padding:.5rem 1.25rem 1.25rem;">
+      ${errBlock}
+    </div>
+  </div>
+
+  <div style="display:flex;gap:.75rem;justify-content:flex-end;flex-wrap:wrap;">
+    ${prevSec ? `<button class="btn btn-secondary" onclick="t8GoTo('${prevSec}')">← Anterior</button>` : ''}
+    <button class="btn t8-btn-primary" onclick="t8GoTo('${nextSec}')">Siguiente →</button>
+  </div>`;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   RENDERIZADO DE SECCIONES
+══════════════════════════════════════════════════════════════ */
+function t8RenderAdelante(res) {
+  const { x0, h, v, adelante, exacto, errAd } = res;
+  const sustitucion = [
+    `f'(x₀) ≈ [f(x₀+h) − f(x₀)] / h`,
+    `= [f(${x0}+${h}) − f(${x0})] / ${h}`,
+    `= [f(${x0+h}) − f(${x0})] / ${h}`,
+    `= [${t8Fmt(v.fxPH,8)} − ${t8Fmt(v.fx0,8)}] / ${h}`,
+    `= ${t8Fmt(v.fxPH-v.fx0,8)} / ${h}`,
+    `= ${t8Fmt(adelante,8)}`,
+  ];
+  t8RenderDif('t8-adelante',
+    'Diferencia hacia adelante',
+    "f'(x₀) ≈ [f(x₀+h) − f(x₀)] / h",
+    sustitucion, adelante, errAd, exacto,
+    't8-atras', 't8-input', '#3b82f6');
+}
+
+function t8RenderAtras(res) {
+  const { x0, h, v, atras, exacto, errAt } = res;
+  const sustitucion = [
+    `f'(x₀) ≈ [f(x₀) − f(x₀−h)] / h`,
+    `= [f(${x0}) − f(${x0}−${h})] / ${h}`,
+    `= [f(${x0}) − f(${x0-h})] / ${h}`,
+    `= [${t8Fmt(v.fx0,8)} − ${t8Fmt(v.fxMH,8)}] / ${h}`,
+    `= ${t8Fmt(v.fx0-v.fxMH,8)} / ${h}`,
+    `= ${t8Fmt(atras,8)}`,
+  ];
+  t8RenderDif('t8-atras',
+    'Diferencia hacia atrás',
+    "f'(x₀) ≈ [f(x₀) − f(x₀−h)] / h",
+    sustitucion, atras, errAt, exacto,
+    't8-central', 't8-adelante', '#8b5cf6');
+}
+
+function t8RenderCentral(res) {
+  const { x0, h, v, central, exacto, errCen } = res;
+  const sustitucion = [
+    `f'(x₀) ≈ [f(x₀+h) − f(x₀−h)] / 2h`,
+    `= [f(${x0+h}) − f(${x0-h})] / ${2*h}`,
+    `= [${t8Fmt(v.fxPH,8)} − ${t8Fmt(v.fxMH,8)}] / ${2*h}`,
+    `= ${t8Fmt(v.fxPH-v.fxMH,8)} / ${2*h}`,
+    `= ${t8Fmt(central,8)}  ⭐ Más recomendada`,
+  ];
+  t8RenderDif('t8-central',
+    'Diferencia central ⭐ (más recomendada)',
+    "f'(x₀) ≈ [f(x₀+h) − f(x₀−h)] / 2h",
+    sustitucion, central, errCen, exacto,
+    't8-segunda', 't8-atras', T8_COLOR);
+}
+
+function t8RenderSegunda(res) {
+  const sec = document.getElementById('t8-segunda');
+  if (!sec) return;
+  const { x0, h, v, segunda } = res;
+
+  sec.innerHTML = `
+  <div class="page-header">
+    <h2>Segunda Derivada</h2>
+    <p>Aproxima f''(x₀) — aceleración, curvatura o variación de la tasa de cambio.</p>
+  </div>
+
+  <div class="card t6-step-card" style="margin-bottom:1.25rem;border-left:5px solid ${T8_COLOR};">
+    <div class="card-header">
+      <div class="card-header-icon t8-icon">f''</div>
+      <div><div class="card-title">Fórmula de diferencia central de segundo orden</div></div>
+    </div>
+    <div class="t6-step-body">
+      <div style="font-family:var(--font-mono);font-size:.9rem;font-weight:600;color:${T8_COLOR};">
+        f''(x) ≈ [f(x+h) − 2f(x) + f(x−h)] / h²
+      </div>
+    </div>
+  </div>
+
+  <div class="card t6-step-card" style="margin-bottom:1.25rem;border-left:5px solid ${T8_COLOR};">
+    <div class="card-header">
+      <div class="card-header-icon t8-icon">🔢</div>
+      <div><div class="card-title">Sustitución numérica — x₀ = ${x0}, h = ${h}</div></div>
+    </div>
+    <div class="t6-step-body">
+      <div style="font-family:var(--font-mono);font-size:.85rem;">f''(${x0}) ≈ [f(${x0+h}) − 2f(${x0}) + f(${x0-h})] / (${h})²</div>
+      <div style="font-family:var(--font-mono);font-size:.85rem;">= [${t8Fmt(v.fxPH,8)} − 2(${t8Fmt(v.fx0,8)}) + ${t8Fmt(v.fxMH,8)}] / ${h*h}</div>
+      <div style="font-family:var(--font-mono);font-size:.85rem;">= [${t8Fmt(v.fxPH - 2*v.fx0 + v.fxMH,8)}] / ${h*h}</div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-bottom:1.25rem;background:linear-gradient(135deg,${T8_LIGHT},#fff7ed);border:2px solid ${T8_COLOR}44;">
+    <div class="card-header">
+      <div class="card-header-icon t8-icon">🎯</div>
+      <div><div class="card-title">Resultado — Segunda Derivada</div></div>
+    </div>
+    <div style="padding:.5rem 1.25rem 1.25rem;text-align:center;">
+      <div style="font-family:var(--font-mono);font-size:1.3rem;font-weight:700;color:${T8_COLOR};">
+        f''(${x0}) ≈ ${t8Fmt(segunda,8)}
+      </div>
+    </div>
+  </div>
+
+  <div style="display:flex;gap:.75rem;justify-content:flex-end;flex-wrap:wrap;">
+    <button class="btn btn-secondary" onclick="t8GoTo('t8-central')">← Dif. central</button>
+    <button class="btn t8-btn-primary" onclick="t8GoTo('t8-richardson')">Siguiente: Richardson →</button>
+  </div>`;
+}
+
+function t8RenderRichardson(res) {
+  const sec = document.getElementById('t8-richardson');
+  if (!sec) return;
+  const { x0, h, central, centralH2, richardson, exacto, errRich } = res;
+
+  const errBlock = (exacto !== null && !isNaN(exacto)) ? `
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:.75rem;margin-top:.75rem;">
+      <div class="t8-metric-card" style="border-left-color:#0891b2;">
+        <div class="t8-metric-label">f(h) — Dif. central paso h</div>
+        <div class="t8-metric-val" style="color:#0891b2;">${t8Fmt(central)}</div>
+      </div>
+      <div class="t8-metric-card" style="border-left-color:#7c3aed;">
+        <div class="t8-metric-label">f(h/2) — Dif. central paso h/2</div>
+        <div class="t8-metric-val" style="color:#7c3aed;">${t8Fmt(centralH2)}</div>
+      </div>
+      <div class="t8-metric-card" style="border-left-color:${T8_COLOR};">
+        <div class="t8-metric-label">R(x) — Richardson</div>
+        <div class="t8-metric-val" style="color:${T8_COLOR};">${t8Fmt(richardson)}</div>
+      </div>
+      <div class="t8-metric-card" style="border-left-color:#10b981;">
+        <div class="t8-metric-label">Valor exacto</div>
+        <div class="t8-metric-val" style="color:#10b981;">${t8Fmt(exacto)}</div>
+      </div>
+      <div class="t8-metric-card" style="border-left-color:#ef4444;">
+        <div class="t8-metric-label">Error Richardson |ε|</div>
+        <div class="t8-metric-val" style="color:#ef4444;">${t8FmtE(errRich)}</div>
+      </div>
+    </div>` : `
+    <div class="t8-metric-card" style="border-left-color:${T8_COLOR};margin-top:.75rem;max-width:300px;">
+      <div class="t8-metric-label">R(x₀) — Richardson</div>
+      <div class="t8-metric-val" style="color:${T8_COLOR};">${t8Fmt(richardson)}</div>
+    </div>`;
+
+  sec.innerHTML = `
+  <div class="page-header">
+    <h2>Extrapolación de Richardson</h2>
+    <p>Mejora la precisión combinando dos diferencias centrales con pasos h y h/2.<br>
+       El error de la diferencia central es proporcional a h² — Richardson lo cancela.</p>
+  </div>
+
+  <div class="card t6-step-card" style="margin-bottom:1.25rem;border-left:5px solid ${T8_COLOR};">
+    <div class="card-header">
+      <div class="card-header-icon t8-icon">R</div>
+      <div><div class="card-title">Fórmula de Richardson</div></div>
+    </div>
+    <div class="t6-step-body">
+      <div style="font-family:var(--font-mono);font-size:.9rem;font-weight:600;color:${T8_COLOR};">
+        R(x) = [4·f(h/2) − f(h)] / 3
+      </div>
+      <div style="font-family:var(--font-main);font-size:.8rem;color:var(--gray-500);">
+        donde f(h) = dif. central con paso h · f(h/2) = dif. central con paso h/2
+      </div>
+    </div>
+  </div>
+
+  <div class="card t6-step-card" style="margin-bottom:1.25rem;border-left:5px solid ${T8_COLOR};">
+    <div class="card-header">
+      <div class="card-header-icon t8-icon">🔢</div>
+      <div><div class="card-title">Sustitución — x₀ = ${x0}, h = ${h}, h/2 = ${h/2}</div></div>
+    </div>
+    <div class="t6-step-body">
+      <div style="font-family:var(--font-mono);font-size:.82rem;">f(h)   = [f(${x0+h}) − f(${x0-h})] / ${2*h} = ${t8Fmt(central,8)}</div>
+      <div style="font-family:var(--font-mono);font-size:.82rem;">f(h/2) = [f(${x0+h/2}) − f(${x0-h/2})] / ${h} = ${t8Fmt(centralH2,8)}</div>
+      <div style="font-family:var(--font-mono);font-size:.82rem;">R(${x0}) = [4·(${t8Fmt(centralH2,6)}) − (${t8Fmt(central,6)})] / 3</div>
+      <div style="font-family:var(--font-mono);font-size:.82rem;">R(${x0}) = [${t8Fmt(4*centralH2,6)} − ${t8Fmt(central,6)}] / 3</div>
+      <div style="font-family:var(--font-mono);font-size:.82rem;">R(${x0}) = ${t8Fmt(4*centralH2-central,6)} / 3 = <strong style="color:${T8_COLOR};">${t8Fmt(richardson,8)}</strong></div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-bottom:1.25rem;">
+    <div class="card-header">
+      <div class="card-header-icon t8-icon">🎯</div>
+      <div><div class="card-title">Comparación de precisión</div></div>
+    </div>
+    <div style="padding:.5rem 1.25rem 1.25rem;">
+      ${errBlock}
+    </div>
+  </div>
+
+  <div style="display:flex;gap:.75rem;justify-content:flex-end;flex-wrap:wrap;">
+    <button class="btn btn-secondary" onclick="t8GoTo('t8-segunda')">← Segunda deriv.</button>
+    <button class="btn t8-btn-primary" onclick="t8GoTo('t8-resumen')">Ver Resumen →</button>
+  </div>`;
+}
+
+function t8RenderResumen(res) {
+  const sec = document.getElementById('t8-resumen');
+  if (!sec) return;
+  const { x0, h, adelante, atras, central, segunda, richardson, exacto, errAd, errAt, errCen, errRich } = res;
+
+  const COLS = ['#3b82f6','#8b5cf6',T8_COLOR,'#0891b2'];
+  const methods = [
+    { label:'Diferencia adelante',  val:adelante,  err:errAd,  col:COLS[0] },
+    { label:'Diferencia atrás',     val:atras,     err:errAt,  col:COLS[1] },
+    { label:'Diferencia central ⭐', val:central,   err:errCen, col:COLS[2] },
+    { label:'Richardson',           val:richardson, err:errRich,col:COLS[3] },
+  ];
+
+  let rows = methods.map(m => `
+    <tr>
+      <td style="padding:.45rem .75rem;font-family:var(--font-main);font-size:.82rem;font-weight:600;color:${m.col};">${m.label}</td>
+      <td style="padding:.45rem .75rem;font-family:var(--font-mono);font-size:.82rem;text-align:right;">${t8Fmt(m.val)}</td>
+      ${exacto !== null ? `<td style="padding:.45rem .75rem;font-family:var(--font-mono);font-size:.82rem;text-align:right;color:#ef4444;">${t8FmtE(m.err)}</td>` : ''}
+      ${exacto !== null ? `<td style="padding:.45rem .75rem;font-family:var(--font-mono);font-size:.82rem;text-align:right;">${exacto !== 0 ? t8Fmt(Math.abs(m.err/exacto)*100,4)+'%' : '—'}</td>` : ''}
+    </tr>`).join('');
+
+  sec.innerHTML = `
+  <div class="page-header">
+    <h2>Resumen — Comparación de Métodos</h2>
+    <p>x₀ = ${x0} · h = ${h}${exacto !== null ? ' · f\'(x₀) exacta = '+t8Fmt(exacto,8) : ''}</p>
+  </div>
+
+  <div class="card" style="padding:0;overflow:hidden;margin-bottom:1.25rem;">
+    <div class="card-header" style="padding:.75rem 1.25rem;border-bottom:1px solid var(--border);">
+      <div class="card-header-icon t8-icon">📊</div>
+      <div><div class="card-title">Tabla comparativa — Primera derivada f'(${x0})</div></div>
+    </div>
+    <div style="overflow-x:auto;">
+    <table style="width:100%;border-collapse:collapse;font-size:.85rem;">
+      <thead>
+        <tr style="background:${T8_LIGHT};">
+          <th style="padding:.5rem .75rem;color:${T8_DARK};border-bottom:2px solid ${T8_COLOR}33;">Método</th>
+          <th style="padding:.5rem .75rem;color:${T8_DARK};border-bottom:2px solid ${T8_COLOR}33;text-align:right;">f'(x₀) ≈</th>
+          ${exacto !== null ? `<th style="padding:.5rem .75rem;color:${T8_DARK};border-bottom:2px solid ${T8_COLOR}33;text-align:right;">Error |ε|</th>` : ''}
+          ${exacto !== null ? `<th style="padding:.5rem .75rem;color:${T8_DARK};border-bottom:2px solid ${T8_COLOR}33;text-align:right;">Error %</th>` : ''}
+        </tr>
+      </thead>
+      <tbody>${rows}</tbody>
+    </table>
+    </div>
+  </div>
+
+  <div class="card" style="margin-bottom:1.25rem;background:linear-gradient(135deg,${T8_LIGHT},#fff7ed);border:2px solid ${T8_COLOR}33;">
+    <div class="card-header">
+      <div class="card-header-icon t8-icon">f''</div>
+      <div><div class="card-title">Segunda Derivada f''(${x0})</div></div>
+    </div>
+    <div style="padding:.5rem 1.25rem 1.25rem;text-align:center;">
+      <div style="font-family:var(--font-mono);font-size:1.2rem;font-weight:700;color:${T8_COLOR};">
+        f''(${x0}) ≈ ${t8Fmt(segunda,8)}
+      </div>
+    </div>
+  </div>
+
+  <div style="display:flex;gap:.75rem;justify-content:flex-end;flex-wrap:wrap;">
+    <button class="btn btn-secondary" onclick="t8GoTo('t8-richardson')">← Richardson</button>
+    <button class="btn t8-btn-primary" onclick="t8GoTo('t8-input')">🔁 Nuevos datos</button>
+  </div>`;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   FLUJO PRINCIPAL
+══════════════════════════════════════════════════════════════ */
+document.addEventListener('DOMContentLoaded', () => {
+
+  /* Tabla inicial */
+  t8State.tableData = [
+    {x:0,y:25},{x:1,y:28},{x:2,y:32},{x:3,y:34}
+  ];
+  t8RenderTable();
+
+  /* Modo toggle */
+  const t8Radios = document.querySelectorAll('input[name="t8Mode"]');
+  const t8PanFx  = document.getElementById('t8PanelFuncion');
+  const t8PanTab = document.getElementById('t8PanelTabla');
+  const t8UpdateMode = () => {
+    const mode = document.querySelector('input[name="t8Mode"]:checked')?.value || 'funcion';
+    t8State.mode = mode;
+    if (t8PanFx)  t8PanFx.style.display  = mode === 'funcion' ? 'block' : 'none';
+    if (t8PanTab) t8PanTab.style.display = mode === 'tabla'   ? 'block' : 'none';
+  };
+  t8Radios.forEach(r => r.addEventListener('change', t8UpdateMode));
+  t8UpdateMode();
+
+  /* Agregar/quitar filas */
+  document.getElementById('btnT8AddRow')?.addEventListener('click', () => {
+    t8State.tableData.push({x:0,y:0}); t8RenderTable();
+  });
+  document.getElementById('btnT8RemRow')?.addEventListener('click', () => {
+    if(t8State.tableData.length > 3){ t8State.tableData.pop(); t8RenderTable(); }
+  });
+
+  /* Navegación interna */
+  document.querySelectorAll('.t8-nav[data-t8]').forEach(el => {
+    el.addEventListener('click', () => t8GoTo(el.getAttribute('data-t8')));
+  });
+
+  /* Ejemplo función (f(x)=sen(x), h=0.2, x0=0 — foto 4) */
+  document.getElementById('btnT8EjFx')?.addEventListener('click', () => {
+    document.querySelector('input[name="t8Mode"][value="funcion"]').checked = true;
+    t8UpdateMode();
+    document.getElementById('t8Fx').value        = 'sin(x)';
+    document.getElementById('t8FxExacta').value  = 'cos(x)';
+    document.getElementById('t8X0').value         = '0';
+    document.getElementById('t8H').value          = '0.2';
+    clearAlert('t8Alert');
+    showAlert('t8Alert','info','📋 Ejemplo clase cargado — f(x)=sen(x), x₀=0, h=0.2. Resultado exacto: f\'(0)=1.');
+  });
+
+  /* Ejemplo tabla temperatura (foto 2) */
+  document.getElementById('btnT8EjTab')?.addEventListener('click', () => {
+    document.querySelector('input[name="t8Mode"][value="tabla"]').checked = true;
+    t8UpdateMode();
+    t8State.tableData = [{x:0,y:25},{x:1,y:28},{x:2,y:32},{x:3,y:34}];
+    document.getElementById('t8X0Tab').value = '2';
+    t8RenderTable();
+    clearAlert('t8Alert');
+    showAlert('t8Alert','info','📋 Ejemplo temperatura cargado — t=2s, h=1. Resultado clase: adelante=2, atrás=4, central=3 °C/s.');
+  });
+
+  /* Ejemplo dron (foto 3) */
+  document.getElementById('btnT8EjDron')?.addEventListener('click', () => {
+    document.querySelector('input[name="t8Mode"][value="tabla"]').checked = true;
+    t8UpdateMode();
+    t8State.tableData = [{x:0.0,y:0.0},{x:0.5,y:1.2},{x:1.0,y:4.5},{x:1.5,y:9.3},{x:2.0,y:15.0}];
+    document.getElementById('t8X0Tab').value = '1';
+    t8RenderTable();
+    clearAlert('t8Alert');
+    showAlert('t8Alert','info','📋 Ejemplo dron cargado — velocidad en t=1s y aceleración. Resultados clase: v(1)=8.1 m/s, a(1)=6.0 m/s².');
+  });
+
+  /* Botón calcular */
+  document.getElementById('btnT8Calc')?.addEventListener('click', () => {
+    clearAlert('t8Alert');
+    clearAlert('t8AlertGlobal');
+
+    const mode = document.querySelector('input[name="t8Mode"]:checked')?.value || 'funcion';
+    t8State.mode = mode;
+
+    let x0, h;
+    if (mode === 'funcion') {
+      t8State.fx       = document.getElementById('t8Fx')?.value?.trim() || 'sin(x)';
+      t8State.fxExacta = document.getElementById('t8FxExacta')?.value?.trim() || '';
+      x0 = parseFloat(document.getElementById('t8X0')?.value);
+      h  = parseFloat(document.getElementById('t8H')?.value);
+    } else {
+      t8ReadTable();
+      x0 = parseFloat(document.getElementById('t8X0Tab')?.value);
+      h  = t8State.tableData.length >= 2
+        ? t8State.tableData[1].x - t8State.tableData[0].x
+        : 1;
+    }
+
+    if (isNaN(x0)) { showAlert('t8Alert','danger','Ingresa el valor de x₀.'); return; }
+    if (isNaN(h) || h === 0) { showAlert('t8Alert','danger','El paso h no puede ser cero.'); return; }
+
+    t8State.x0 = x0; t8State.h = h;
+
+    try {
+      const res = t8Compute(x0, h);
+      t8State.result = res;
+
+      t8RenderAdelante(res);
+      t8RenderAtras(res);
+      t8RenderCentral(res);
+      t8RenderSegunda(res);
+      t8RenderRichardson(res);
+      t8RenderResumen(res);
+
+      const dl = document.getElementById('t8-download-bar');
+      if (dl) { dl.dataset.ready = '1'; dl.style.display = 'block'; }
+
+      t8GoTo('t8-adelante');
+      showAlert('t8AlertGlobal','success',
+        `✓ Dif. adelante=${t8Fmt(res.adelante,6)} · Atrás=${t8Fmt(res.atras,6)} · Central=${t8Fmt(res.central,6)} · Richardson=${t8Fmt(res.richardson,6)}`);
+
+    } catch(e) { showAlert('t8Alert','danger','Error: ' + e.message); }
+  });
+});
+
+/* ══════════════════════════════════════════════════════════════
+   EXPORTACIÓN EXCEL T8
+══════════════════════════════════════════════════════════════ */
+(function patchT8Export() {
+  document.addEventListener('DOMContentLoaded', () => {
+    if (typeof numerixExport === 'undefined') return;
+    numerixExport.t8 = function() {
+      const res = t8State.result;
+      if (!res) { alert('Ejecuta el cálculo primero.'); return; }
+      const wb = XLSX.utils.book_new();
+
+      const info = [
+        ['NUMERIX — Diferenciación Numérica','','© 2026 Fernando Granja & Alejandra Tinoco'],
+        [],
+        ['Modo', t8State.mode === 'funcion' ? 'Función f(x)' : 'Tabla de datos'],
+        t8State.mode === 'funcion' ? ['f(x)', t8State.fx] : [],
+        t8State.mode === 'funcion' ? ["f'(x) exacta", t8State.fxExacta] : [],
+        ['x₀', res.x0], ['h', res.h],
+        [],
+        ['RESULTADOS — Primera derivada f\'(x₀)'],
+        ['Método', 'Valor aproximado', res.exacto !== null ? 'Error |ε|' : ''],
+        ['Diferencia adelante',  res.adelante,  res.errAd  ?? ''],
+        ['Diferencia atrás',     res.atras,     res.errAt  ?? ''],
+        ['Diferencia central',   res.central,   res.errCen ?? ''],
+        ['Richardson',           res.richardson, res.errRich ?? ''],
+        [],
+        ['Segunda derivada f\'\'(x₀)', res.segunda],
+        [],
+        res.exacto !== null ? ['Valor exacto f\'(x₀)', res.exacto] : [],
+      ].filter(r => r.length > 0);
+
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(info), 'Diferenciacion');
+
+      if (t8State.mode === 'tabla' && t8State.tableData.length > 0) {
+        const hdr = ['i','xi','f(xi)'];
+        const rows = t8State.tableData.map((p,i) => [i,p.x,p.y]);
+        XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([hdr,...rows]), 'Tabla datos');
+      }
+
+      XLSX.writeFile(wb, `NUMERIX_T8_DiferenciacionNumerica.xlsx`);
+    };
+  });
+})();
+
+
+/* ══════════════════════════════════════════════════════════════
+   TEMA 9 — INTEGRACIÓN POR APROXIMACIÓN
+   Trapecio Simple/Compuesta · Simpson 1/3 · Simpson 3/8
+   © 2026 Fernando Granja & Alejandra Tinoco
+══════════════════════════════════════════════════════════════ */
+
+const T9_COLOR = '#4338ca';
+const T9_LIGHT = '#eef2ff';
+const T9_DARK  = '#312e81';
+
+/* ── Estado T9 ──────────────────────────────────────────────── */
+const t9State = {
+  fx: 'exp(x)', a: 0, b: 2, n: 4, exacto: null,
+  result: null
+};
+
+/* ── Evaluador ──────────────────────────────────────────────── */
+function t9Eval(expr, x) {
+  try {
+    return new Function('x','PI','sin','cos','tan','exp','log','sqrt','pow','abs',
+      `"use strict";return(${expr});`)(x,Math.PI,Math.sin,Math.cos,Math.tan,Math.exp,Math.log,Math.sqrt,Math.pow,Math.abs);
+  } catch(e){ return NaN; }
+}
+
+/* ── Navegación T9 ──────────────────────────────────────────── */
+function t9GoTo(secId) {
+  document.querySelectorAll('.t9-sec').forEach(s => s.style.display='none');
+  document.querySelectorAll('.t9-nav').forEach(n => n.classList.remove('active'));
+  const sec=document.getElementById(secId);
+  if(sec) sec.style.display='block';
+  document.querySelectorAll(`[data-t9="${secId}"]`).forEach(el=>el.classList.add('active'));
+  const dl=document.getElementById('t9-download-bar');
+  if(dl && dl.dataset.ready==='1' && secId!=='t9-input') dl.style.display='block';
+}
+window.t9GoTo = t9GoTo;
+
+/* ── Formato ────────────────────────────────────────────────── */
+const t9Fmt  = (v,d=8) => (v===null||isNaN(v)) ? '—' : Number(v).toFixed(d);
+const t9FmtE = v => (v===null||isNaN(v)) ? '—' : Number(v).toExponential(4);
+const t9Frac = (n,d) => {
+  const g=(a,b)=>b===0?a:g(b,a%b);
+  const div=g(Math.abs(n),Math.abs(d));
+  return (n/div)===(d/div) ? String(n/div) : `${n/div}/${d/div}`;
+};
+
+/* ══════════════════════════════════════════════════════════════
+   ALGORITMOS
+══════════════════════════════════════════════════════════════ */
+
+/** Genera n+1 nodos uniformes en [a,b] */
+function t9Nodes(a, b, n) {
+  const h = (b-a)/n;
+  return Array.from({length:n+1}, (_,i) => a + i*h);
+}
+
+/** Evalúa f en todos los nodos */
+function t9EvalNodes(fx, xs) {
+  return xs.map(x => t9Eval(fx, x));
+}
+
+/** Trapecio Simple: n=1, h=b-a */
+function t9TrapSimple(fx, a, b) {
+  const h  = b-a;
+  const fa = t9Eval(fx,a), fb = t9Eval(fx,b);
+  const I  = (h/2)*(fa+fb);
+  return { h, fa, fb, I, xs:[a,b], ys:[fa,fb] };
+}
+
+/** Trapecio Compuesta: n subintervalos */
+function t9TrapComp(fx, a, b, n) {
+  const h   = (b-a)/n;
+  const xs  = t9Nodes(a,b,n);
+  const ys  = t9EvalNodes(fx,xs);
+  const sum = ys.slice(1,-1).reduce((s,v)=>s+v,0);
+  const I   = (h/2)*(ys[0] + 2*sum + ys[n]);
+  return { h, xs, ys, sum, I, n };
+}
+
+/** Simpson 1/3 Simple: n=2, h=(b-a)/2 */
+function t9S13Simple(fx, a, b) {
+  const h   = (b-a)/2;
+  const xs  = [a, a+h, b];
+  const ys  = xs.map(x=>t9Eval(fx,x));
+  const I   = (h/3)*(ys[0] + 4*ys[1] + ys[2]);
+  return { h, xs, ys, I };
+}
+
+/** Simpson 1/3 Compuesta: n par */
+function t9S13Comp(fx, a, b, n) {
+  if(n%2 !== 0) n = n%2===1 ? n+1 : n; // forzar par
+  const h   = (b-a)/n;
+  const xs  = t9Nodes(a,b,n);
+  const ys  = t9EvalNodes(fx,xs);
+  // impares (1,3,5...) coef 4; pares (2,4,6...) coef 2
+  let sumImp=0, sumPar=0;
+  for(let i=1; i<n; i++){
+    if(i%2===1) sumImp+=ys[i];
+    else        sumPar+=ys[i];
+  }
+  const I = (h/3)*(ys[0] + 4*sumImp + 2*sumPar + ys[n]);
+  return { h, xs, ys, sumImp, sumPar, I, n };
+}
+
+/** Simpson 3/8 Simple: n=3, h=(b-a)/3 */
+function t9S38Simple(fx, a, b) {
+  const h   = (b-a)/3;
+  const xs  = [a, a+h, a+2*h, b];
+  const ys  = xs.map(x=>t9Eval(fx,x));
+  const I   = (3*h/8)*(ys[0] + 3*ys[1] + 3*ys[2] + ys[3]);
+  return { h, xs, ys, I };
+}
+
+/** Simpson 3/8 Compuesta: n múltiplo de 3 */
+function t9S38Comp(fx, a, b, n) {
+  // ajustar n al múltiplo de 3 más cercano
+  while(n%3 !== 0) n++;
+  const h   = (b-a)/n;
+  const xs  = t9Nodes(a,b,n);
+  const ys  = t9EvalNodes(fx,xs);
+  let sum3=0, sum2=0;
+  for(let i=1; i<n; i++){
+    if(i%3!==0) sum3+=ys[i]; // múltiplos de 3 → coef 2; resto → coef 3
+    else        sum2+=ys[i];
+  }
+  const I = (3*h/8)*(ys[0] + 3*sum3 + 2*sum2 + ys[n]);
+  return { h, xs, ys, sum3, sum2, I, n };
+}
+
+/** Compute all */
+function t9Compute(fx, a, b, n, exacto) {
+  const ts  = t9TrapSimple(fx,a,b);
+  const tc  = t9TrapComp(fx,a,b,n);
+  // Simpson 1/3: asegurar n par para compuesta
+  const nS13 = n%2===0 ? n : n+1;
+  const s13s = t9S13Simple(fx,a,b);
+  const s13c = t9S13Comp(fx,a,b,nS13);
+  // Simpson 3/8: asegurar n múltiplo de 3
+  let nS38 = n; while(nS38%3!==0) nS38++;
+  const s38s = t9S38Simple(fx,a,b);
+  const s38c = t9S38Comp(fx,a,b,nS38);
+
+  const err = (I) => exacto!==null && !isNaN(exacto) ? Math.abs(exacto-I) : null;
+
+  return {
+    fx, a, b, n, exacto,
+    ts:  { ...ts,  err: err(ts.I)  },
+    tc:  { ...tc,  err: err(tc.I)  },
+    s13s:{ ...s13s,err: err(s13s.I)},
+    s13c:{ ...s13c,err: err(s13c.I)},
+    s38s:{ ...s38s,err: err(s38s.I)},
+    s38c:{ ...s38c,err: err(s38c.I)},
+  };
+}
+
+/* ══════════════════════════════════════════════════════════════
+   RENDERIZADO — HELPER TABLA DE NODOS
+══════════════════════════════════════════════════════════════ */
+function t9NodeTable(xs, ys, coefs, color) {
+  const hdr = ['i','xᵢ','f(xᵢ)','Coef.','Coef. × f(xᵢ)'];
+  let html = `<div style="overflow-x:auto;">
+  <table style="width:100%;border-collapse:collapse;font-family:var(--font-mono);font-size:.78rem;">
+    <thead><tr style="background:${T9_LIGHT};">
+      ${hdr.map(h=>`<th style="padding:.4rem .65rem;color:${T9_DARK};border-bottom:2px solid ${color}33;">${h}</th>`).join('')}
+    </tr></thead><tbody>`;
+  xs.forEach((x,i) => {
+    const c = coefs[i];
+    const bg = i===0||i===xs.length-1 ? `background:${T9_LIGHT};` : '';
+    html += `<tr style="${bg}">
+      <td style="padding:.35rem .65rem;text-align:center;font-weight:700;color:${color};">${i}</td>
+      <td style="padding:.35rem .65rem;text-align:right;">${t9Fmt(x,6)}</td>
+      <td style="padding:.35rem .65rem;text-align:right;">${t9Fmt(ys[i],8)}</td>
+      <td style="padding:.35rem .65rem;text-align:center;font-weight:700;">${c}</td>
+      <td style="padding:.35rem .65rem;text-align:right;">${t9Fmt(c*ys[i],8)}</td>
+    </tr>`;
+  });
+  html += `</tbody></table></div>`;
+  return html;
+}
+
+/* ── Helper: card de resultado con error ── */
+function t9ResultCard(I, exacto, err, color) {
+  const hasExacto = exacto!==null && !isNaN(exacto);
+  return `
+  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:.75rem;margin-top:.75rem;">
+    <div class="t8-metric-card" style="border-left-color:${color};">
+      <div class="t8-metric-label">Resultado ∫</div>
+      <div class="t8-metric-val" style="color:${color};font-size:1.1rem;">${t9Fmt(I,10)}</div>
+    </div>
+    ${hasExacto ? `
+    <div class="t8-metric-card" style="border-left-color:#10b981;">
+      <div class="t8-metric-label">Valor exacto</div>
+      <div class="t8-metric-val" style="color:#10b981;">${t9Fmt(exacto,10)}</div>
+    </div>
+    <div class="t8-metric-card" style="border-left-color:#ef4444;">
+      <div class="t8-metric-label">Error |ε|</div>
+      <div class="t8-metric-val" style="color:#ef4444;">${t9FmtE(err)}</div>
+    </div>` : ''}
+  </div>`;
+}
+
+/* ── Botones de navegación ── */
+function t9NavBtns(prev, next) {
+  return `<div style="display:flex;gap:.75rem;justify-content:flex-end;flex-wrap:wrap;margin-top:1rem;">
+    ${prev?`<button class="btn btn-secondary" onclick="t9GoTo('${prev}')">← Anterior</button>`:''}
+    <button class="btn t9-btn-primary" onclick="t9GoTo('${next}')">Siguiente →</button>
+  </div>`;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   RENDERIZADO — TRAPECIO SIMPLE
+══════════════════════════════════════════════════════════════ */
+function t9RenderTrapSimple(res) {
+  const sec=document.getElementById('t9-trap-simple'); if(!sec) return;
+  const {ts,a,b,exacto}=res;
+  const COL='#3b82f6';
+  sec.innerHTML=`
+  <div class="page-header">
+    <h2>Trapecio Simple</h2>
+    <p>Aproxima la integral con <strong>n=1</strong> (un solo trapecio) usando los dos extremos del intervalo.</p>
+  </div>
+  <div class="card t6-step-card" style="margin-bottom:1rem;border-left:5px solid ${COL};">
+    <div class="card-header">
+      <div class="card-header-icon" style="background:${COL};width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;">∫</div>
+      <div><div class="card-title">Fórmula del Trapecio Simple</div></div>
+    </div>
+    <div class="t6-step-body">
+      <div style="font-family:var(--font-mono);font-size:.9rem;color:${COL};font-weight:600;">∫ₐᵇ f(x)dx ≈ (h/2)·[f(a) + f(b)] &nbsp; donde h = b−a</div>
+    </div>
+  </div>
+  <div class="card t6-step-card" style="margin-bottom:1rem;border-left:5px solid ${T9_COLOR};">
+    <div class="card-header"><div class="card-header-icon t9-icon">🔢</div>
+      <div><div class="card-title">Sustitución — [${a}, ${b}]</div></div></div>
+    <div class="t6-step-body">
+      <div style="font-family:var(--font-mono);font-size:.83rem;">h = ${b}−${a} = <strong>${t9Fmt(ts.h,6)}</strong></div>
+      <div style="font-family:var(--font-mono);font-size:.83rem;">f(a) = f(${a}) = <strong>${t9Fmt(ts.fa,8)}</strong></div>
+      <div style="font-family:var(--font-mono);font-size:.83rem;">f(b) = f(${b}) = <strong>${t9Fmt(ts.fb,8)}</strong></div>
+      <div style="font-family:var(--font-mono);font-size:.83rem;">∫ ≈ (${t9Fmt(ts.h,4)}/2)·[${t9Fmt(ts.fa,6)} + ${t9Fmt(ts.fb,6)}]</div>
+      <div style="font-family:var(--font-mono);font-size:.83rem;">∫ ≈ ${t9Fmt(ts.h/2,6)} · ${t9Fmt(ts.fa+ts.fb,6)} = <strong style="color:${COL};">${t9Fmt(ts.I,10)}</strong></div>
+    </div>
+  </div>
+  <div class="card" style="margin-bottom:1rem;">${t9ResultCard(ts.I,exacto,ts.err,COL)}</div>
+  ${t9NavBtns('t9-input','t9-trap-comp')}`;
+}
+
+/* ── Trapecio Compuesta ── */
+function t9RenderTrapComp(res) {
+  const sec=document.getElementById('t9-trap-comp'); if(!sec) return;
+  const {tc,a,b,exacto}=res; const COL='#3b82f6';
+  const coefs=[1,...new Array(tc.n-1).fill(2),1];
+  sec.innerHTML=`
+  <div class="page-header">
+    <h2>Trapecio Compuesta</h2>
+    <p>n = ${tc.n} subintervalos · h = ${t9Fmt(tc.h,6)} · Suma interior × 2</p>
+  </div>
+  <div class="card t6-step-card" style="margin-bottom:1rem;border-left:5px solid ${COL};">
+    <div class="card-header"><div class="card-header-icon" style="background:${COL};width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;">∫</div>
+      <div><div class="card-title">Fórmula Compuesta del Trapecio</div></div></div>
+    <div class="t6-step-body">
+      <div style="font-family:var(--font-mono);font-size:.88rem;color:${COL};font-weight:600;">∫ ≈ (h/2)·[f(x₀) + 2·Σf(xᵢ) + f(xₙ)] &nbsp; h=(b−a)/n</div>
+    </div>
+  </div>
+  <div class="card" style="padding:0;overflow:hidden;margin-bottom:1rem;">
+    <div class="card-header" style="padding:.65rem 1.25rem;border-bottom:1px solid var(--border);">
+      <div class="card-header-icon t9-icon">📋</div>
+      <div><div class="card-title">Tabla de nodos — n=${tc.n}, h=${t9Fmt(tc.h,6)}</div></div></div>
+    <div style="padding:.75rem 1.25rem 1.25rem;">${t9NodeTable(tc.xs,tc.ys,coefs,COL)}</div>
+  </div>
+  <div class="card t6-step-card" style="margin-bottom:1rem;border-left:5px solid ${T9_COLOR};">
+    <div class="card-header"><div class="card-header-icon t9-icon">🔢</div>
+      <div><div class="card-title">Cálculo</div></div></div>
+    <div class="t6-step-body">
+      <div style="font-family:var(--font-mono);font-size:.83rem;">Σ interior = ${t9Fmt(tc.sum,8)}</div>
+      <div style="font-family:var(--font-mono);font-size:.83rem;">∫ ≈ (${t9Fmt(tc.h,6)}/2)·[${t9Fmt(tc.ys[0],6)} + 2·(${t9Fmt(tc.sum,6)}) + ${t9Fmt(tc.ys[tc.n],6)}]</div>
+      <div style="font-family:var(--font-mono);font-size:.83rem;">= ${t9Fmt(tc.h/2,6)} · ${t9Fmt(tc.ys[0]+2*tc.sum+tc.ys[tc.n],6)} = <strong style="color:${COL};">${t9Fmt(tc.I,10)}</strong></div>
+    </div>
+  </div>
+  <div class="card" style="margin-bottom:1rem;">${t9ResultCard(tc.I,exacto,tc.err,COL)}</div>
+  ${t9NavBtns('t9-trap-simple','t9-s13-simple')}`;
+}
+
+/* ── Simpson 1/3 Simple ── */
+function t9RenderS13Simple(res) {
+  const sec=document.getElementById('t9-s13-simple'); if(!sec) return;
+  const {s13s,a,b,exacto}=res; const COL='#059669';
+  sec.innerHTML=`
+  <div class="page-header">
+    <h2>Simpson 1/3 Simple</h2>
+    <p>n=2 · h=(b−a)/2 · Aproxima con una parábola (polinomio de Lagrange grado 2)</p>
+  </div>
+  <div class="card t6-step-card" style="margin-bottom:1rem;border-left:5px solid ${COL};">
+    <div class="card-header"><div class="card-header-icon" style="background:${COL};width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;">⌒</div>
+      <div><div class="card-title">Fórmula Simpson 1/3 Simple</div></div></div>
+    <div class="t6-step-body">
+      <div style="font-family:var(--font-mono);font-size:.88rem;color:${COL};font-weight:600;">∫ₐᵇ f(x)dx ≈ (h/3)·[f(x₀) + 4f(x₁) + f(x₂)] &nbsp; h=(b−a)/2</div>
+    </div>
+  </div>
+  <div class="card" style="padding:0;overflow:hidden;margin-bottom:1rem;">
+    <div class="card-header" style="padding:.65rem 1.25rem;border-bottom:1px solid var(--border);">
+      <div class="card-header-icon t9-icon">📋</div>
+      <div><div class="card-title">Nodos — x₀=${t9Fmt(s13s.xs[0],4)}, x₁=${t9Fmt(s13s.xs[1],4)}, x₂=${t9Fmt(s13s.xs[2],4)}</div></div></div>
+    <div style="padding:.75rem 1.25rem 1.25rem;">${t9NodeTable(s13s.xs,s13s.ys,[1,4,1],COL)}</div>
+  </div>
+  <div class="card t6-step-card" style="margin-bottom:1rem;border-left:5px solid ${T9_COLOR};">
+    <div class="card-header"><div class="card-header-icon t9-icon">🔢</div>
+      <div><div class="card-title">Sustitución</div></div></div>
+    <div class="t6-step-body">
+      <div style="font-family:var(--font-mono);font-size:.83rem;">h = (${b}−${a})/2 = ${t9Fmt(s13s.h,6)}</div>
+      <div style="font-family:var(--font-mono);font-size:.83rem;">∫ ≈ (${t9Fmt(s13s.h,4)}/3)·[${t9Fmt(s13s.ys[0],6)} + 4·${t9Fmt(s13s.ys[1],6)} + ${t9Fmt(s13s.ys[2],6)}]</div>
+      <div style="font-family:var(--font-mono);font-size:.83rem;">= ${t9Fmt(s13s.h/3,6)} · ${t9Fmt(s13s.ys[0]+4*s13s.ys[1]+s13s.ys[2],6)} = <strong style="color:${COL};">${t9Fmt(s13s.I,10)}</strong></div>
+    </div>
+  </div>
+  <div class="card" style="margin-bottom:1rem;">${t9ResultCard(s13s.I,exacto,s13s.err,COL)}</div>
+  ${t9NavBtns('t9-trap-comp','t9-s13-comp')}`;
+}
+
+/* ── Simpson 1/3 Compuesta ── */
+function t9RenderS13Comp(res) {
+  const sec=document.getElementById('t9-s13-comp'); if(!sec) return;
+  const {s13c,a,b,exacto}=res; const COL='#059669';
+  const coefs=s13c.xs.map((_,i)=>{
+    if(i===0||i===s13c.n) return 1;
+    return i%2===1 ? 4 : 2;
+  });
+  sec.innerHTML=`
+  <div class="page-header">
+    <h2>Simpson 1/3 Compuesta</h2>
+    <p>n=${s13c.n} (par) · h=${t9Fmt(s13c.h,6)} · Coeficientes: 1, 4, 2, 4, 2, …, 4, 1</p>
+  </div>
+  <div class="card t6-step-card" style="margin-bottom:1rem;border-left:5px solid ${COL};">
+    <div class="card-header"><div class="card-header-icon" style="background:${COL};width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;">⌣</div>
+      <div><div class="card-title">Fórmula Compuesta Simpson 1/3</div></div></div>
+    <div class="t6-step-body">
+      <div style="font-family:var(--font-mono);font-size:.82rem;color:${COL};font-weight:600;">∫ ≈ (h/3)·[f(x₀) + 4·Σ(imp) + 2·Σ(par) + f(xₙ)]</div>
+      <div style="font-family:var(--font-main);font-size:.78rem;color:var(--gray-500);">imp = índices impares (1,3,5…) · par = índices pares interiores (2,4,6…)</div>
+    </div>
+  </div>
+  <div class="card" style="padding:0;overflow:hidden;margin-bottom:1rem;">
+    <div class="card-header" style="padding:.65rem 1.25rem;border-bottom:1px solid var(--border);">
+      <div class="card-header-icon t9-icon">📋</div>
+      <div><div class="card-title">Tabla de nodos — n=${s13c.n}, h=${t9Fmt(s13c.h,6)}</div></div></div>
+    <div style="padding:.75rem 1.25rem 1.25rem;">${t9NodeTable(s13c.xs,s13c.ys,coefs,COL)}</div>
+  </div>
+  <div class="card t6-step-card" style="margin-bottom:1rem;border-left:5px solid ${T9_COLOR};">
+    <div class="card-header"><div class="card-header-icon t9-icon">🔢</div>
+      <div><div class="card-title">Cálculo</div></div></div>
+    <div class="t6-step-body">
+      <div style="font-family:var(--font-mono);font-size:.83rem;">Σ impares (×4) = ${t9Fmt(s13c.sumImp,8)}</div>
+      <div style="font-family:var(--font-mono);font-size:.83rem;">Σ pares int.(×2) = ${t9Fmt(s13c.sumPar,8)}</div>
+      <div style="font-family:var(--font-mono);font-size:.83rem;">∫ ≈ (${t9Fmt(s13c.h,4)}/3)·[${t9Fmt(s13c.ys[0],4)} + 4·(${t9Fmt(s13c.sumImp,4)}) + 2·(${t9Fmt(s13c.sumPar,4)}) + ${t9Fmt(s13c.ys[s13c.n],4)}]</div>
+      <div style="font-family:var(--font-mono);font-size:.83rem;">= <strong style="color:${COL};">${t9Fmt(s13c.I,10)}</strong></div>
+    </div>
+  </div>
+  <div class="card" style="margin-bottom:1rem;">${t9ResultCard(s13c.I,exacto,s13c.err,COL)}</div>
+  ${t9NavBtns('t9-s13-simple','t9-s38-simple')}`;
+}
+
+/* ── Simpson 3/8 Simple ── */
+function t9RenderS38Simple(res) {
+  const sec=document.getElementById('t9-s38-simple'); if(!sec) return;
+  const {s38s,a,b,exacto}=res; const COL='#d97706';
+  sec.innerHTML=`
+  <div class="page-header">
+    <h2>Simpson 3/8 Simple</h2>
+    <p>n=3 · h=(b−a)/3 · Aproxima con un polinomio cúbico (4 puntos)</p>
+  </div>
+  <div class="card t6-step-card" style="margin-bottom:1rem;border-left:5px solid ${COL};">
+    <div class="card-header"><div class="card-header-icon" style="background:${COL};width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;">∫</div>
+      <div><div class="card-title">Fórmula Simpson 3/8 Simple</div></div></div>
+    <div class="t6-step-body">
+      <div style="font-family:var(--font-mono);font-size:.88rem;color:${COL};font-weight:600;">∫ₐᵇ f(x)dx ≈ (3h/8)·[f(x₀) + 3f(x₁) + 3f(x₂) + f(x₃)] &nbsp; h=(b−a)/3</div>
+    </div>
+  </div>
+  <div class="card" style="padding:0;overflow:hidden;margin-bottom:1rem;">
+    <div class="card-header" style="padding:.65rem 1.25rem;border-bottom:1px solid var(--border);">
+      <div class="card-header-icon t9-icon">📋</div>
+      <div><div class="card-title">Nodos — 4 puntos</div></div></div>
+    <div style="padding:.75rem 1.25rem 1.25rem;">${t9NodeTable(s38s.xs,s38s.ys,[1,3,3,1],COL)}</div>
+  </div>
+  <div class="card t6-step-card" style="margin-bottom:1rem;border-left:5px solid ${T9_COLOR};">
+    <div class="card-header"><div class="card-header-icon t9-icon">🔢</div>
+      <div><div class="card-title">Sustitución</div></div></div>
+    <div class="t6-step-body">
+      <div style="font-family:var(--font-mono);font-size:.83rem;">h = (${b}−${a})/3 = ${t9Fmt(s38s.h,6)}</div>
+      <div style="font-family:var(--font-mono);font-size:.83rem;">∫ ≈ (3·${t9Fmt(s38s.h,4)}/8)·[${t9Fmt(s38s.ys[0],4)} + 3·${t9Fmt(s38s.ys[1],4)} + 3·${t9Fmt(s38s.ys[2],4)} + ${t9Fmt(s38s.ys[3],4)}]</div>
+      <div style="font-family:var(--font-mono);font-size:.83rem;">= ${t9Fmt(3*s38s.h/8,6)} · ${t9Fmt(s38s.ys[0]+3*s38s.ys[1]+3*s38s.ys[2]+s38s.ys[3],6)} = <strong style="color:${COL};">${t9Fmt(s38s.I,10)}</strong></div>
+    </div>
+  </div>
+  <div class="card" style="margin-bottom:1rem;">${t9ResultCard(s38s.I,exacto,s38s.err,COL)}</div>
+  ${t9NavBtns('t9-s13-comp','t9-s38-comp')}`;
+}
+
+/* ── Simpson 3/8 Compuesta ── */
+function t9RenderS38Comp(res) {
+  const sec=document.getElementById('t9-s38-comp'); if(!sec) return;
+  const {s38c,a,b,exacto}=res; const COL='#d97706';
+  const coefs=s38c.xs.map((_,i)=>{
+    if(i===0||i===s38c.n) return 1;
+    return i%3===0 ? 2 : 3;
+  });
+  sec.innerHTML=`
+  <div class="page-header">
+    <h2>Simpson 3/8 Compuesta</h2>
+    <p>n=${s38c.n} (múltiplo de 3) · h=${t9Fmt(s38c.h,6)} · Coeficientes: 1, 3, 3, 2, 3, 3, 2, …, 1</p>
+  </div>
+  <div class="card t6-step-card" style="margin-bottom:1rem;border-left:5px solid ${COL};">
+    <div class="card-header"><div class="card-header-icon" style="background:${COL};width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;">∬</div>
+      <div><div class="card-title">Fórmula Compuesta Simpson 3/8</div></div></div>
+    <div class="t6-step-body">
+      <div style="font-family:var(--font-mono);font-size:.82rem;color:${COL};font-weight:600;">∫ ≈ (3h/8)·[f(x₀) + 3·Σ(no múlt.3) + 2·Σ(múlt.3) + f(xₙ)]</div>
+      <div style="font-family:var(--font-main);font-size:.78rem;color:var(--gray-500);">n debe ser múltiplo de 3</div>
+    </div>
+  </div>
+  <div class="card" style="padding:0;overflow:hidden;margin-bottom:1rem;">
+    <div class="card-header" style="padding:.65rem 1.25rem;border-bottom:1px solid var(--border);">
+      <div class="card-header-icon t9-icon">📋</div>
+      <div><div class="card-title">Tabla de nodos — n=${s38c.n}, h=${t9Fmt(s38c.h,6)}</div></div></div>
+    <div style="padding:.75rem 1.25rem 1.25rem;">${t9NodeTable(s38c.xs,s38c.ys,coefs,COL)}</div>
+  </div>
+  <div class="card t6-step-card" style="margin-bottom:1rem;border-left:5px solid ${T9_COLOR};">
+    <div class="card-header"><div class="card-header-icon t9-icon">🔢</div>
+      <div><div class="card-title">Cálculo</div></div></div>
+    <div class="t6-step-body">
+      <div style="font-family:var(--font-mono);font-size:.83rem;">Σ (coef 3) = ${t9Fmt(s38c.sum3,8)}</div>
+      <div style="font-family:var(--font-mono);font-size:.83rem;">Σ (coef 2) = ${t9Fmt(s38c.sum2,8)}</div>
+      <div style="font-family:var(--font-mono);font-size:.83rem;">∫ ≈ (3·${t9Fmt(s38c.h,4)}/8)·[...] = <strong style="color:${COL};">${t9Fmt(s38c.I,10)}</strong></div>
+    </div>
+  </div>
+  <div class="card" style="margin-bottom:1rem;">${t9ResultCard(s38c.I,exacto,s38c.err,COL)}</div>
+  ${t9NavBtns('t9-s38-simple','t9-resumen')}`;
+}
+
+/* ── Resumen comparativo ── */
+function t9RenderResumen(res) {
+  const sec=document.getElementById('t9-resumen'); if(!sec) return;
+  const {ts,tc,s13s,s13c,s38s,s38c,exacto,a,b,n}=res;
+  const hasE=exacto!==null&&!isNaN(exacto);
+
+  const methods=[
+    {label:'Trapecio Simple',       I:ts.I,   err:ts.err,   col:'#3b82f6'},
+    {label:`Trapecio Compuesta n=${tc.n}`, I:tc.I,   err:tc.err,   col:'#6366f1'},
+    {label:'Simpson 1/3 Simple',    I:s13s.I, err:s13s.err, col:'#059669'},
+    {label:`Simpson 1/3 Comp. n=${s13c.n}`,I:s13c.I, err:s13c.err, col:'#10b981'},
+    {label:'Simpson 3/8 Simple',    I:s38s.I, err:s38s.err, col:'#d97706'},
+    {label:`Simpson 3/8 Comp. n=${s38c.n}`,I:s38c.I, err:s38c.err, col:'#f59e0b'},
+  ];
+
+  const rows=methods.map(m=>`<tr>
+    <td style="padding:.4rem .75rem;font-family:var(--font-main);font-size:.82rem;font-weight:600;color:${m.col};">${m.label}</td>
+    <td style="padding:.4rem .75rem;font-family:var(--font-mono);font-size:.8rem;text-align:right;">${t9Fmt(m.I,10)}</td>
+    ${hasE?`<td style="padding:.4rem .75rem;font-family:var(--font-mono);font-size:.8rem;text-align:right;color:#ef4444;">${t9FmtE(m.err)}</td>`:''}
+  </tr>`).join('');
+
+  sec.innerHTML=`
+  <div class="page-header">
+    <h2>Resumen — Comparación de Métodos</h2>
+    <p>∫${a}^${b} f(x)dx${hasE?' · Exacto = '+t9Fmt(exacto,10):''}</p>
+  </div>
+  <div class="card" style="padding:0;overflow:hidden;margin-bottom:1.25rem;">
+    <div class="card-header" style="padding:.75rem 1.25rem;border-bottom:1px solid var(--border);">
+      <div class="card-header-icon t9-icon">📊</div>
+      <div><div class="card-title">Tabla comparativa</div></div></div>
+    <div style="overflow-x:auto;">
+    <table style="width:100%;border-collapse:collapse;">
+      <thead><tr style="background:${T9_LIGHT};">
+        <th style="padding:.5rem .75rem;color:${T9_DARK};border-bottom:2px solid ${T9_COLOR}33;">Método</th>
+        <th style="padding:.5rem .75rem;color:${T9_DARK};border-bottom:2px solid ${T9_COLOR}33;text-align:right;">∫ aproximada</th>
+        ${hasE?`<th style="padding:.5rem .75rem;color:${T9_DARK};border-bottom:2px solid ${T9_COLOR}33;text-align:right;">Error |ε|</th>`:''}
+      </tr></thead>
+      <tbody>${rows}</tbody>
+    </table></div>
+  </div>
+  <div style="display:flex;gap:.75rem;justify-content:flex-end;flex-wrap:wrap;">
+    <button class="btn btn-secondary" onclick="t9GoTo('t9-s38-comp')">← Anterior</button>
+    <button class="btn t9-btn-primary" onclick="t9GoTo('t9-input')">🔁 Nuevos datos</button>
+  </div>`;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   FLUJO PRINCIPAL
+══════════════════════════════════════════════════════════════ */
+document.addEventListener('DOMContentLoaded', () => {
+
+  /* Hint dinámico para n */
+  document.getElementById('t9N')?.addEventListener('input', function() {
+    const n=parseInt(this.value)||4;
+    const hint=document.getElementById('t9NHint');
+    if(hint) {
+      const par=n%2===0?'✓':'✗ (se usará '+(n+1)+')';
+      let m3=n; while(m3%3!==0) m3++;
+      hint.textContent=`n=${n}: par ${par} para S1/3 · múlt.3: ${n%3===0?'✓':'✗ (se usará '+m3+')'}`;
+    }
+  });
+
+  /* Navegación interna */
+  document.querySelectorAll('.t9-nav[data-t9]').forEach(el=>{
+    el.addEventListener('click',()=>t9GoTo(el.getAttribute('data-t9')));
+  });
+
+  /* Ejemplo clase: ∫₀² eˣdx */
+  document.getElementById('btnT9EjEx')?.addEventListener('click',()=>{
+    document.getElementById('t9Fx').value      = 'exp(x)';
+    document.getElementById('t9A').value       = '0';
+    document.getElementById('t9B').value       = '2';
+    document.getElementById('t9N').value       = '4';
+    document.getElementById('t9Exacto').value  = '6.38905609893065';
+    clearAlert('t9Alert');
+    showAlert('t9Alert','info','📋 Ejemplo clase — ∫₀² eˣdx. Exacto = e²−1 = 6.38905609893065. Presiona ▶ Calcular.');
+  });
+
+  /* Botón calcular */
+  document.getElementById('btnT9Calc')?.addEventListener('click',()=>{
+    clearAlert('t9Alert'); clearAlert('t9AlertGlobal');
+    const fx     = document.getElementById('t9Fx')?.value?.trim()||'exp(x)';
+    const a      = parseFloat(document.getElementById('t9A')?.value);
+    const b      = parseFloat(document.getElementById('t9B')?.value);
+    const n      = parseInt(document.getElementById('t9N')?.value)||4;
+    const exVal  = document.getElementById('t9Exacto')?.value?.trim();
+    const exacto = exVal ? parseFloat(exVal) : null;
+
+    if(isNaN(a)||isNaN(b)){ showAlert('t9Alert','danger','Ingresa los límites a y b.'); return; }
+    if(a>=b){ showAlert('t9Alert','danger','El límite a debe ser menor que b.'); return; }
+    if(n<1){ showAlert('t9Alert','danger','n debe ser ≥ 1.'); return; }
+    if(isNaN(t9Eval(fx,a))){ showAlert('t9Alert','danger','La función f(x) no es válida.'); return; }
+
+    try {
+      const res=t9Compute(fx,a,b,n,exacto);
+      t9State.result=res;
+      Object.assign(t9State,{fx,a,b,n,exacto});
+
+      t9RenderTrapSimple(res);
+      t9RenderTrapComp(res);
+      t9RenderS13Simple(res);
+      t9RenderS13Comp(res);
+      t9RenderS38Simple(res);
+      t9RenderS38Comp(res);
+      t9RenderResumen(res);
+
+      const dl=document.getElementById('t9-download-bar');
+      if(dl){ dl.dataset.ready='1'; dl.style.display='block'; }
+
+      t9GoTo('t9-trap-simple');
+      showAlert('t9AlertGlobal','success',
+        `✓ Trap.Simple=${t9Fmt(res.ts.I,6)} · Trap.Comp=${t9Fmt(res.tc.I,6)} · S1/3=${t9Fmt(res.s13s.I,6)} · S3/8=${t9Fmt(res.s38s.I,6)}`);
+
+    } catch(e){ showAlert('t9Alert','danger','Error: '+e.message); }
+  });
+});
+
+/* ══════════════════════════════════════════════════════════════
+   EXPORTACIÓN EXCEL T9
+══════════════════════════════════════════════════════════════ */
+(function patchT9Export(){
+  document.addEventListener('DOMContentLoaded',()=>{
+    if(typeof numerixExport==='undefined') return;
+    numerixExport.t9=function(){
+      const res=t9State.result;
+      if(!res){ alert('Ejecuta el cálculo primero.'); return; }
+      const wb=XLSX.utils.book_new();
+      const hasE=res.exacto!==null&&!isNaN(res.exacto);
+
+      /* Resumen */
+      const info=[
+        ['NUMERIX — Integración por Aproximación','','© 2026 Fernando Granja & Alejandra Tinoco'],
+        [],['f(x)',res.fx],['a',res.a],['b',res.b],['n',res.n],
+        hasE?['Exacto',res.exacto]:[],
+        [],
+        ['RESULTADOS'],
+        ['Método','∫ aprox.',hasE?'Error |ε|':''],
+        ['Trapecio Simple',      res.ts.I,   hasE?res.ts.err:''],
+        [`Trapecio Comp. n=${res.tc.n}`, res.tc.I,hasE?res.tc.err:''],
+        ['Simpson 1/3 Simple',   res.s13s.I, hasE?res.s13s.err:''],
+        [`S1/3 Comp. n=${res.s13c.n}`,  res.s13c.I,hasE?res.s13c.err:''],
+        ['Simpson 3/8 Simple',   res.s38s.I, hasE?res.s38s.err:''],
+        [`S3/8 Comp. n=${res.s38c.n}`,  res.s38c.I,hasE?res.s38c.err:''],
+      ].filter(r=>r.length>0);
+      XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(info),'Resumen');
+
+      /* Nodos por método */
+      const addSheet=(name,xs,ys,coefs)=>{
+        const hdr=['i','xi','f(xi)','Coef','Coef×f(xi)'];
+        const rows=xs.map((x,i)=>[i,x,ys[i],coefs[i],coefs[i]*ys[i]]);
+        XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([hdr,...rows]),name);
+      };
+      const tcCoefs=[1,...new Array(res.tc.n-1).fill(2),1];
+      addSheet(`Trap n=${res.tc.n}`,res.tc.xs,res.tc.ys,tcCoefs);
+      const s13Coefs=res.s13c.xs.map((_,i)=>i===0||i===res.s13c.n?1:i%2===1?4:2);
+      addSheet(`S13 n=${res.s13c.n}`,res.s13c.xs,res.s13c.ys,s13Coefs);
+      const s38Coefs=res.s38c.xs.map((_,i)=>i===0||i===res.s38c.n?1:i%3===0?2:3);
+      addSheet(`S38 n=${res.s38c.n}`,res.s38c.xs,res.s38c.ys,s38Coefs);
+
+      XLSX.writeFile(wb,'NUMERIX_T9_Integracion.xlsx');
+    };
+  });
+})();
+
+
+/* ══════════════════════════════════════════════════════════════
+   TEMA 10 — INTEGRACIÓN DE ROMBERG
+   Trapecio Compuesta + Extrapolación de Richardson
+   Fórmula maestra: Iⱼ,ₖ = [4^(k-1)·Iⱼ₊₁,ₖ₋₁ − Iⱼ,ₖ₋₁] / (4^(k-1)−1)
+   © 2026 Fernando Granja & Alejandra Tinoco
+══════════════════════════════════════════════════════════════ */
+
+const T10_COLOR = '#0891b2';
+const T10_LIGHT = '#ecfeff';
+const T10_DARK  = '#164e63';
+
+/* ── Estado T10 ─────────────────────────────────────────────── */
+const t10State = {
+  fx:'exp(x)', a:0, b:2, maxJ:5, tol:1e-5, exacto:null,
+  result:null
+};
+
+/* ── Evaluador ──────────────────────────────────────────────── */
+function t10Eval(expr,x) {
+  try {
+    return new Function('x','PI','sin','cos','tan','exp','log','sqrt','pow','abs',
+      `"use strict";return(${expr});`)(x,Math.PI,Math.sin,Math.cos,Math.tan,Math.exp,Math.log,Math.sqrt,Math.pow,Math.abs);
+  } catch(e){return NaN;}
+}
+
+/* ── Navegación T10 ─────────────────────────────────────────── */
+function t10GoTo(secId){
+  document.querySelectorAll('.t10-sec').forEach(s=>s.style.display='none');
+  document.querySelectorAll('.t10-nav').forEach(n=>n.classList.remove('active'));
+  const sec=document.getElementById(secId);
+  if(sec) sec.style.display='block';
+  document.querySelectorAll(`[data-t10="${secId}"]`).forEach(el=>el.classList.add('active'));
+  const dl=document.getElementById('t10-download-bar');
+  if(dl&&dl.dataset.ready==='1'&&secId!=='t10-input') dl.style.display='block';
+}
+window.t10GoTo = t10GoTo;
+
+/* ── Formato ────────────────────────────────────────────────── */
+const t10Fmt  = (v,d=8) => (v===null||v===undefined||isNaN(v)) ? '—' : Number(v).toFixed(d);
+const t10FmtE = v => (v===null||isNaN(v)) ? '—' : Number(v).toExponential(4);
+
+/* ══════════════════════════════════════════════════════════════
+   ALGORITMO — ROMBERG
+══════════════════════════════════════════════════════════════ */
+
+/** Trapecio compuesta para n subintervalos */
+function t10Trapecio(fx, a, b, n) {
+  const h   = (b-a)/n;
+  let sum = 0;
+  for(let i=1; i<n; i++) sum += t10Eval(fx, a + i*h);
+  const fa = t10Eval(fx,a), fb = t10Eval(fx,b);
+  const I  = (h/2)*(fa + 2*sum + fb);
+  /* guardar nodos para mostrar */
+  const xs = Array.from({length:n+1},(_,i)=>a+i*h);
+  const ys = xs.map(x=>t10Eval(fx,x));
+  return { I, h, n, fa, fb, sum, xs, ys };
+}
+
+/** Construir tabla de Romberg completa */
+function t10Compute(fx, a, b, maxJ, tol, exacto) {
+  /* R[j][k] — índices base 0 internamente, 1-based en display */
+  const R   = [];
+  const col1Details = [];   /* detalle de cada Iⱼ,₁ */
+  let converged = false;
+  let convJ = null, convK = null, convEps = null;
+
+  /* Columna 1: Trapecio con n = 2^j */
+  for(let j=0; j<maxJ; j++){
+    R.push(new Array(maxJ).fill(null));
+    const n   = Math.pow(2, j+1);    /* j=0→n=2, j=1→n=4, j=2→n=8 … */
+    const det = t10Trapecio(fx, a, b, n);
+    R[j][0]   = det.I;
+    col1Details.push({ j:j+1, n, ...det });
+  }
+
+  /* Columnas K≥2: extrapolación de Richardson */
+  for(let k=1; k<maxJ; k++){
+    for(let j=0; j<maxJ-k; j++){
+      const pow4 = Math.pow(4, k);
+      R[j][k]   = (pow4 * R[j+1][k-1] - R[j][k-1]) / (pow4 - 1);
+    }
+    /* Verificar convergencia en la diagonal: I[0][k] vs I[0][k-1] */
+    if(R[0][k] !== null && R[0][k-1] !== null) {
+      const eps = Math.abs(R[0][k] - R[0][k-1]);
+      if(eps < tol && !converged) {
+        converged=true; convJ=1; convK=k+1; convEps=eps;
+      }
+    }
+  }
+
+  const best = R[0][maxJ-1] ?? R[0].find(v=>v!==null);
+  const errFinal = (exacto!==null&&!isNaN(exacto)) ? Math.abs(exacto-best) : null;
+
+  return { R, col1Details, maxJ, fx, a, b, tol, exacto, best, errFinal, converged, convJ, convK, convEps };
+}
+
+/* ══════════════════════════════════════════════════════════════
+   RENDERIZADO
+══════════════════════════════════════════════════════════════ */
+
+/** Sección 1: Columna K=1 — detalle de cada Iⱼ,₁ */
+function t10RenderCol1(res) {
+  const sec=document.getElementById('t10-col1'); if(!sec) return;
+  const {col1Details, a, b} = res;
+
+  let cards='';
+  col1Details.forEach(d => {
+    const COLORS=['#0891b2','#4338ca','#059669','#d97706','#7c3aed','#ef4444','#f59e0b','#10b981','#3b82f6','#8b5cf6'];
+    const col=COLORS[(d.j-1)%COLORS.length];
+    /* Mostrar hasta 8 nodos, truncar si hay más */
+    const showN = Math.min(d.xs.length, 9);
+    const truncated = d.xs.length > 9;
+    let nodeRows='';
+    for(let i=0;i<showN;i++){
+      nodeRows+=`<tr style="${i%2===1?'background:var(--gray-50)':''}">
+        <td style="padding:.3rem .65rem;text-align:center;font-weight:700;color:${col};">${i}</td>
+        <td style="padding:.3rem .65rem;text-align:right;font-family:var(--font-mono);font-size:.78rem;">${t10Fmt(d.xs[i],6)}</td>
+        <td style="padding:.3rem .65rem;text-align:right;font-family:var(--font-mono);font-size:.78rem;">${t10Fmt(d.ys[i],8)}</td>
+        <td style="padding:.3rem .65rem;text-align:center;font-weight:700;font-family:var(--font-mono);font-size:.75rem;">${i===0||i===d.n?'1':'2'}</td>
+      </tr>`;
+    }
+    if(truncated) nodeRows+=`<tr><td colspan="4" style="text-align:center;padding:.3rem;color:var(--gray-400);font-size:.75rem;font-family:var(--font-main);">… ${d.xs.length-showN} nodos más (n=${d.n})</td></tr>`;
+
+    cards+=`
+    <div class="card t6-step-card" style="margin-bottom:1rem;border-left:5px solid ${col};">
+      <div class="card-header">
+        <div class="card-header-icon" style="background:${col};width:38px;height:38px;border-radius:10px;
+          display:flex;align-items:center;justify-content:center;color:#fff;font-size:.78rem;font-weight:700;">
+          I${d.j},₁
+        </div>
+        <div>
+          <div class="card-title">I<sub>${d.j},1</sub> — Trapecio con n = 2<sup>${d.j}</sup> = ${d.n} subintervalos</div>
+          <div class="card-subtitle">h = (${b}−${a})/${d.n} = ${t10Fmt(d.h,6)}</div>
+        </div>
+        <div style="margin-left:auto;font-family:var(--font-mono);font-size:.95rem;font-weight:700;color:${col};">
+          ${t10Fmt(d.I,8)}
+        </div>
+      </div>
+      <div style="padding:.5rem 1.25rem 1rem;">
+        <div style="font-family:var(--font-mono);font-size:.8rem;color:var(--gray-600);margin-bottom:.5rem;">
+          I<sub>${d.j},1</sub> ≈ (${t10Fmt(d.h,4)}/2)·[f(${a}) + 2·Σ + f(${b})]
+          = (${t10Fmt(d.h,4)}/2)·[${t10Fmt(d.fa,6)} + 2·(${t10Fmt(d.sum,6)}) + ${t10Fmt(d.fb,6)}]
+        </div>
+        <div style="overflow-x:auto;">
+        <table style="border-collapse:collapse;font-size:.78rem;min-width:320px;">
+          <thead><tr style="background:${T10_LIGHT};">
+            <th style="padding:.3rem .65rem;color:${T10_DARK};">i</th>
+            <th style="padding:.3rem .65rem;color:${T10_DARK};text-align:right;">xᵢ</th>
+            <th style="padding:.3rem .65rem;color:${T10_DARK};text-align:right;">f(xᵢ)</th>
+            <th style="padding:.3rem .65rem;color:${T10_DARK};text-align:center;">Coef.</th>
+          </tr></thead>
+          <tbody>${nodeRows}</tbody>
+        </table>
+        </div>
+      </div>
+    </div>`;
+  });
+
+  sec.innerHTML=`
+  <div class="page-header">
+    <h2>Romberg — Columna K=1 (Trapecio)</h2>
+    <p>Primera columna de la tabla: se aplica la Regla del Trapecio Compuesta con n = 2, 4, 8, 16… subintervalos.</p>
+  </div>
+  ${cards}
+  <div style="display:flex;gap:.75rem;justify-content:flex-end;">
+    <button class="btn btn-secondary" onclick="t10GoTo('t10-input')">← Datos</button>
+    <button class="btn t10-btn-primary" onclick="t10GoTo('t10-tabla')">Ver Tabla de Romberg →</button>
+  </div>`;
+}
+
+/** Sección 2: Tabla triangular de Romberg */
+function t10RenderTabla(res) {
+  const sec=document.getElementById('t10-tabla'); if(!sec) return;
+  const {R, maxJ, tol, exacto, converged, convJ, convK, convEps} = res;
+
+  /* Encabezado de columnas */
+  let hdr=`<tr style="background:${T10_LIGHT};">
+    <th style="padding:.5rem .75rem;color:${T10_DARK};border-bottom:2px solid ${T10_COLOR}33;">j \\ k</th>`;
+  for(let k=1;k<=maxJ;k++)
+    hdr+=`<th style="padding:.5rem .75rem;color:${T10_DARK};border-bottom:2px solid ${T10_COLOR}33;text-align:center;">K=${k}</th>`;
+  hdr+=`</tr>`;
+
+  /* Filas */
+  let rows='';
+  for(let j=0;j<maxJ;j++){
+    rows+=`<tr style="${j%2===1?'background:var(--gray-50)':''}">
+      <td style="padding:.45rem .75rem;font-weight:700;color:${T10_COLOR};font-family:var(--font-mono);">j=${j+1}</td>`;
+    for(let k=0;k<maxJ;k++){
+      const val=R[j][k];
+      /* ¿Es valor de la diagonal superior (best path)? */
+      const isDiag = (j+k===maxJ-1) && val!==null;
+      /* ¿Es el punto de convergencia? */
+      const isConv = converged && j===0 && k===convK-1;
+      let cellStyle=`padding:.45rem .75rem;text-align:center;font-family:var(--font-mono);font-size:.78rem;`;
+      if(val===null)        cellStyle+='color:var(--gray-300);';
+      else if(isConv)       cellStyle+=`background:linear-gradient(135deg,#f0fdf4,#dcfce7);font-weight:700;color:#065f46;border:2px solid #10b981;border-radius:4px;`;
+      else if(isDiag)       cellStyle+=`background:${T10_LIGHT};font-weight:700;color:${T10_COLOR};`;
+      else if(k===0)        cellStyle+=`color:#4338ca;`;
+
+      rows+=`<td style="${cellStyle}">${val===null?'—':t10Fmt(val,8)}</td>`;
+    }
+    rows+=`</tr>`;
+  }
+
+  /* Explicación de extrapolaciones */
+  let extHtml='';
+  for(let k=1;k<maxJ;k++){
+    const pow4=Math.pow(4,k);
+    for(let j=0;j<maxJ-k;j++){
+      if(R[j][k]===null) continue;
+      extHtml+=`
+      <div style="border-left:4px solid ${T10_COLOR};padding:.4rem .75rem;background:var(--gray-50);
+                  border-radius:0 var(--radius-sm) var(--radius-sm) 0;margin-bottom:.4rem;
+                  font-family:var(--font-mono);font-size:.75rem;">
+        <span style="color:${T10_COLOR};font-weight:700;">I<sub>${j+1},${k+1}</sub></span> =
+        [4<sup>${k}</sup>·I<sub>${j+2},${k}</sub> − I<sub>${j+1},${k}</sub>] / (4<sup>${k}</sup>−1) =
+        [${pow4}·(${t10Fmt(R[j+1][k-1],6)}) − (${t10Fmt(R[j][k-1],6)})] / ${pow4-1} =
+        <strong style="color:${T10_COLOR};">${t10Fmt(R[j][k],8)}</strong>
+        ${(()=>{
+          const eps=exacto!==null&&!isNaN(exacto)?`· ε=${t10FmtE(Math.abs(exacto-R[j][k]))}`:''
+          return eps;
+        })()}
+      </div>`;
+    }
+  }
+
+  sec.innerHTML=`
+  <div class="page-header">
+    <h2>Romberg — Tabla Triangular I<sub>j,k</sub></h2>
+    <p>Fórmula: I<sub>j,k</sub> ≈ [4<sup>k-1</sup>·I<sub>j+1,k-1</sub> − I<sub>j,k-1</sub>] / (4<sup>k-1</sup>−1)
+       · Tolerancia: ${tol}</p>
+  </div>
+
+  <!-- Tabla triangular -->
+  <div class="card" style="padding:0;overflow:hidden;margin-bottom:1.25rem;">
+    <div class="card-header" style="padding:.75rem 1.25rem;border-bottom:1px solid var(--border);">
+      <div class="card-header-icon t10-icon">📋</div>
+      <div>
+        <div class="card-title">Tabla de Romberg</div>
+        <div class="card-subtitle">
+          K=1: Trapecio · K≥2: Extrapolación de Richardson ·
+          <span style="background:#d1fae5;color:#065f46;padding:.1rem .4rem;border-radius:4px;font-weight:700;">
+            Verde = convergencia
+          </span>
+          <span style="background:${T10_LIGHT};color:${T10_COLOR};padding:.1rem .4rem;border-radius:4px;margin-left:.5rem;font-weight:700;">
+            Azul = diagonal principal
+          </span>
+        </div>
+      </div>
+    </div>
+    <div style="overflow-x:auto;padding:1rem 1.25rem;">
+    <table style="border-collapse:separate;border-spacing:3px;font-family:var(--font-mono);font-size:.8rem;">
+      <thead>${hdr}</thead>
+      <tbody>${rows}</tbody>
+    </table>
+    </div>
+  </div>
+
+  <!-- Extrapolaciones paso a paso -->
+  <div class="card t6-step-card" style="margin-bottom:1.25rem;border-left:5px solid ${T10_COLOR};">
+    <div class="card-header">
+      <div class="card-header-icon t10-icon">⚙</div>
+      <div>
+        <div class="card-title">Extrapolaciones de Richardson — paso a paso</div>
+        <div class="card-subtitle">Cada celda de K≥2 calculada explícitamente</div>
+      </div>
+    </div>
+    <div style="padding:.75rem 1.25rem 1.25rem;">${extHtml}</div>
+  </div>
+
+  <div style="display:flex;gap:.75rem;justify-content:flex-end;">
+    <button class="btn btn-secondary" onclick="t10GoTo('t10-col1')">← Columna K=1</button>
+    <button class="btn t10-btn-primary" onclick="t10GoTo('t10-resultado')">Ver Resultado →</button>
+  </div>`;
+}
+
+/** Sección 3: Resultado final */
+function t10RenderResultado(res) {
+  const sec=document.getElementById('t10-resultado'); if(!sec) return;
+  const {best, errFinal, exacto, converged, convJ, convK, convEps, tol, maxJ, R} = res;
+
+  const hasE=exacto!==null&&!isNaN(exacto);
+  const convMsg=converged
+    ? `✓ Convergencia en I<sub>${convJ},${convK}</sub> — ε = ${t10FmtE(convEps)} &lt; ${tol}`
+    : `⚠ No se alcanzó la tolerancia en ${maxJ} filas — se tomó el mejor valor disponible`;
+  const convColor=converged?'#065f46':'#92400e';
+  const convBg=converged?'linear-gradient(135deg,#f0fdf4,#dcfce7)':'linear-gradient(135deg,#fffbeb,#fef3c7)';
+
+  /* Progresión de errores por fila */
+  let progRows='';
+  for(let j=0;j<maxJ;j++){
+    const val=R[j][Math.min(j,maxJ-1)] ?? R[j].filter(v=>v!==null).at(-1);
+    if(val===null) continue;
+    const e=hasE?Math.abs(exacto-val):null;
+    progRows+=`<tr>
+      <td style="padding:.35rem .75rem;text-align:center;font-weight:700;color:${T10_COLOR};font-family:var(--font-mono);">j=${j+1}, K=${Math.min(j+1,maxJ)}</td>
+      <td style="padding:.35rem .75rem;text-align:right;font-family:var(--font-mono);font-size:.8rem;">${t10Fmt(val,10)}</td>
+      ${hasE?`<td style="padding:.35rem .75rem;text-align:right;font-family:var(--font-mono);font-size:.8rem;color:#ef4444;">${t10FmtE(e)}</td>`:''}
+    </tr>`;
+  }
+
+  sec.innerHTML=`
+  <div class="page-header">
+    <h2>Romberg — Resultado Final</h2>
+    <p>Mejor aproximación de la diagonal superior de la tabla de Romberg.</p>
+  </div>
+
+  <!-- Badge de convergencia -->
+  <div style="padding:.875rem 1.25rem;background:${convBg};border:1.5px solid ${converged?'#6ee7b7':'#fcd34d'};
+              border-radius:var(--radius-sm);margin-bottom:1.25rem;
+              font-family:var(--font-main);font-size:.88rem;font-weight:600;color:${convColor};">
+    ${convMsg}
+  </div>
+
+  <!-- Resultado principal -->
+  <div class="card" style="margin-bottom:1.25rem;background:linear-gradient(135deg,${T10_LIGHT},#ecfeff);
+    border:2px solid ${T10_COLOR}44;">
+    <div class="card-header">
+      <div class="card-header-icon t10-icon">🎯</div>
+      <div><div class="card-title">Mejor aproximación — Romberg</div></div>
+    </div>
+    <div style="padding:.5rem 1.25rem 1.25rem;">
+      <div style="text-align:center;font-family:var(--font-mono);font-size:1.4rem;font-weight:700;color:${T10_COLOR};">
+        ∫ ≈ ${t10Fmt(best,10)}
+      </div>
+      ${hasE?`
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:.75rem;margin-top:1rem;">
+        <div class="t8-metric-card" style="border-left-color:${T10_COLOR};">
+          <div class="t8-metric-label">Romberg</div>
+          <div class="t8-metric-val" style="color:${T10_COLOR};">${t10Fmt(best,10)}</div>
+        </div>
+        <div class="t8-metric-card" style="border-left-color:#10b981;">
+          <div class="t8-metric-label">Valor exacto</div>
+          <div class="t8-metric-val" style="color:#10b981;">${t10Fmt(exacto,10)}</div>
+        </div>
+        <div class="t8-metric-card" style="border-left-color:#ef4444;">
+          <div class="t8-metric-label">Error |ε|</div>
+          <div class="t8-metric-val" style="color:#ef4444;">${t10FmtE(errFinal)}</div>
+        </div>
+      </div>`:''}
+    </div>
+  </div>
+
+  <!-- Progresión diagonal -->
+  <div class="card" style="padding:0;overflow:hidden;margin-bottom:1.25rem;">
+    <div class="card-header" style="padding:.75rem 1.25rem;border-bottom:1px solid var(--border);">
+      <div class="card-header-icon t10-icon">📈</div>
+      <div>
+        <div class="card-title">Progresión de la diagonal — convergencia</div>
+        <div class="card-subtitle">Cada fila muestra la mejor estimación disponible al llegar a esa fila</div>
+      </div>
+    </div>
+    <div style="overflow-x:auto;">
+    <table style="width:100%;border-collapse:collapse;font-size:.82rem;">
+      <thead><tr style="background:${T10_LIGHT};">
+        <th style="padding:.45rem .75rem;color:${T10_DARK};border-bottom:2px solid ${T10_COLOR}33;">Estimación</th>
+        <th style="padding:.45rem .75rem;color:${T10_DARK};border-bottom:2px solid ${T10_COLOR}33;text-align:right;">Valor</th>
+        ${hasE?`<th style="padding:.45rem .75rem;color:${T10_DARK};border-bottom:2px solid ${T10_COLOR}33;text-align:right;">Error |ε|</th>`:''}
+      </tr></thead>
+      <tbody>${progRows}</tbody>
+    </table>
+    </div>
+  </div>
+
+  <div style="display:flex;gap:.75rem;justify-content:flex-end;">
+    <button class="btn btn-secondary" onclick="t10GoTo('t10-tabla')">← Tabla</button>
+    <button class="btn t10-btn-primary" onclick="t10GoTo('t10-input')">🔁 Nuevos datos</button>
+  </div>`;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   FLUJO PRINCIPAL
+══════════════════════════════════════════════════════════════ */
+document.addEventListener('DOMContentLoaded', () => {
+
+  document.querySelectorAll('.t10-nav[data-t10]').forEach(el=>{
+    el.addEventListener('click',()=>t10GoTo(el.getAttribute('data-t10')));
+  });
+
+  /* Ejemplo clase */
+  document.getElementById('btnT10Ej')?.addEventListener('click',()=>{
+    document.getElementById('t10Fx').value     = 'exp(x)';
+    document.getElementById('t10A').value      = '0';
+    document.getElementById('t10B').value      = '2';
+    document.getElementById('t10MaxJ').value   = '3';
+    document.getElementById('t10Tol').value    = '0.00001';
+    document.getElementById('t10Exacto').value = '6.38905609893065';
+    clearAlert('t10Alert');
+    showAlert('t10Alert','info','📋 Ejemplo clase ∫₀² eˣdx — 3 filas (K=1,2,3). Exacto = 6.38905609893065. Presiona ▶');
+  });
+
+  /* Calcular */
+  document.getElementById('btnT10Calc')?.addEventListener('click',()=>{
+    clearAlert('t10Alert'); clearAlert('t10AlertGlobal');
+    const fx     = document.getElementById('t10Fx')?.value?.trim()||'exp(x)';
+    const a      = parseFloat(document.getElementById('t10A')?.value);
+    const b      = parseFloat(document.getElementById('t10B')?.value);
+    const maxJ   = parseInt(document.getElementById('t10MaxJ')?.value)||5;
+    const tol    = parseFloat(document.getElementById('t10Tol')?.value)||1e-5;
+    const exStr  = document.getElementById('t10Exacto')?.value?.trim();
+    const exacto = exStr ? parseFloat(exStr) : null;
+
+    if(isNaN(a)||isNaN(b)){ showAlert('t10Alert','danger','Ingresa los límites a y b.'); return; }
+    if(a>=b){ showAlert('t10Alert','danger','a debe ser menor que b.'); return; }
+    if(maxJ<2||maxJ>10){ showAlert('t10Alert','danger','Máximo de filas debe ser entre 2 y 10.'); return; }
+    if(isNaN(t10Eval(fx,a))){ showAlert('t10Alert','danger','La función no es válida.'); return; }
+
+    try {
+      const res=t10Compute(fx,a,b,maxJ,tol,exacto);
+      t10State.result=res;
+      Object.assign(t10State,{fx,a,b,maxJ,tol,exacto});
+
+      t10RenderCol1(res);
+      t10RenderTabla(res);
+      t10RenderResultado(res);
+
+      const dl=document.getElementById('t10-download-bar');
+      if(dl){ dl.dataset.ready='1'; dl.style.display='block'; }
+
+      t10GoTo('t10-col1');
+      const msg=res.converged
+        ? `✓ Convergencia — ∫ ≈ ${t10Fmt(res.best,8)} · ε = ${t10FmtE(res.convEps)}`
+        : `⚠ Máx. filas — mejor aprox: ∫ ≈ ${t10Fmt(res.best,8)}`;
+      showAlert('t10AlertGlobal',res.converged?'success':'warning',msg);
+
+    } catch(e){ showAlert('t10Alert','danger','Error: '+e.message); }
+  });
+});
+
+/* ══════════════════════════════════════════════════════════════
+   EXPORTACIÓN EXCEL T10
+══════════════════════════════════════════════════════════════ */
+(function patchT10Export(){
+  document.addEventListener('DOMContentLoaded',()=>{
+    if(typeof numerixExport==='undefined') return;
+    numerixExport.t10=function(){
+      const res=t10State.result;
+      if(!res){ alert('Ejecuta el cálculo primero.'); return; }
+      const wb=XLSX.utils.book_new();
+      const {R,maxJ,fx,a,b,tol,exacto,best,errFinal,converged}=res;
+
+      /* Hoja 1: Tabla de Romberg */
+      const hdr=['j \\ k',...Array.from({length:maxJ},(_,k)=>`K=${k+1}`)];
+      const rows=R.map((row,j)=>[`j=${j+1}`,...row.map(v=>v===null?'':v)]);
+      const info=[
+        ['NUMERIX — Integración de Romberg','','© 2026 Fernando Granja & Alejandra Tinoco'],
+        [],['f(x)',fx],['a',a],['b',b],['Filas',maxJ],['Tolerancia',tol],
+        exacto!==null?['Exacto',exacto]:[],
+        [],['Mejor aprox.',best],errFinal!==null?['Error |ε|',errFinal]:[],
+        ['Convergió',converged?'Sí':'No'],
+        [],[],[hdr],...rows
+      ].filter(r=>r.length>0);
+      XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(info),'Tabla Romberg');
+
+      /* Hoja 2: Detalle columna 1 */
+      const hdr2=['j','n','h','I(j,1)'];
+      const rows2=res.col1Details.map(d=>[d.j,d.n,d.h,d.I]);
+      XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([hdr2,...rows2]),'Col K=1 Trapecio');
+
+      XLSX.writeFile(wb,'NUMERIX_T10_Romberg.xlsx');
+    };
+  });
+})();
+
+
+/* ══════════════════════════════════════════════════════════════
+   TEMA 11 — MÉTODOS DE UN PASO PARA EDO
+   Euler · Euler Mejorado (Heun) · Runge-Kutta 4to Orden
+   © 2026 Fernando Granja & Alejandra Tinoco
+══════════════════════════════════════════════════════════════ */
+
+const T11_COLOR = '#be185d';
+const T11_LIGHT = '#fdf2f8';
+const T11_DARK  = '#831843';
+const T11_EULER = '#3b82f6';
+const T11_HEUN  = '#0d9488';
+const T11_RK4   = '#7c3aed';
+const T11_EXACT = '#10b981';
+
+/* ── Estado T11 ─────────────────────────────────────────────── */
+const t11State = {
+  fxy:'x+y', x0:0, y0:1, h:0.1, xn:0.5, exacta:'', method:'euler',
+  result:null,
+  graph:{canvas:null,ctx:null,xMin:-1,xMax:1,yMin:-1,yMax:3,dragging:false,lastMouse:{x:0,y:0},hoverOn:false}
+};
+
+/* ── Evaluador f(x,y) ───────────────────────────────────────── */
+function t11Eval(expr,x,y) {
+  try {
+    return new Function('x','y','PI','sin','cos','tan','exp','log','sqrt','pow','abs',
+      `"use strict";return(${expr});`)(x,y,Math.PI,Math.sin,Math.cos,Math.tan,Math.exp,Math.log,Math.sqrt,Math.pow,Math.abs);
+  } catch(e){return NaN;}
+}
+/* ── Evaluador y(x) exacta (solo x) ──────────────────────────── */
+function t11EvalExacta(expr,x) {
+  if(!expr || !expr.trim()) return null;
+  try {
+    return new Function('x','PI','sin','cos','tan','exp','log','sqrt','pow','abs',
+      `"use strict";return(${expr});`)(x,Math.PI,Math.sin,Math.cos,Math.tan,Math.exp,Math.log,Math.sqrt,Math.pow,Math.abs);
+  } catch(e){return null;}
+}
+
+/* ── Navegación T11 ─────────────────────────────────────────── */
+function t11GoTo(secId){
+  document.querySelectorAll('.t11-sec').forEach(s=>s.style.display='none');
+  document.querySelectorAll('.t11-nav').forEach(n=>n.classList.remove('active'));
+  const sec=document.getElementById(secId);
+  if(sec) sec.style.display='block';
+  document.querySelectorAll(`[data-t11="${secId}"]`).forEach(el=>el.classList.add('active'));
+  const dl=document.getElementById('t11-download-bar');
+  if(dl&&dl.dataset.ready==='1'&&secId!=='t11-input') dl.style.display='block';
+}
+window.t11GoTo = t11GoTo;
+
+/* ── Formato ────────────────────────────────────────────────── */
+const t11Fmt  = (v,d=8) => (v===null||v===undefined||isNaN(v)) ? '—' : Number(v).toFixed(d);
+const t11FmtE = v => (v===null||isNaN(v)) ? '—' : Number(v).toExponential(4);
+
+/* ══════════════════════════════════════════════════════════════
+   ALGORITMOS
+══════════════════════════════════════════════════════════════ */
+
+/** Método de Euler */
+function t11Euler(fxy, x0, y0, h, n) {
+  const pts=[{x:x0,y:y0,slope:t11Eval(fxy,x0,y0)}];
+  let x=x0, y=y0;
+  for(let i=0;i<n;i++){
+    const f = t11Eval(fxy,x,y);
+    const yNew = y + h*f;
+    const xNew = x + h;
+    pts.push({x:xNew,y:yNew,slope:t11Eval(fxy,xNew,yNew),f0:f,h});
+    x=xNew; y=yNew;
+  }
+  return pts;
+}
+
+/** Euler Mejorado (Heun) */
+function t11Heun(fxy, x0, y0, h, n) {
+  const pts=[{x:x0,y:y0}];
+  let x=x0, y=y0;
+  for(let i=0;i<n;i++){
+    const f0 = t11Eval(fxy,x,y);
+    const yPred = y + h*f0;
+    const xNew  = x + h;
+    const f1 = t11Eval(fxy,xNew,yPred);
+    const yNew  = y + (h/2)*(f0+f1);
+    pts.push({x:xNew,y:yNew,f0,yPred,f1,h});
+    x=xNew; y=yNew;
+  }
+  return pts;
+}
+
+/** Runge-Kutta 4to orden */
+function t11RK4(fxy, x0, y0, h, n) {
+  const pts=[{x:x0,y:y0}];
+  let x=x0, y=y0;
+  for(let i=0;i<n;i++){
+    const k1 = h*t11Eval(fxy, x,       y);
+    const k2 = h*t11Eval(fxy, x+h/2,   y+k1/2);
+    const k3 = h*t11Eval(fxy, x+h/2,   y+k2/2);
+    const k4 = h*t11Eval(fxy, x+h,     y+k3);
+    const yNew = y + (k1+2*k2+2*k3+k4)/6;
+    const xNew = x+h;
+    pts.push({x:xNew,y:yNew,k1,k2,k3,k4,h});
+    x=xNew; y=yNew;
+  }
+  return pts;
+}
+
+/** Compute all 3 methods */
+function t11Compute(fxy, x0, y0, h, xn, exacta) {
+  const n = Math.round((xn-x0)/h);
+  const euler = t11Euler(fxy,x0,y0,h,n);
+  const heun  = t11Heun(fxy,x0,y0,h,n);
+  const rk4   = t11RK4(fxy,x0,y0,h,n);
+
+  /* Agregar valor exacto y error a cada punto */
+  const addExact = (pts) => pts.map(p => {
+    const ex = t11EvalExacta(exacta, p.x);
+    return { ...p, exact:ex, err: ex!==null ? Math.abs(ex-p.y) : null };
+  });
+
+  return {
+    fxy, x0, y0, h, xn, n, exacta,
+    euler: addExact(euler),
+    heun:  addExact(heun),
+    rk4:   addExact(rk4),
+  };
+}
+
+/* ══════════════════════════════════════════════════════════════
+   RENDERIZADO — FÓRMULA DEL MÉTODO SELECCIONADO
+══════════════════════════════════════════════════════════════ */
+function t11RenderFormula(res, method) {
+  const sec=document.getElementById('t11-formula'); if(!sec) return;
+  const {fxy,x0,y0,h} = res;
+  const labels={euler:'Euler',heun:'Euler Mejorado (Heun)',rk4:'Runge-Kutta 4to Orden'};
+  const colors={euler:T11_EULER,heun:T11_HEUN,rk4:T11_RK4};
+  const col=colors[method];
+
+  let formulaHtml='';
+  if(method==='euler'){
+    formulaHtml=`
+    <div style="font-family:var(--font-mono);font-size:1rem;font-weight:700;color:${col};text-align:center;padding:1rem;">
+      yᵢ₊₁ = yᵢ + h·f(xᵢ,yᵢ)
+    </div>
+    <div style="font-family:var(--font-main);font-size:.82rem;color:var(--gray-600);text-align:center;">
+      Se usa la pendiente al <strong>inicio</strong> del intervalo para extrapolar linealmente.
+    </div>`;
+  } else if(method==='heun'){
+    formulaHtml=`
+    <div style="display:flex;flex-direction:column;gap:.5rem;padding:1rem;">
+      <div style="font-family:var(--font-mono);font-size:.92rem;color:${col};font-weight:600;">
+        <strong>Predictor:</strong> y*ᵢ₊₁ = yᵢ + h·f(xᵢ,yᵢ)
+      </div>
+      <div style="font-family:var(--font-mono);font-size:.92rem;color:${col};font-weight:600;">
+        <strong>Corrector:</strong> yᵢ₊₁ = yᵢ + (h/2)·[f(xᵢ,yᵢ) + f(xᵢ₊₁, y*ᵢ₊₁)]
+      </div>
+    </div>
+    <div style="font-family:var(--font-main);font-size:.82rem;color:var(--gray-600);text-align:center;">
+      Promedia la pendiente inicial con la pendiente al final del intervalo (usando la predicción de Euler).
+    </div>`;
+  } else {
+    formulaHtml=`
+    <div style="display:flex;flex-direction:column;gap:.4rem;padding:1rem;font-family:var(--font-mono);font-size:.85rem;color:${col};font-weight:600;">
+      <div>k₁ = h·f(xᵢ, yᵢ)</div>
+      <div>k₂ = h·f(xᵢ + h/2, yᵢ + k₁/2)</div>
+      <div>k₃ = h·f(xᵢ + h/2, yᵢ + k₂/2)</div>
+      <div>k₄ = h·f(xᵢ + h, yᵢ + k₃)</div>
+      <div style="border-top:1px solid ${col}33;padding-top:.4rem;margin-top:.2rem;">
+        yᵢ₊₁ = yᵢ + (1/6)·(k₁ + 2k₂ + 2k₃ + k₄)
+      </div>
+    </div>
+    <div style="font-family:var(--font-main);font-size:.82rem;color:var(--gray-600);text-align:center;">
+      Promedia 4 pendientes (inicio, dos en el punto medio, final) con pesos 1:2:2:1.
+    </div>`;
+  }
+
+  sec.innerHTML=`
+  <div class="page-header">
+    <h2>${labels[method]} — Fórmula</h2>
+    <p>PVI: dy/dx = ${fxy} &nbsp;·&nbsp; y(${x0}) = ${y0} &nbsp;·&nbsp; h = ${h}</p>
+  </div>
+  <div class="card t6-step-card" style="margin-bottom:1.25rem;border-left:5px solid ${col};">
+    <div class="card-header">
+      <div class="card-header-icon" style="background:${col};width:38px;height:38px;border-radius:10px;
+        display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:.8rem;">
+        ${method==='euler'?'①':method==='heun'?'②':'③'}
+      </div>
+      <div><div class="card-title">${labels[method]}</div></div>
+    </div>
+    ${formulaHtml}
+  </div>
+  <div style="display:flex;gap:.75rem;justify-content:flex-end;">
+    <button class="btn btn-secondary" onclick="t11GoTo('t11-input')">← Datos</button>
+    <button class="btn t11-btn-primary" onclick="t11GoTo('t11-iteraciones')">Ver Iteraciones →</button>
+  </div>`;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   RENDERIZADO — ITERACIONES PASO A PASO
+══════════════════════════════════════════════════════════════ */
+function t11RenderIteraciones(res, method) {
+  const sec=document.getElementById('t11-iteraciones'); if(!sec) return;
+  const pts = res[method];
+  const colors={euler:T11_EULER,heun:T11_HEUN,rk4:T11_RK4};
+  const col=colors[method];
+  const labels={euler:'Euler',heun:'Heun',rk4:'RK4'};
+
+  let cards='';
+  const showMax=Math.min(pts.length,8);
+  for(let i=1;i<showMax;i++){
+    const p=pts[i], prev=pts[i-1];
+    let detail='';
+    if(method==='euler'){
+      detail=`
+        <div style="font-family:var(--font-mono);font-size:.8rem;">f(x${i-1},y${i-1}) = f(${t11Fmt(prev.x,4)}, ${t11Fmt(prev.y,6)}) = ${t11Fmt(p.f0,8)}</div>
+        <div style="font-family:var(--font-mono);font-size:.8rem;">y${i} = ${t11Fmt(prev.y,6)} + (${t11Fmt(p.h,4)})(${t11Fmt(p.f0,6)}) = <strong style="color:${col};">${t11Fmt(p.y,8)}</strong></div>`;
+    } else if(method==='heun'){
+      detail=`
+        <div style="font-family:var(--font-mono);font-size:.8rem;">f(x${i-1},y${i-1}) = ${t11Fmt(p.f0,8)}</div>
+        <div style="font-family:var(--font-mono);font-size:.8rem;">y*${i} (predictor) = ${t11Fmt(prev.y,6)} + (${t11Fmt(p.h,4)})(${t11Fmt(p.f0,6)}) = ${t11Fmt(p.yPred,8)}</div>
+        <div style="font-family:var(--font-mono);font-size:.8rem;">f(x${i},y*${i}) = ${t11Fmt(p.f1,8)}</div>
+        <div style="font-family:var(--font-mono);font-size:.8rem;">y${i} = ${t11Fmt(prev.y,6)} + (${t11Fmt(p.h,4)}/2)[${t11Fmt(p.f0,6)}+${t11Fmt(p.f1,6)}] = <strong style="color:${col};">${t11Fmt(p.y,8)}</strong></div>`;
+    } else {
+      detail=`
+        <div style="font-family:var(--font-mono);font-size:.78rem;">k₁ = ${t11Fmt(p.k1,8)}</div>
+        <div style="font-family:var(--font-mono);font-size:.78rem;">k₂ = ${t11Fmt(p.k2,8)}</div>
+        <div style="font-family:var(--font-mono);font-size:.78rem;">k₃ = ${t11Fmt(p.k3,8)}</div>
+        <div style="font-family:var(--font-mono);font-size:.78rem;">k₄ = ${t11Fmt(p.k4,8)}</div>
+        <div style="font-family:var(--font-mono);font-size:.78rem;">y${i} = ${t11Fmt(prev.y,6)} + (1/6)[${t11Fmt(p.k1,4)}+2(${t11Fmt(p.k2,4)})+2(${t11Fmt(p.k3,4)})+${t11Fmt(p.k4,4)}] = <strong style="color:${col};">${t11Fmt(p.y,8)}</strong></div>`;
+    }
+
+    cards+=`
+    <div class="card t6-step-card" style="margin-bottom:.875rem;border-left:5px solid ${col};">
+      <div class="card-header" style="padding:.6rem 1.25rem;">
+        <div class="card-header-icon" style="background:${col};width:32px;height:32px;border-radius:8px;
+          display:flex;align-items:center;justify-content:center;color:#fff;font-size:.75rem;font-weight:700;">i=${i}</div>
+        <div><div class="card-title" style="font-size:.92rem;">x${i} = ${t11Fmt(p.x,4)}</div></div>
+        <div style="margin-left:auto;font-family:var(--font-mono);font-weight:700;color:${col};">y${i}=${t11Fmt(p.y,6)}</div>
+      </div>
+      <div style="padding:.5rem 1.25rem 1rem;display:flex;flex-direction:column;gap:.3rem;">${detail}</div>
+    </div>`;
+  }
+  const truncMsg = pts.length>8 ? `<div style="text-align:center;color:var(--gray-400);font-size:.82rem;padding:.5rem;">… ${pts.length-8} iteraciones más — ver tabla completa →</div>` : '';
+
+  sec.innerHTML=`
+  <div class="page-header">
+    <h2>${labels[method]} — Iteraciones Paso a Paso</h2>
+    <p>Cálculo detallado de cada paso desde x₀=${res.x0} hasta x=${pts.at(-1).x.toFixed(4)}</p>
+  </div>
+  ${cards}${truncMsg}
+  <div style="display:flex;gap:.75rem;justify-content:flex-end;">
+    <button class="btn btn-secondary" onclick="t11GoTo('t11-formula')">← Fórmula</button>
+    <button class="btn t11-btn-primary" onclick="t11GoTo('t11-tabla')">Ver Tabla completa →</button>
+  </div>`;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   RENDERIZADO — TABLA DE RESULTADOS
+══════════════════════════════════════════════════════════════ */
+function t11RenderTabla(res, method) {
+  const sec=document.getElementById('t11-tabla'); if(!sec) return;
+  const pts=res[method];
+  const colors={euler:T11_EULER,heun:T11_HEUN,rk4:T11_RK4};
+  const col=colors[method];
+  const labels={euler:'Euler',heun:'Euler Mejorado (Heun)',rk4:'Runge-Kutta 4'};
+  const hasExacta = pts[0].exact!==null;
+
+  let rows=pts.map((p,i)=>`<tr style="${i%2===1?'background:var(--gray-50)':''}">
+    <td style="padding:.4rem .7rem;text-align:center;font-weight:700;color:${col};">${i}</td>
+    <td style="padding:.4rem .7rem;text-align:right;font-family:var(--font-mono);font-size:.8rem;">${t11Fmt(p.x,4)}</td>
+    <td style="padding:.4rem .7rem;text-align:right;font-family:var(--font-mono);font-size:.8rem;font-weight:600;">${t11Fmt(p.y,8)}</td>
+    ${hasExacta?`<td style="padding:.4rem .7rem;text-align:right;font-family:var(--font-mono);font-size:.8rem;color:${T11_EXACT};">${t11Fmt(p.exact,8)}</td>`:''}
+    ${hasExacta?`<td style="padding:.4rem .7rem;text-align:right;font-family:var(--font-mono);font-size:.8rem;color:#ef4444;">${t11FmtE(p.err)}</td>`:''}
+  </tr>`).join('');
+
+  sec.innerHTML=`
+  <div class="page-header">
+    <h2>${labels[method]} — Tabla Completa</h2>
+    <p>n = ${res.n} pasos · h = ${res.h}</p>
+  </div>
+  <div class="card" style="padding:0;overflow:hidden;margin-bottom:1.25rem;">
+    <div class="card-header" style="padding:.65rem 1.25rem;border-bottom:1px solid var(--border);">
+      <div class="card-header-icon" style="background:${col};width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;">📋</div>
+      <div><div class="card-title">Tabla de aproximaciones</div></div>
+    </div>
+    <div style="overflow-x:auto;">
+    <table style="width:100%;border-collapse:collapse;">
+      <thead><tr style="background:${T11_LIGHT};">
+        <th style="padding:.45rem .7rem;color:${T11_DARK};border-bottom:2px solid ${col}33;">i</th>
+        <th style="padding:.45rem .7rem;color:${T11_DARK};border-bottom:2px solid ${col}33;text-align:right;">xᵢ</th>
+        <th style="padding:.45rem .7rem;color:${T11_DARK};border-bottom:2px solid ${col}33;text-align:right;">yᵢ aprox.</th>
+        ${hasExacta?`<th style="padding:.45rem .7rem;color:${T11_DARK};border-bottom:2px solid ${col}33;text-align:right;">y(x) exacta</th>`:''}
+        ${hasExacta?`<th style="padding:.45rem .7rem;color:${T11_DARK};border-bottom:2px solid ${col}33;text-align:right;">Error |ε|</th>`:''}
+      </tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+    </div>
+  </div>
+  <div style="display:flex;gap:.75rem;justify-content:flex-end;">
+    <button class="btn btn-secondary" onclick="t11GoTo('t11-iteraciones')">← Iteraciones</button>
+    <button class="btn t11-btn-primary" onclick="t11GoTo('t11-grafica');setTimeout(t11DrawGraph,80);">Ver Gráfica →</button>
+  </div>`;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   GRÁFICA INTERACTIVA — COMPARACIÓN DE LOS 3 MÉTODOS
+══════════════════════════════════════════════════════════════ */
+function t11InitGraph() {
+  const g=t11State.graph;
+  const c=document.getElementById('t11Canvas');
+  if(!c||g.canvas) return;
+  g.canvas=c; g.ctx=c.getContext('2d');
+  const resize=()=>{ const w=c.parentElement.clientWidth||700; c.width=w; c.height=Math.max(340,Math.round(w*0.52)); t11DrawGraph(); };
+  resize(); window.addEventListener('resize',resize);
+
+  c.addEventListener('mousedown',e=>{g.dragging=true;g.lastMouse={x:e.clientX,y:e.clientY};c.style.cursor='grabbing';});
+  c.addEventListener('mouseup',()=>{g.dragging=false;c.style.cursor='crosshair';});
+  c.addEventListener('mouseleave',()=>{g.dragging=false;g.hoverOn=false;c.style.cursor='crosshair';
+    const tip=document.getElementById('t11Tooltip');if(tip)tip.style.display='none';t11DrawGraph();});
+  c.addEventListener('mousemove',e=>{
+    const rect=c.getBoundingClientRect();
+    const px=(e.clientX-rect.left)*(c.width/rect.width);
+    const py=(e.clientY-rect.top)*(c.height/rect.height);
+    const mw=t11ToWorld(px,py);
+    g.hoverOn=true;
+    const coord=document.getElementById('t11Coords');
+    if(coord) coord.innerHTML=`x = ${mw.x.toFixed(3)} &nbsp; y = ${mw.y.toFixed(3)}`;
+    if(g.dragging){
+      const dx=(e.clientX-g.lastMouse.x)/rect.width*(g.xMax-g.xMin);
+      const dy=(e.clientY-g.lastMouse.y)/rect.height*(g.yMax-g.yMin);
+      g.xMin-=dx;g.xMax-=dx;g.yMin+=dy;g.yMax+=dy;
+      g.lastMouse={x:e.clientX,y:e.clientY};
+    }
+    t11DrawGraph();
+  });
+  c.addEventListener('wheel',e=>{
+    e.preventDefault();
+    const f=e.deltaY>0?1.12:0.89;
+    const rect=c.getBoundingClientRect();
+    const {x:wx,y:wy}=t11ToWorld((e.clientX-rect.left)*(c.width/rect.width),(e.clientY-rect.top)*(c.height/rect.height));
+    g.xMin=wx+(g.xMin-wx)*f;g.xMax=wx+(g.xMax-wx)*f;
+    g.yMin=wy+(g.yMin-wy)*f;g.yMax=wy+(g.yMax-wy)*f;
+    t11DrawGraph();
+  },{passive:false});
+}
+function t11ToCanvas(wx,wy){
+  const g=t11State.graph,PAD={t:24,r:24,b:44,l:60};
+  const W=g.canvas.width,H=g.canvas.height;
+  return {x:PAD.l+(wx-g.xMin)/(g.xMax-g.xMin)*(W-PAD.l-PAD.r), y:PAD.t+(1-(wy-g.yMin)/(g.yMax-g.yMin))*(H-PAD.t-PAD.b)};
+}
+function t11ToWorld(px,py){
+  const g=t11State.graph,PAD={t:24,r:24,b:44,l:60};
+  const W=g.canvas.width,H=g.canvas.height;
+  return {x:g.xMin+(px-PAD.l)/(W-PAD.l-PAD.r)*(g.xMax-g.xMin), y:g.yMin+(1-(py-PAD.t)/(H-PAD.t-PAD.b))*(g.yMax-g.yMin)};
+}
+function t11DrawGraph() {
+  const g=t11State.graph, res=t11State.result;
+  if(!g.canvas||!res) return;
+  const isDark=document.body.classList.contains('dark-mode');
+  const W=g.canvas.width,H=g.canvas.height,ctx=g.ctx;
+  const PAD={t:24,r:24,b:44,l:60};
+  const PW=W-PAD.l-PAD.r,PH=H-PAD.t-PAD.b;
+  const niceStep=(range,tgt)=>{const r=range/tgt,m=Math.pow(10,Math.floor(Math.log10(r)));const n=r/m;return(n<1.5?1:n<3.5?2:n<7.5?5:10)*m;};
+
+  ctx.fillStyle=isDark?'#0f172a':'#fff'; ctx.fillRect(0,0,W,H);
+
+  const xSt=niceStep(g.xMax-g.xMin,10), ySt=niceStep(g.yMax-g.yMin,8);
+  ctx.strokeStyle=isDark?'rgba(148,163,184,.08)':'#f1f5f9'; ctx.lineWidth=1;
+  for(let gx=Math.ceil(g.xMin/xSt)*xSt;gx<=g.xMax;gx+=xSt){const{x:px}=t11ToCanvas(gx,0);ctx.beginPath();ctx.moveTo(px,PAD.t);ctx.lineTo(px,PAD.t+PH);ctx.stroke();}
+  for(let gy=Math.ceil(g.yMin/ySt)*ySt;gy<=g.yMax;gy+=ySt){const{y:py}=t11ToCanvas(0,gy);ctx.beginPath();ctx.moveTo(PAD.l,py);ctx.lineTo(PAD.l+PW,py);ctx.stroke();}
+
+  ctx.strokeStyle=isDark?'rgba(148,163,184,.3)':'#cbd5e1'; ctx.lineWidth=1.5;
+  const{y:axY}=t11ToCanvas(0,0),{x:axX}=t11ToCanvas(0,0);
+  if(g.yMin<=0&&g.yMax>=0){ctx.beginPath();ctx.moveTo(PAD.l,axY);ctx.lineTo(PAD.l+PW,axY);ctx.stroke();}
+  if(g.xMin<=0&&g.xMax>=0){ctx.beginPath();ctx.moveTo(axX,PAD.t);ctx.lineTo(axX,PAD.t+PH);ctx.stroke();}
+
+  ctx.fillStyle=isDark?'rgba(148,163,184,.6)':'#94a3b8';
+  ctx.font='10px "JetBrains Mono",monospace'; ctx.textAlign='center'; ctx.textBaseline='middle';
+  const lbY=Math.max(PAD.t+10,Math.min(PAD.t+PH-4,axY+16));
+  const lbX=Math.max(PAD.l+28,Math.min(PAD.l+PW-4,axX-8));
+  for(let gx=Math.ceil(g.xMin/xSt)*xSt;gx<=g.xMax;gx+=xSt){if(Math.abs(gx)<xSt*.01)continue;const{x:px}=t11ToCanvas(gx,0);ctx.fillText(gx%1===0?gx:gx.toFixed(1),px,lbY);}
+  ctx.textAlign='right';
+  for(let gy=Math.ceil(g.yMin/ySt)*ySt;gy<=g.yMax;gy+=ySt){if(Math.abs(gy)<ySt*.01)continue;const{y:py}=t11ToCanvas(0,gy);ctx.fillText(gy%1===0?gy:gy.toFixed(1),lbX,py);}
+  ctx.textBaseline='alphabetic';
+
+  /* Curva exacta (si existe) */
+  if(res.euler[0].exact!==null){
+    ctx.beginPath(); ctx.strokeStyle=T11_EXACT; ctx.lineWidth=2; ctx.setLineDash([]);
+    const STEPS=150; const dx=(res.xn-res.x0)/STEPS;
+    let first=true;
+    for(let k=0;k<=STEPS;k++){
+      const wx=res.x0+k*dx; const wy=t11EvalExacta(res.exacta,wx);
+      if(wy===null||!isFinite(wy)){first=true;continue;}
+      const{x:px,y:py}=t11ToCanvas(wx,wy);
+      if(first){ctx.moveTo(px,py);first=false;}else ctx.lineTo(px,py);
+    }
+    ctx.stroke();
+  }
+
+  /* 3 métodos */
+  const methods=[{pts:res.euler,col:T11_EULER},{pts:res.heun,col:T11_HEUN},{pts:res.rk4,col:T11_RK4}];
+  methods.forEach(m=>{
+    ctx.beginPath(); ctx.strokeStyle=m.col; ctx.lineWidth=2; ctx.setLineDash([4,3]);
+    m.pts.forEach((p,i)=>{const{x:px,y:py}=t11ToCanvas(p.x,p.y); if(i===0)ctx.moveTo(px,py);else ctx.lineTo(px,py);});
+    ctx.stroke(); ctx.setLineDash([]);
+    m.pts.forEach(p=>{const{x:px,y:py}=t11ToCanvas(p.x,p.y); ctx.beginPath();ctx.arc(px,py,3.5,0,Math.PI*2);ctx.fillStyle=m.col;ctx.fill();});
+  });
+
+  /* Leyenda */
+  ctx.font='10px "Poppins",sans-serif'; ctx.textBaseline='middle';
+  let lx=PAD.l+6, ly=PAD.t+12;
+  const legend=[{lbl:'Exacta',col:T11_EXACT,show:res.euler[0].exact!==null},{lbl:'Euler',col:T11_EULER,show:true},{lbl:'Heun',col:T11_HEUN,show:true},{lbl:'RK4',col:T11_RK4,show:true}];
+  legend.filter(l=>l.show).forEach(l=>{
+    ctx.strokeStyle=l.col;ctx.lineWidth=2.5;ctx.beginPath();ctx.moveTo(lx,ly);ctx.lineTo(lx+18,ly);ctx.stroke();
+    ctx.fillStyle=isDark?'#e2e8f0':'#374151';ctx.textAlign='left';ctx.fillText(l.lbl,lx+23,ly);
+    lx+=65;
+  });
+  ctx.textBaseline='alphabetic';
+
+  ctx.fillStyle=isDark?'rgba(190,24,93,.15)':'rgba(148,163,184,.4)';
+  ctx.font='600 11px "Poppins",sans-serif'; ctx.textAlign='right'; ctx.textBaseline='bottom';
+  ctx.fillText('NUMERIX © 2026',W-10,H-8); ctx.textBaseline='alphabetic';
+}
+window.t11DrawGraph=t11DrawGraph;
+function t11Zoom(f){const g=t11State.graph;const cx=(g.xMin+g.xMax)/2,cy=(g.yMin+g.yMax)/2;const hw=(g.xMax-g.xMin)/2*f,hh=(g.yMax-g.yMin)/2*f;g.xMin=cx-hw;g.xMax=cx+hw;g.yMin=cy-hh;g.yMax=cy+hh;t11DrawGraph();}
+window.t11Zoom=t11Zoom;
+function t11ResetView(res){
+  const allY=[...res.euler,...res.heun,...res.rk4].map(p=>p.y);
+  const allX=res.euler.map(p=>p.x);
+  const xr=Math.max(...allX)-Math.min(...allX)||1, yr=Math.max(...allY)-Math.min(...allY)||1;
+  const g=t11State.graph;
+  g.xMin=Math.min(...allX)-xr*.15; g.xMax=Math.max(...allX)+xr*.15;
+  g.yMin=Math.min(...allY)-yr*.25; g.yMax=Math.max(...allY)+yr*.25;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   RENDERIZADO — COMPARACIÓN DE LOS 3 MÉTODOS
+══════════════════════════════════════════════════════════════ */
+function t11RenderComparar(res) {
+  const sec=document.getElementById('t11-comparar'); if(!sec) return;
+  const hasExacta = res.euler[0].exact!==null;
+  const final = {
+    euler: res.euler.at(-1), heun: res.heun.at(-1), rk4: res.rk4.at(-1)
+  };
+
+  let rows=`<tr>
+    <td style="padding:.45rem .75rem;font-weight:700;color:${T11_EULER};">① Euler</td>
+    <td style="padding:.45rem .75rem;text-align:right;font-family:var(--font-mono);">${t11Fmt(final.euler.y,8)}</td>
+    ${hasExacta?`<td style="padding:.45rem .75rem;text-align:right;font-family:var(--font-mono);color:#ef4444;">${t11FmtE(final.euler.err)}</td>`:''}
+  </tr>
+  <tr style="background:var(--gray-50);">
+    <td style="padding:.45rem .75rem;font-weight:700;color:${T11_HEUN};">② Euler Mejorado (Heun)</td>
+    <td style="padding:.45rem .75rem;text-align:right;font-family:var(--font-mono);">${t11Fmt(final.heun.y,8)}</td>
+    ${hasExacta?`<td style="padding:.45rem .75rem;text-align:right;font-family:var(--font-mono);color:#ef4444;">${t11FmtE(final.heun.err)}</td>`:''}
+  </tr>
+  <tr>
+    <td style="padding:.45rem .75rem;font-weight:700;color:${T11_RK4};">③ Runge-Kutta 4</td>
+    <td style="padding:.45rem .75rem;text-align:right;font-family:var(--font-mono);">${t11Fmt(final.rk4.y,8)}</td>
+    ${hasExacta?`<td style="padding:.45rem .75rem;text-align:right;font-family:var(--font-mono);color:#ef4444;">${t11FmtE(final.rk4.err)}</td>`:''}
+  </tr>`;
+
+  sec.innerHTML=`
+  <div class="page-header">
+    <h2>Comparación — Euler vs Heun vs RK4</h2>
+    <p>Resultado final en x = ${final.euler.x.toFixed(4)}${hasExacta?` · y exacta = ${t11Fmt(final.euler.exact,8)}`:''}</p>
+  </div>
+  <div class="card" style="padding:0;overflow:hidden;margin-bottom:1.25rem;">
+    <div class="card-header" style="padding:.75rem 1.25rem;border-bottom:1px solid var(--border);">
+      <div class="card-header-icon t11-icon">⚖</div>
+      <div><div class="card-title">Precisión relativa de los 3 métodos</div></div>
+    </div>
+    <div style="overflow-x:auto;">
+    <table style="width:100%;border-collapse:collapse;">
+      <thead><tr style="background:${T11_LIGHT};">
+        <th style="padding:.5rem .75rem;color:${T11_DARK};border-bottom:2px solid ${T11_COLOR}33;">Método</th>
+        <th style="padding:.5rem .75rem;color:${T11_DARK};border-bottom:2px solid ${T11_COLOR}33;text-align:right;">y final</th>
+        ${hasExacta?`<th style="padding:.5rem .75rem;color:${T11_DARK};border-bottom:2px solid ${T11_COLOR}33;text-align:right;">Error |ε|</th>`:''}
+      </tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+    </div>
+  </div>
+  ${hasExacta?`
+  <div class="card" style="margin-bottom:1.25rem;background:linear-gradient(135deg,${T11_LIGHT},#fdf2f8);border:2px solid ${T11_COLOR}33;">
+    <div class="card-header"><div class="card-header-icon t11-icon">💡</div><div><div class="card-title">Conclusión</div></div></div>
+    <div style="padding:.5rem 1.25rem 1.25rem;font-family:var(--font-main);font-size:.85rem;color:var(--gray-600);">
+      A igual tamaño de paso h, <strong style="color:${T11_RK4};">Runge-Kutta 4</strong> ofrece la mayor precisión (error O(h⁴)),
+      seguido de <strong style="color:${T11_HEUN};">Heun</strong> (O(h²)) y por último <strong style="color:${T11_EULER};">Euler</strong> (O(h)).
+    </div>
+  </div>`:''}
+  <div style="display:flex;gap:.75rem;justify-content:flex-end;">
+    <button class="btn btn-secondary" onclick="t11GoTo('t11-grafica')">← Gráfica</button>
+    <button class="btn t11-btn-primary" onclick="t11GoTo('t11-input')">🔁 Nuevos datos</button>
+  </div>`;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   FLUJO PRINCIPAL
+══════════════════════════════════════════════════════════════ */
+document.addEventListener('DOMContentLoaded', () => {
+
+  document.getElementById('t11H')?.addEventListener('input', t11UpdateHint);
+  document.getElementById('t11X0')?.addEventListener('input', t11UpdateHint);
+  document.getElementById('t11Xn')?.addEventListener('input', t11UpdateHint);
+  function t11UpdateHint(){
+    const x0=parseFloat(document.getElementById('t11X0')?.value)||0;
+    const xn=parseFloat(document.getElementById('t11Xn')?.value)||0;
+    const h=parseFloat(document.getElementById('t11H')?.value)||0.1;
+    const n=Math.round((xn-x0)/h);
+    const hint=document.getElementById('t11NHint');
+    if(hint) hint.textContent=`${n} pasos desde x₀=${x0} hasta xₙ=${xn}`;
+  }
+  t11UpdateHint();
+
+  document.querySelectorAll('.t11-nav[data-t11]').forEach(el=>{
+    el.addEventListener('click',()=>t11GoTo(el.getAttribute('data-t11')));
+  });
+
+  /* Ejemplo 1: y'=x+y, y(0)=1 */
+  document.getElementById('btnT11Ej1')?.addEventListener('click',()=>{
+    document.getElementById('t11Fxy').value='x+y';
+    document.getElementById('t11X0').value='0';
+    document.getElementById('t11Y0').value='1';
+    document.getElementById('t11H').value='0.1';
+    document.getElementById('t11Xn').value='0.5';
+    document.getElementById('t11Exacta').value='-x-1+2*exp(x)';
+    t11UpdateHint();
+    clearAlert('t11Alert');
+    showAlert('t11Alert','info','📋 Ejemplo clase — y\'=x+y, y(0)=1. Exacta: y=-x-1+2eˣ. Presiona ▶ Resolver.');
+  });
+
+  /* Ejemplo 2: y'=x-y, y(0)=2 */
+  document.getElementById('btnT11Ej2')?.addEventListener('click',()=>{
+    document.getElementById('t11Fxy').value='x-y';
+    document.getElementById('t11X0').value='0';
+    document.getElementById('t11Y0').value='2';
+    document.getElementById('t11H').value='0.1';
+    document.getElementById('t11Xn').value='0.5';
+    document.getElementById('t11Exacta').value='x-1+3*exp(-x)';
+    t11UpdateHint();
+    clearAlert('t11Alert');
+    showAlert('t11Alert','info','📋 Ejemplo clase — y\'=x−y, y(0)=2. Exacta: y=x-1+3e⁻ˣ. Presiona ▶ Resolver.');
+  });
+
+  /* Botón resolver */
+  document.getElementById('btnT11Calc')?.addEventListener('click',()=>{
+    clearAlert('t11Alert'); clearAlert('t11AlertGlobal');
+    const fxy    = document.getElementById('t11Fxy')?.value?.trim()||'x+y';
+    const x0     = parseFloat(document.getElementById('t11X0')?.value);
+    const y0     = parseFloat(document.getElementById('t11Y0')?.value);
+    const h      = parseFloat(document.getElementById('t11H')?.value);
+    const xn     = parseFloat(document.getElementById('t11Xn')?.value);
+    const exacta = document.getElementById('t11Exacta')?.value?.trim()||'';
+    const method = document.querySelector('input[name="t11Method"]:checked')?.value||'euler';
+
+    if(isNaN(x0)||isNaN(y0)){ showAlert('t11Alert','danger','Ingresa x₀ y y₀.'); return; }
+    if(isNaN(h)||h<=0){ showAlert('t11Alert','danger','h debe ser positivo.'); return; }
+    if(isNaN(xn)||xn<=x0){ showAlert('t11Alert','danger','xₙ debe ser mayor que x₀.'); return; }
+    if(isNaN(t11Eval(fxy,x0,y0))){ showAlert('t11Alert','danger','f(x,y) no es válida.'); return; }
+
+    try {
+      const res=t11Compute(fxy,x0,y0,h,xn,exacta);
+      t11State.result=res;
+      t11State.method=method;
+      Object.assign(t11State,{fxy,x0,y0,h,xn,exacta});
+
+      t11RenderFormula(res,method);
+      t11RenderIteraciones(res,method);
+      t11RenderTabla(res,method);
+      t11RenderComparar(res);
+
+      const dl=document.getElementById('t11-download-bar');
+      if(dl){ dl.dataset.ready='1'; dl.style.display='block'; }
+
+      t11ResetView(res);
+      setTimeout(()=>{ t11InitGraph(); t11DrawGraph(); }, 100);
+
+      t11GoTo('t11-formula');
+      const labels={euler:'Euler',heun:'Heun',rk4:'RK4'};
+      showAlert('t11AlertGlobal','success',
+        `✓ ${labels[method]}: y(${xn})≈${t11Fmt(res[method].at(-1).y,6)} · Euler=${t11Fmt(res.euler.at(-1).y,6)} · Heun=${t11Fmt(res.heun.at(-1).y,6)} · RK4=${t11Fmt(res.rk4.at(-1).y,6)}`);
+
+    } catch(e){ showAlert('t11Alert','danger','Error: '+e.message); }
+  });
+
+  window.addEventListener('resize',()=>{ if(t11State.result) t11DrawGraph(); });
+});
+
+/* ══════════════════════════════════════════════════════════════
+   EXPORTACIÓN EXCEL T11
+══════════════════════════════════════════════════════════════ */
+(function patchT11Export(){
+  document.addEventListener('DOMContentLoaded',()=>{
+    if(typeof numerixExport==='undefined') return;
+    numerixExport.t11=function(){
+      const res=t11State.result;
+      if(!res){ alert('Ejecuta el cálculo primero.'); return; }
+      const wb=XLSX.utils.book_new();
+      const hasE=res.euler[0].exact!==null;
+
+      const info=[
+        ['NUMERIX — Métodos de un Paso para EDO','','© 2026 Fernando Granja & Alejandra Tinoco'],
+        [],['f(x,y)',res.fxy],['x0',res.x0],['y0',res.y0],['h',res.h],['xn',res.xn],['n pasos',res.n],
+        hasE?['y(x) exacta',res.exacta]:[],
+      ].filter(r=>r.length>0);
+      XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(info),'Info');
+
+      const addSheet=(name,pts)=>{
+        const hdr=['i','xi','yi',...(hasE?['y exacta','Error |ε|']:[])];
+        const rows=pts.map((p,i)=>[i,p.x,p.y,...(hasE?[p.exact,p.err]:[])]);
+        XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([hdr,...rows]),name);
+      };
+      addSheet('Euler',res.euler);
+      addSheet('Heun',res.heun);
+      addSheet('RK4',res.rk4);
+
+      XLSX.writeFile(wb,'NUMERIX_T11_EDO_UnPaso.xlsx');
+    };
+  });
+})();
+
+
+/* ══════════════════════════════════════════════════════════════
+   TEMA 12 — SISTEMAS DE ECUACIONES DIFERENCIALES ORDINARIAS
+   Runge-Kutta 4to Orden acoplado (2 y 3 variables)
+   © 2026 Fernando Granja & Alejandra Tinoco
+══════════════════════════════════════════════════════════════ */
+
+const T12_COLOR = '#65a30d';
+const T12_LIGHT = '#f7fee7';
+const T12_DARK  = '#3f6212';
+const T12_X = '#0ea5e9';
+const T12_Y = '#f59e0b';
+const T12_Z = '#a855f7';
+
+/* ── Estado T12 ─────────────────────────────────────────────── */
+const t12State = {
+  size:2, fx:'x-y', fy:'x+y', fz:'x+y-z', t0:0, x0:1, y0:0, z0:0, h:0.1, tn:0.5,
+  result:null,
+  graphT:{canvas:null,ctx:null,xMin:-1,xMax:1,yMin:-2,yMax:2,dragging:false,lastMouse:{x:0,y:0}},
+  graphFase:{canvas:null,ctx:null,xMin:-2,xMax:2,yMin:-2,yMax:2,dragging:false,lastMouse:{x:0,y:0}}
+};
+
+/* ── Evaluador f(t,x,y,z) ───────────────────────────────────── */
+function t12Eval(expr,t,x,y,z) {
+  try {
+    return new Function('t','x','y','z','PI','sin','cos','tan','exp','log','sqrt','pow','abs',
+      `"use strict";return(${expr});`)(t,x,y,z??0,Math.PI,Math.sin,Math.cos,Math.tan,Math.exp,Math.log,Math.sqrt,Math.pow,Math.abs);
+  } catch(e){return NaN;}
+}
+
+/* ── Navegación T12 ────────────────────────────────────────── */
+function t12GoTo(secId){
+  document.querySelectorAll('.t12-sec').forEach(s=>s.style.display='none');
+  document.querySelectorAll('.t12-nav').forEach(n=>n.classList.remove('active'));
+  const sec=document.getElementById(secId);
+  if(sec) sec.style.display='block';
+  document.querySelectorAll(`[data-t12="${secId}"]`).forEach(el=>el.classList.add('active'));
+  const dl=document.getElementById('t12-download-bar');
+  if(dl&&dl.dataset.ready==='1'&&secId!=='t12-input') dl.style.display='block';
+}
+window.t12GoTo = t12GoTo;
+
+/* ── Formato ───────────────────────────────────────────────── */
+const t12Fmt = (v,d=8) => (v===null||v===undefined||isNaN(v)) ? '—' : Number(v).toFixed(d);
+
+/* ══════════════════════════════════════════════════════════════
+   ALGORITMO — RK4 PARA SISTEMAS 2×2 y 3×3
+══════════════════════════════════════════════════════════════ */
+function t12RK4System(fx, fy, fz, t0, x0, y0, z0, h, n, size) {
+  const pts=[{t:t0, x:x0, y:y0, z:z0}];
+  let t=t0, x=x0, y=y0, z=z0;
+
+  for(let i=0;i<n;i++){
+    let k1x,k1y,k1z, k2x,k2y,k2z, k3x,k3y,k3z, k4x,k4y,k4z;
+
+    if(size===2){
+      k1x = h*t12Eval(fx,t,x,y);
+      k1y = h*t12Eval(fy,t,x,y);
+
+      k2x = h*t12Eval(fx, t+h/2, x+k1x/2, y+k1y/2);
+      k2y = h*t12Eval(fy, t+h/2, x+k1x/2, y+k1y/2);
+
+      k3x = h*t12Eval(fx, t+h/2, x+k2x/2, y+k2y/2);
+      k3y = h*t12Eval(fy, t+h/2, x+k2x/2, y+k2y/2);
+
+      k4x = h*t12Eval(fx, t+h, x+k3x, y+k3y);
+      k4y = h*t12Eval(fy, t+h, x+k3x, y+k3y);
+
+      const xNew = x + (k1x+2*k2x+2*k3x+k4x)/6;
+      const yNew = y + (k1y+2*k2y+2*k3y+k4y)/6;
+      const tNew = t+h;
+
+      pts.push({t:tNew,x:xNew,y:yNew,z:0,
+        k1x,k1y,k2x,k2y,k3x,k3y,k4x,k4y,h});
+      t=tNew; x=xNew; y=yNew;
+
+    } else {
+      k1x = h*t12Eval(fx,t,x,y,z);
+      k1y = h*t12Eval(fy,t,x,y,z);
+      k1z = h*t12Eval(fz,t,x,y,z);
+
+      k2x = h*t12Eval(fx, t+h/2, x+k1x/2, y+k1y/2, z+k1z/2);
+      k2y = h*t12Eval(fy, t+h/2, x+k1x/2, y+k1y/2, z+k1z/2);
+      k2z = h*t12Eval(fz, t+h/2, x+k1x/2, y+k1y/2, z+k1z/2);
+
+      k3x = h*t12Eval(fx, t+h/2, x+k2x/2, y+k2y/2, z+k2z/2);
+      k3y = h*t12Eval(fy, t+h/2, x+k2x/2, y+k2y/2, z+k2z/2);
+      k3z = h*t12Eval(fz, t+h/2, x+k2x/2, y+k2y/2, z+k2z/2);
+
+      k4x = h*t12Eval(fx, t+h, x+k3x, y+k3y, z+k3z);
+      k4y = h*t12Eval(fy, t+h, x+k3x, y+k3y, z+k3z);
+      k4z = h*t12Eval(fz, t+h, x+k3x, y+k3y, z+k3z);
+
+      const xNew = x + (k1x+2*k2x+2*k3x+k4x)/6;
+      const yNew = y + (k1y+2*k2y+2*k3y+k4y)/6;
+      const zNew = z + (k1z+2*k2z+2*k3z+k4z)/6;
+      const tNew = t+h;
+
+      pts.push({t:tNew,x:xNew,y:yNew,z:zNew,
+        k1x,k1y,k1z,k2x,k2y,k2z,k3x,k3y,k3z,k4x,k4y,k4z,h});
+      t=tNew; x=xNew; y=yNew; z=zNew;
+    }
+  }
+  return pts;
+}
+
+function t12Compute(fx, fy, fz, t0, x0, y0, z0, h, tn, size) {
+  const n = Math.round((tn-t0)/h);
+  const pts = t12RK4System(fx, fy, fz, t0, x0, y0, z0, h, n, size);
+  return { fx, fy, fz, t0, x0, y0, z0, h, tn, n, size, pts };
+}
+
+/* ══════════════════════════════════════════════════════════════
+   RENDERIZADO — FÓRMULA
+══════════════════════════════════════════════════════════════ */
+function t12RenderFormula(res) {
+  const sec=document.getElementById('t12-formula'); if(!sec) return;
+  const {fx,fy,fz,t0,x0,y0,z0,h,size} = res;
+
+  let formulaHtml = size===2 ? `
+    <div style="font-family:var(--font-mono);font-size:.85rem;display:flex;flex-direction:column;gap:.4rem;padding:1rem;">
+      <div style="color:${T12_X};font-weight:600;">k₁ₓ=h·f(t,x,y) &nbsp;·&nbsp; k₁ᵥ=h·g(t,x,y)</div>
+      <div style="color:${T12_X};font-weight:600;">k₂ₓ=h·f(t+h/2,x+k₁ₓ/2,y+k₁ᵥ/2) &nbsp;·&nbsp; k₂ᵥ=h·g(t+h/2,x+k₁ₓ/2,y+k₁ᵥ/2)</div>
+      <div style="color:${T12_X};font-weight:600;">k₃ₓ=h·f(t+h/2,x+k₂ₓ/2,y+k₂ᵥ/2) &nbsp;·&nbsp; k₃ᵥ=h·g(t+h/2,x+k₂ₓ/2,y+k₂ᵥ/2)</div>
+      <div style="color:${T12_X};font-weight:600;">k₄ₓ=h·f(t+h,x+k₃ₓ,y+k₃ᵥ) &nbsp;·&nbsp; k₄ᵥ=h·g(t+h,x+k₃ₓ,y+k₃ᵥ)</div>
+      <div style="border-top:1px solid ${T12_COLOR}33;padding-top:.5rem;margin-top:.25rem;color:${T12_COLOR};font-weight:700;">
+        xᵢ₊₁ = xᵢ + (k₁ₓ+2k₂ₓ+2k₃ₓ+k₄ₓ)/6<br>
+        yᵢ₊₁ = yᵢ + (k₁ᵥ+2k₂ᵥ+2k₃ᵥ+k₄ᵥ)/6
+      </div>
+    </div>` : `
+    <div style="font-family:var(--font-mono);font-size:.8rem;color:${T12_COLOR};font-weight:600;padding:1rem;">
+      Mismo procedimiento RK4 con 3 ecuaciones acopladas (x,y,z) — se calculan k, l, m en paralelo en cada etapa.
+    </div>`;
+
+  sec.innerHTML=`
+  <div class="page-header">
+    <h2>Sistema ${size}×${size} — Fórmula RK4</h2>
+    <p>dx/dt = ${fx} &nbsp;·&nbsp; dy/dt = ${fy}${size===3?` &nbsp;·&nbsp; dz/dt = ${fz}`:''}<br>
+       x(${t0})=${x0} &nbsp;·&nbsp; y(${t0})=${y0}${size===3?` &nbsp;·&nbsp; z(${t0})=${z0}`:''} &nbsp;·&nbsp; h=${h}</p>
+  </div>
+  <div class="card t6-step-card" style="margin-bottom:1.25rem;border-left:5px solid ${T12_COLOR};">
+    <div class="card-header">
+      <div class="card-header-icon t12-icon">RK4</div>
+      <div><div class="card-title">Runge-Kutta 4to Orden — Sistema Acoplado</div></div>
+    </div>
+    ${formulaHtml}
+  </div>
+  <div style="display:flex;gap:.75rem;justify-content:flex-end;">
+    <button class="btn btn-secondary" onclick="t12GoTo('t12-input')">← Datos</button>
+    <button class="btn t12-btn-primary" onclick="t12GoTo('t12-iteraciones')">Ver Iteraciones →</button>
+  </div>`;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   RENDERIZADO — ITERACIONES PASO A PASO
+══════════════════════════════════════════════════════════════ */
+function t12RenderIteraciones(res) {
+  const sec=document.getElementById('t12-iteraciones'); if(!sec) return;
+  const {pts, size} = res;
+
+  let cards='';
+  const showMax=Math.min(pts.length,7);
+  for(let i=1;i<showMax;i++){
+    const p=pts[i], prev=pts[i-1];
+
+    let kBlock = `
+      <div style="font-family:var(--font-mono);font-size:.76rem;">k₁ₓ=${t12Fmt(p.k1x,6)} &nbsp; k₁ᵥ=${t12Fmt(p.k1y,6)}${size===3?` &nbsp; k₁ᵤ=${t12Fmt(p.k1z,6)}`:''}</div>
+      <div style="font-family:var(--font-mono);font-size:.76rem;">k₂ₓ=${t12Fmt(p.k2x,6)} &nbsp; k₂ᵥ=${t12Fmt(p.k2y,6)}${size===3?` &nbsp; k₂ᵤ=${t12Fmt(p.k2z,6)}`:''}</div>
+      <div style="font-family:var(--font-mono);font-size:.76rem;">k₃ₓ=${t12Fmt(p.k3x,6)} &nbsp; k₃ᵥ=${t12Fmt(p.k3y,6)}${size===3?` &nbsp; k₃ᵤ=${t12Fmt(p.k3z,6)}`:''}</div>
+      <div style="font-family:var(--font-mono);font-size:.76rem;">k₄ₓ=${t12Fmt(p.k4x,6)} &nbsp; k₄ᵥ=${t12Fmt(p.k4y,6)}${size===3?` &nbsp; k₄ᵤ=${t12Fmt(p.k4z,6)}`:''}</div>
+      <div style="font-family:var(--font-mono);font-size:.8rem;margin-top:.3rem;">
+        x${i} = ${t12Fmt(prev.x,6)} + (${t12Fmt(p.k1x,4)}+2(${t12Fmt(p.k2x,4)})+2(${t12Fmt(p.k3x,4)})+${t12Fmt(p.k4x,4)})/6 = <strong style="color:${T12_X};">${t12Fmt(p.x,8)}</strong>
+      </div>
+      <div style="font-family:var(--font-mono);font-size:.8rem;">
+        y${i} = ${t12Fmt(prev.y,6)} + (...)/6 = <strong style="color:${T12_Y};">${t12Fmt(p.y,8)}</strong>
+      </div>
+      ${size===3?`<div style="font-family:var(--font-mono);font-size:.8rem;">z${i} = ${t12Fmt(prev.z,6)} + (...)/6 = <strong style="color:${T12_Z};">${t12Fmt(p.z,8)}</strong></div>`:''}
+    `;
+
+    cards+=`
+    <div class="card t6-step-card" style="margin-bottom:.875rem;border-left:5px solid ${T12_COLOR};">
+      <div class="card-header" style="padding:.6rem 1.25rem;">
+        <div class="card-header-icon" style="background:${T12_COLOR};width:32px;height:32px;border-radius:8px;
+          display:flex;align-items:center;justify-content:center;color:#fff;font-size:.75rem;font-weight:700;">i=${i}</div>
+        <div><div class="card-title" style="font-size:.92rem;">t${i} = ${t12Fmt(p.t,4)}</div></div>
+      </div>
+      <div style="padding:.5rem 1.25rem 1rem;display:flex;flex-direction:column;gap:.25rem;">${kBlock}</div>
+    </div>`;
+  }
+  const truncMsg = pts.length>7 ? `<div style="text-align:center;color:var(--gray-400);font-size:.82rem;padding:.5rem;">… ${pts.length-7} iteraciones más — ver tabla completa →</div>` : '';
+
+  sec.innerHTML=`
+  <div class="page-header">
+    <h2>Iteraciones Paso a Paso — RK4</h2>
+    <p>Cálculo detallado de k₁,k₂,k₃,k₄ para cada variable en cada paso.</p>
+  </div>
+  ${cards}${truncMsg}
+  <div style="display:flex;gap:.75rem;justify-content:flex-end;">
+    <button class="btn btn-secondary" onclick="t12GoTo('t12-formula')">← Fórmula</button>
+    <button class="btn t12-btn-primary" onclick="t12GoTo('t12-tabla')">Ver Tabla completa →</button>
+  </div>`;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   RENDERIZADO — TABLA
+══════════════════════════════════════════════════════════════ */
+function t12RenderTabla(res) {
+  const sec=document.getElementById('t12-tabla'); if(!sec) return;
+  const {pts, size} = res;
+
+  let rows=pts.map((p,i)=>`<tr style="${i%2===1?'background:var(--gray-50)':''}">
+    <td style="padding:.4rem .7rem;text-align:center;font-weight:700;color:${T12_COLOR};">${i}</td>
+    <td style="padding:.4rem .7rem;text-align:right;font-family:var(--font-mono);font-size:.8rem;">${t12Fmt(p.t,4)}</td>
+    <td style="padding:.4rem .7rem;text-align:right;font-family:var(--font-mono);font-size:.8rem;color:${T12_X};font-weight:600;">${t12Fmt(p.x,8)}</td>
+    <td style="padding:.4rem .7rem;text-align:right;font-family:var(--font-mono);font-size:.8rem;color:${T12_Y};font-weight:600;">${t12Fmt(p.y,8)}</td>
+    ${size===3?`<td style="padding:.4rem .7rem;text-align:right;font-family:var(--font-mono);font-size:.8rem;color:${T12_Z};font-weight:600;">${t12Fmt(p.z,8)}</td>`:''}
+  </tr>`).join('');
+
+  sec.innerHTML=`
+  <div class="page-header">
+    <h2>Tabla de Resultados — Sistema ${size}×${size}</h2>
+    <p>n=${res.n} pasos · h=${res.h}</p>
+  </div>
+  <div class="card" style="padding:0;overflow:hidden;margin-bottom:1.25rem;">
+    <div class="card-header" style="padding:.65rem 1.25rem;border-bottom:1px solid var(--border);">
+      <div class="card-header-icon t12-icon">📋</div>
+      <div><div class="card-title">Tabla de aproximaciones x(t), y(t)${size===3?', z(t)':''}</div></div>
+    </div>
+    <div style="overflow-x:auto;">
+    <table style="width:100%;border-collapse:collapse;">
+      <thead><tr style="background:${T12_LIGHT};">
+        <th style="padding:.45rem .7rem;color:${T12_DARK};border-bottom:2px solid ${T12_COLOR}33;">i</th>
+        <th style="padding:.45rem .7rem;color:${T12_DARK};border-bottom:2px solid ${T12_COLOR}33;text-align:right;">tᵢ</th>
+        <th style="padding:.45rem .7rem;color:${T12_X};border-bottom:2px solid ${T12_COLOR}33;text-align:right;">xᵢ</th>
+        <th style="padding:.45rem .7rem;color:${T12_Y};border-bottom:2px solid ${T12_COLOR}33;text-align:right;">yᵢ</th>
+        ${size===3?`<th style="padding:.45rem .7rem;color:${T12_Z};border-bottom:2px solid ${T12_COLOR}33;text-align:right;">zᵢ</th>`:''}
+      </tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+    </div>
+  </div>
+  <div style="display:flex;gap:.75rem;justify-content:flex-end;">
+    <button class="btn btn-secondary" onclick="t12GoTo('t12-iteraciones')">← Iteraciones</button>
+    <button class="btn t12-btn-primary" onclick="t12GoTo('t12-grafica');setTimeout(t12DrawGraphT,80);">Ver Gráfica →</button>
+  </div>`;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   GRÁFICA x(t),y(t) vs t
+══════════════════════════════════════════════════════════════ */
+function t12InitGraphT() {
+  const g=t12State.graphT;
+  const c=document.getElementById('t12Canvas');
+  if(!c||g.canvas) return;
+  g.canvas=c; g.ctx=c.getContext('2d');
+  const resize=()=>{ const w=c.parentElement.clientWidth||700; c.width=w; c.height=Math.max(320,Math.round(w*0.48)); t12DrawGraphT(); };
+  resize(); window.addEventListener('resize',resize);
+  t12AttachPanZoom(c,g,t12DrawGraphT,'t12Coords','t');
+}
+
+function t12InitGraphFase() {
+  const g=t12State.graphFase;
+  const c=document.getElementById('t12CanvasFase');
+  if(!c||g.canvas) return;
+  g.canvas=c; g.ctx=c.getContext('2d');
+  const resize=()=>{ const w=c.parentElement.clientWidth||700; c.width=w; c.height=Math.max(360,Math.round(w*0.62)); t12DrawGraphFase(); };
+  resize(); window.addEventListener('resize',resize);
+  t12AttachPanZoom(c,g,t12DrawGraphFase,'t12CoordsFase','fase');
+}
+
+function t12AttachPanZoom(c,g,drawFn,coordId,kind) {
+  c.addEventListener('mousedown',e=>{g.dragging=true;g.lastMouse={x:e.clientX,y:e.clientY};c.style.cursor='grabbing';});
+  c.addEventListener('mouseup',()=>{g.dragging=false;c.style.cursor='crosshair';});
+  c.addEventListener('mouseleave',()=>{g.dragging=false;c.style.cursor='crosshair';});
+  c.addEventListener('mousemove',e=>{
+    const rect=c.getBoundingClientRect();
+    const px=(e.clientX-rect.left)*(c.width/rect.width);
+    const py=(e.clientY-rect.top)*(c.height/rect.height);
+    const PAD={t:24,r:24,b:44,l:60};
+    const W=c.width,H=c.height;
+    const wx=g.xMin+(px-PAD.l)/(W-PAD.l-PAD.r)*(g.xMax-g.xMin);
+    const wy=g.yMin+(1-(py-PAD.t)/(H-PAD.t-PAD.b))*(g.yMax-g.yMin);
+    const coord=document.getElementById(coordId);
+    if(coord) coord.innerHTML = kind==='t'
+      ? `t = ${wx.toFixed(3)} &nbsp; valor = ${wy.toFixed(3)}`
+      : `x = ${wx.toFixed(3)} &nbsp; y = ${wy.toFixed(3)}`;
+    if(g.dragging){
+      const dx=(e.clientX-g.lastMouse.x)/rect.width*(g.xMax-g.xMin);
+      const dy=(e.clientY-g.lastMouse.y)/rect.height*(g.yMax-g.yMin);
+      g.xMin-=dx;g.xMax-=dx;g.yMin+=dy;g.yMax+=dy;
+      g.lastMouse={x:e.clientX,y:e.clientY};
+    }
+    drawFn();
+  });
+  c.addEventListener('wheel',e=>{
+    e.preventDefault();
+    const f=e.deltaY>0?1.12:0.89;
+    const cx=(g.xMin+g.xMax)/2, cy=(g.yMin+g.yMax)/2;
+    const hw=(g.xMax-g.xMin)/2*f, hh=(g.yMax-g.yMin)/2*f;
+    g.xMin=cx-hw;g.xMax=cx+hw;g.yMin=cy-hh;g.yMax=cy+hh;
+    drawFn();
+  },{passive:false});
+}
+
+function t12ToCanvasGeneric(g,wx,wy) {
+  const PAD={t:24,r:24,b:44,l:60};
+  const W=g.canvas.width,H=g.canvas.height;
+  return {x:PAD.l+(wx-g.xMin)/(g.xMax-g.xMin)*(W-PAD.l-PAD.r), y:PAD.t+(1-(wy-g.yMin)/(g.yMax-g.yMin))*(H-PAD.t-PAD.b)};
+}
+
+function t12DrawAxesGrid(g, isDark) {
+  const W=g.canvas.width,H=g.canvas.height,ctx=g.ctx;
+  const PAD={t:24,r:24,b:44,l:60};
+  const PW=W-PAD.l-PAD.r,PH=H-PAD.t-PAD.b;
+  const niceStep=(range,tgt)=>{const r=range/tgt,m=Math.pow(10,Math.floor(Math.log10(r)));const n=r/m;return(n<1.5?1:n<3.5?2:n<7.5?5:10)*m;};
+
+  ctx.fillStyle=isDark?'#0f172a':'#fff'; ctx.fillRect(0,0,W,H);
+  const xSt=niceStep(g.xMax-g.xMin,10), ySt=niceStep(g.yMax-g.yMin,8);
+  ctx.strokeStyle=isDark?'rgba(148,163,184,.08)':'#f1f5f9'; ctx.lineWidth=1;
+  for(let gx=Math.ceil(g.xMin/xSt)*xSt;gx<=g.xMax;gx+=xSt){const{x:px}=t12ToCanvasGeneric(g,gx,0);ctx.beginPath();ctx.moveTo(px,PAD.t);ctx.lineTo(px,PAD.t+PH);ctx.stroke();}
+  for(let gy=Math.ceil(g.yMin/ySt)*ySt;gy<=g.yMax;gy+=ySt){const{y:py}=t12ToCanvasGeneric(g,0,gy);ctx.beginPath();ctx.moveTo(PAD.l,py);ctx.lineTo(PAD.l+PW,py);ctx.stroke();}
+
+  ctx.strokeStyle=isDark?'rgba(148,163,184,.3)':'#cbd5e1'; ctx.lineWidth=1.5;
+  const{y:axY}=t12ToCanvasGeneric(g,0,0),{x:axX}=t12ToCanvasGeneric(g,0,0);
+  if(g.yMin<=0&&g.yMax>=0){ctx.beginPath();ctx.moveTo(PAD.l,axY);ctx.lineTo(PAD.l+PW,axY);ctx.stroke();}
+  if(g.xMin<=0&&g.xMax>=0){ctx.beginPath();ctx.moveTo(axX,PAD.t);ctx.lineTo(axX,PAD.t+PH);ctx.stroke();}
+
+  ctx.fillStyle=isDark?'rgba(148,163,184,.6)':'#94a3b8';
+  ctx.font='10px "JetBrains Mono",monospace'; ctx.textAlign='center'; ctx.textBaseline='middle';
+  const lbY=Math.max(PAD.t+10,Math.min(PAD.t+PH-4,axY+16));
+  const lbX=Math.max(PAD.l+28,Math.min(PAD.l+PW-4,axX-8));
+  for(let gx=Math.ceil(g.xMin/xSt)*xSt;gx<=g.xMax;gx+=xSt){if(Math.abs(gx)<xSt*.01)continue;const{x:px}=t12ToCanvasGeneric(g,gx,0);ctx.fillText(gx%1===0?gx:gx.toFixed(1),px,lbY);}
+  ctx.textAlign='right';
+  for(let gy=Math.ceil(g.yMin/ySt)*ySt;gy<=g.yMax;gy+=ySt){if(Math.abs(gy)<ySt*.01)continue;const{y:py}=t12ToCanvasGeneric(g,0,gy);ctx.fillText(gy%1===0?gy:gy.toFixed(1),lbX,py);}
+  ctx.textBaseline='alphabetic';
+
+  return {PAD,PW,PH};
+}
+
+function t12DrawGraphT() {
+  const g=t12State.graphT, res=t12State.result;
+  if(!g.canvas||!res) return;
+  const isDark=document.body.classList.contains('dark-mode');
+  t12DrawAxesGrid(g, isDark);
+  const ctx=g.ctx, W=g.canvas.width, H=g.canvas.height;
+
+  const series=[{key:'x',col:T12_X,lbl:'x(t)'},{key:'y',col:T12_Y,lbl:'y(t)'}];
+  if(res.size===3) series.push({key:'z',col:T12_Z,lbl:'z(t)'});
+
+  series.forEach(s=>{
+    ctx.beginPath(); ctx.strokeStyle=s.col; ctx.lineWidth=2.5; ctx.setLineDash([]);
+    res.pts.forEach((p,i)=>{const{x:px,y:py}=t12ToCanvasGeneric(g,p.t,p[s.key]); if(i===0)ctx.moveTo(px,py);else ctx.lineTo(px,py);});
+    ctx.stroke();
+    res.pts.forEach(p=>{const{x:px,y:py}=t12ToCanvasGeneric(g,p.t,p[s.key]); ctx.beginPath();ctx.arc(px,py,3,0,Math.PI*2);ctx.fillStyle=s.col;ctx.fill();});
+  });
+
+  /* Leyenda */
+  ctx.font='11px "Poppins",sans-serif'; ctx.textBaseline='middle';
+  let lx=70, ly=24;
+  series.forEach(s=>{
+    ctx.strokeStyle=s.col;ctx.lineWidth=2.5;ctx.beginPath();ctx.moveTo(lx,ly);ctx.lineTo(lx+20,ly);ctx.stroke();
+    ctx.fillStyle=isDark?'#e2e8f0':'#374151';ctx.textAlign='left';ctx.fillText(s.lbl,lx+25,ly);
+    lx+=80;
+  });
+  ctx.textBaseline='alphabetic';
+  ctx.fillStyle=isDark?'rgba(101,163,13,.15)':'rgba(148,163,184,.4)';
+  ctx.font='600 11px "Poppins",sans-serif'; ctx.textAlign='right'; ctx.textBaseline='bottom';
+  ctx.fillText('NUMERIX © 2026',W-10,H-8); ctx.textBaseline='alphabetic';
+}
+window.t12DrawGraphT = t12DrawGraphT;
+
+function t12DrawGraphFase() {
+  const g=t12State.graphFase, res=t12State.result;
+  if(!g.canvas||!res) return;
+  const isDark=document.body.classList.contains('dark-mode');
+  t12DrawAxesGrid(g, isDark);
+  const ctx=g.ctx, W=g.canvas.width, H=g.canvas.height;
+
+  /* Trayectoria x vs y */
+  ctx.beginPath(); ctx.strokeStyle=T12_COLOR; ctx.lineWidth=2.5;
+  res.pts.forEach((p,i)=>{const{x:px,y:py}=t12ToCanvasGeneric(g,p.x,p.y); if(i===0)ctx.moveTo(px,py);else ctx.lineTo(px,py);});
+  ctx.stroke();
+
+  /* Puntos con gradiente de color (inicio verde, fin rojo) */
+  res.pts.forEach((p,i)=>{
+    const t=i/(res.pts.length-1);
+    const r=Math.round(16+(239-16)*t), gg=Math.round(185+(68-185)*t), b=Math.round(129+(68-129)*t);
+    const{x:px,y:py}=t12ToCanvasGeneric(g,p.x,p.y);
+    ctx.beginPath();ctx.arc(px,py,i===0||i===res.pts.length-1?6:3,0,Math.PI*2);
+    ctx.fillStyle=`rgb(${r},${gg},${b})`;ctx.fill();
+    if(i===0||i===res.pts.length-1){ ctx.strokeStyle='#fff'; ctx.lineWidth=1.5; ctx.stroke(); }
+  });
+
+  /* Etiquetas inicio/fin */
+  const p0=res.pts[0], pf=res.pts.at(-1);
+  const c0=t12ToCanvasGeneric(g,p0.x,p0.y), cf=t12ToCanvasGeneric(g,pf.x,pf.y);
+  ctx.font='10px "Poppins",sans-serif'; ctx.textAlign='center'; ctx.fillStyle=isDark?'#e2e8f0':'#374151';
+  ctx.fillText('Inicio',c0.x,c0.y-12);
+  ctx.fillText('Fin',cf.x,cf.y-12);
+
+  ctx.fillStyle=isDark?'rgba(101,163,13,.15)':'rgba(148,163,184,.4)';
+  ctx.font='600 11px "Poppins",sans-serif'; ctx.textAlign='right'; ctx.textBaseline='bottom';
+  ctx.fillText('NUMERIX © 2026',W-10,H-8); ctx.textBaseline='alphabetic';
+}
+window.t12DrawGraphFase = t12DrawGraphFase;
+
+function t12Zoom(f,kind) {
+  const g = kind==='t' ? t12State.graphT : t12State.graphFase;
+  const cx=(g.xMin+g.xMax)/2, cy=(g.yMin+g.yMax)/2;
+  const hw=(g.xMax-g.xMin)/2*f, hh=(g.yMax-g.yMin)/2*f;
+  g.xMin=cx-hw;g.xMax=cx+hw;g.yMin=cy-hh;g.yMax=cy+hh;
+  if(kind==='t') t12DrawGraphT(); else t12DrawGraphFase();
+}
+window.t12Zoom = t12Zoom;
+
+function t12ResetViews(res) {
+  const ts=res.pts.map(p=>p.t);
+  const allVals=[...res.pts.map(p=>p.x),...res.pts.map(p=>p.y),...(res.size===3?res.pts.map(p=>p.z):[])];
+  const tr=Math.max(...ts)-Math.min(...ts)||1, vr=Math.max(...allVals)-Math.min(...allVals)||1;
+  const gT=t12State.graphT;
+  gT.xMin=Math.min(...ts)-tr*.1; gT.xMax=Math.max(...ts)+tr*.1;
+  gT.yMin=Math.min(...allVals)-vr*.2; gT.yMax=Math.max(...allVals)+vr*.2;
+
+  const xs=res.pts.map(p=>p.x), ys=res.pts.map(p=>p.y);
+  const xr=Math.max(...xs)-Math.min(...xs)||1, yr=Math.max(...ys)-Math.min(...ys)||1;
+  const gF=t12State.graphFase;
+  gF.xMin=Math.min(...xs)-xr*.2; gF.xMax=Math.max(...xs)+xr*.2;
+  gF.yMin=Math.min(...ys)-yr*.2; gF.yMax=Math.max(...ys)+yr*.2;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   FLUJO PRINCIPAL
+══════════════════════════════════════════════════════════════ */
+document.addEventListener('DOMContentLoaded', () => {
+
+  /* Toggle tamaño del sistema 2x2 / 3x3 */
+  const t12SizeRadios=document.querySelectorAll('input[name="t12Size"]');
+  const updateSizeUI=()=>{
+    const size=document.querySelector('input[name="t12Size"]:checked')?.value||'2';
+    const show3=size==='3';
+    document.getElementById('t12FzGroup').style.display = show3?'block':'none';
+    document.getElementById('t12Z0Group').style.display = show3?'block':'none';
+    document.getElementById('t12Zlabel1').style.display = show3?'inline':'none';
+    document.getElementById('t12Zlabel2').style.display = show3?'inline':'none';
+  };
+  t12SizeRadios.forEach(r=>r.addEventListener('change',updateSizeUI));
+  updateSizeUI();
+
+  /* Hint de pasos */
+  const updateHint=()=>{
+    const t0=parseFloat(document.getElementById('t12T0')?.value)||0;
+    const tn=parseFloat(document.getElementById('t12Tn')?.value)||0;
+    const h=parseFloat(document.getElementById('t12H')?.value)||0.1;
+    const n=Math.round((tn-t0)/h);
+    const hint=document.getElementById('t12NHint');
+    if(hint) hint.textContent=`${n} pasos desde t₀=${t0} hasta tₙ=${tn}`;
+  };
+  ['t12T0','t12Tn','t12H'].forEach(id=>document.getElementById(id)?.addEventListener('input',updateHint));
+  updateHint();
+
+  document.querySelectorAll('.t12-nav[data-t12]').forEach(el=>{
+    el.addEventListener('click',()=>t12GoTo(el.getAttribute('data-t12')));
+  });
+
+  /* Ejemplo 1: oscilador x'=x-y, y'=x+y */
+  document.getElementById('btnT12Ej1')?.addEventListener('click',()=>{
+    document.querySelector('input[name="t12Size"][value="2"]').checked=true; updateSizeUI();
+    document.getElementById('t12Fx').value='x-y';
+    document.getElementById('t12Fy').value='x+y';
+    document.getElementById('t12T0').value='0';
+    document.getElementById('t12X0').value='1';
+    document.getElementById('t12Y0').value='0';
+    document.getElementById('t12H').value='0.1';
+    document.getElementById('t12Tn').value='0.5';
+    updateHint();
+    clearAlert('t12Alert');
+    showAlert('t12Alert','info','📋 Ejemplo oscilador — x\'=x−y, y\'=x+y, x(0)=1, y(0)=0. Presiona ▶ Resolver.');
+  });
+
+  /* Ejemplo 2: depredador-presa simplificado */
+  document.getElementById('btnT12Ej2')?.addEventListener('click',()=>{
+    document.querySelector('input[name="t12Size"][value="2"]').checked=true; updateSizeUI();
+    document.getElementById('t12Fx').value='x*(1-y)';
+    document.getElementById('t12Fy').value='y*(x-1)*0.5';
+    document.getElementById('t12T0').value='0';
+    document.getElementById('t12X0').value='2';
+    document.getElementById('t12Y0').value='1';
+    document.getElementById('t12H').value='0.1';
+    document.getElementById('t12Tn').value='2';
+    updateHint();
+    clearAlert('t12Alert');
+    showAlert('t12Alert','info','📋 Ejemplo depredador-presa — x\'=x(1−y), y\'=0.5y(x−1). Presiona ▶ Resolver.');
+  });
+
+  /* Botón resolver */
+  document.getElementById('btnT12Calc')?.addEventListener('click',()=>{
+    clearAlert('t12Alert'); clearAlert('t12AlertGlobal');
+    const size = parseInt(document.querySelector('input[name="t12Size"]:checked')?.value)||2;
+    const fx = document.getElementById('t12Fx')?.value?.trim()||'x-y';
+    const fy = document.getElementById('t12Fy')?.value?.trim()||'x+y';
+    const fz = document.getElementById('t12Fz')?.value?.trim()||'x+y-z';
+    const t0 = parseFloat(document.getElementById('t12T0')?.value);
+    const x0 = parseFloat(document.getElementById('t12X0')?.value);
+    const y0 = parseFloat(document.getElementById('t12Y0')?.value);
+    const z0 = parseFloat(document.getElementById('t12Z0')?.value)||0;
+    const h  = parseFloat(document.getElementById('t12H')?.value);
+    const tn = parseFloat(document.getElementById('t12Tn')?.value);
+
+    if(isNaN(t0)||isNaN(x0)||isNaN(y0)){ showAlert('t12Alert','danger','Completa t₀, x₀, y₀.'); return; }
+    if(size===3 && isNaN(z0)){ showAlert('t12Alert','danger','Completa z₀.'); return; }
+    if(isNaN(h)||h<=0){ showAlert('t12Alert','danger','h debe ser positivo.'); return; }
+    if(isNaN(tn)||tn<=t0){ showAlert('t12Alert','danger','tₙ debe ser mayor que t₀.'); return; }
+    if(isNaN(t12Eval(fx,t0,x0,y0,z0))){ showAlert('t12Alert','danger','dx/dt no es válida.'); return; }
+    if(isNaN(t12Eval(fy,t0,x0,y0,z0))){ showAlert('t12Alert','danger','dy/dt no es válida.'); return; }
+    if(size===3 && isNaN(t12Eval(fz,t0,x0,y0,z0))){ showAlert('t12Alert','danger','dz/dt no es válida.'); return; }
+
+    try {
+      const res=t12Compute(fx,fy,fz,t0,x0,y0,z0,h,tn,size);
+      t12State.result=res;
+      Object.assign(t12State,{size,fx,fy,fz,t0,x0,y0,z0,h,tn});
+
+      t12RenderFormula(res);
+      t12RenderIteraciones(res);
+      t12RenderTabla(res);
+
+      const dl=document.getElementById('t12-download-bar');
+      if(dl){ dl.dataset.ready='1'; dl.style.display='block'; }
+
+      t12ResetViews(res);
+      setTimeout(()=>{ t12InitGraphT(); t12InitGraphFase(); t12DrawGraphT(); t12DrawGraphFase(); }, 100);
+
+      t12GoTo('t12-formula');
+      const final=res.pts.at(-1);
+      showAlert('t12AlertGlobal','success',
+        `✓ Sistema ${size}×${size} resuelto — x(${tn})≈${t12Fmt(final.x,6)} · y(${tn})≈${t12Fmt(final.y,6)}${size===3?` · z(${tn})≈${t12Fmt(final.z,6)}`:''}`);
+
+    } catch(e){ showAlert('t12Alert','danger','Error: '+e.message); }
+  });
+
+  window.addEventListener('resize',()=>{ if(t12State.result){ t12DrawGraphT(); t12DrawGraphFase(); } });
+});
+
+/* ══════════════════════════════════════════════════════════════
+   EXPORTACIÓN EXCEL T12
+══════════════════════════════════════════════════════════════ */
+(function patchT12Export(){
+  document.addEventListener('DOMContentLoaded',()=>{
+    if(typeof numerixExport==='undefined') return;
+    numerixExport.t12=function(){
+      const res=t12State.result;
+      if(!res){ alert('Ejecuta el cálculo primero.'); return; }
+      const wb=XLSX.utils.book_new();
+
+      const info=[
+        ['NUMERIX — Sistemas de EDO (RK4)','','© 2026 Fernando Granja & Alejandra Tinoco'],
+        [],['Tamaño',`${res.size}×${res.size}`],
+        ['dx/dt',res.fx],['dy/dt',res.fy], res.size===3?['dz/dt',res.fz]:[],
+        ['t0',res.t0],['x0',res.x0],['y0',res.y0], res.size===3?['z0',res.z0]:[],
+        ['h',res.h],['tn',res.tn],['n pasos',res.n],
+      ].filter(r=>r.length>0);
+      XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(info),'Info');
+
+      const hdr=['i','t','x','y',...(res.size===3?['z']:[])];
+      const rows=res.pts.map((p,i)=>[i,p.t,p.x,p.y,...(res.size===3?[p.z]:[])]);
+      XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([hdr,...rows]),'Resultados RK4');
+
+      XLSX.writeFile(wb,'NUMERIX_T12_SistemasEDO.xlsx');
+    };
+  });
+})();
+
+
+/* ══════════════════════════════════════════════════════════════
+   FIX — NAVEGACIÓN DE TEMAS: SCROLL HORIZONTAL CON MOUSE
+   Antes: solo se podía desplazar con touch (celular) o
+   shift+rueda del mouse (poco intuitivo, casi nadie lo sabe).
+   Ahora: drag con clic sostenido + botones de flecha ‹ ›
+══════════════════════════════════════════════════════════════ */
+document.addEventListener('DOMContentLoaded', () => {
+  const nav = document.getElementById('themeNav');
+  const btnLeft  = document.getElementById('themeNavArrowLeft');
+  const btnRight = document.getElementById('themeNavArrowRight');
+  if (!nav) return;
+
+  /* ── Drag-to-scroll con el mouse ── */
+  let isDown = false, startX = 0, startScroll = 0;
+
+  nav.addEventListener('mousedown', (e) => {
+    isDown = true;
+    nav.classList.add('is-dragging');
+    startX = e.pageX;
+    startScroll = nav.scrollLeft;
+  });
+
+  window.addEventListener('mouseup', () => {
+    isDown = false;
+    nav.classList.remove('is-dragging');
+  });
+
+  window.addEventListener('mousemove', (e) => {
+    if (!isDown) return;
+    e.preventDefault();
+    const dx = e.pageX - startX;
+    nav.scrollLeft = startScroll - dx;
+  });
+
+  /* Evitar que el drag dispare el click del botón de tab al soltar */
+  let dragDistance = 0;
+  nav.addEventListener('mousedown', (e) => { dragDistance = 0; startX = e.pageX; });
+  nav.addEventListener('mousemove', (e) => { if (isDown) dragDistance = Math.abs(e.pageX - startX); });
+  nav.addEventListener('click', (e) => {
+    if (dragDistance > 6) { e.preventDefault(); e.stopPropagation(); }
+  }, true);
+
+  /* ── Botones de flecha ── */
+  const SCROLL_STEP = 220;
+  btnLeft?.addEventListener('click', () => {
+    nav.scrollBy({ left: -SCROLL_STEP, behavior: 'smooth' });
+  });
+  btnRight?.addEventListener('click', () => {
+    nav.scrollBy({ left: SCROLL_STEP, behavior: 'smooth' });
+  });
+
+  /* ── Habilitar/deshabilitar flechas según posición ── */
+  function updateArrowState() {
+    if (!btnLeft || !btnRight) return;
+    const maxScroll = nav.scrollWidth - nav.clientWidth;
+    btnLeft.disabled  = nav.scrollLeft <= 2;
+    btnRight.disabled = nav.scrollLeft >= maxScroll - 2;
+    /* Si no hay overflow real, ocultar ambas flechas */
+    const noOverflow = maxScroll <= 2;
+    btnLeft.style.display  = noOverflow ? 'none' : '';
+    btnRight.style.display = noOverflow ? 'none' : '';
+  }
+
+  nav.addEventListener('scroll', updateArrowState);
+  window.addEventListener('resize', updateArrowState);
+  /* Estado inicial (con pequeño delay para asegurar layout calculado) */
+  setTimeout(updateArrowState, 100);
+
+  /* ── Al hacer clic en un tab, centrarlo si quedó cerca del borde ── */
+  nav.addEventListener('click', (e) => {
+    const tab = e.target.closest('.theme-tab');
+    if (!tab) return;
+    const tabRect = tab.getBoundingClientRect();
+    const navRect = nav.getBoundingClientRect();
+    if (tabRect.left < navRect.left + 20 || tabRect.right > navRect.right - 20) {
+      tab.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+    }
+  });
 });

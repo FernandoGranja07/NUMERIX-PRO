@@ -2515,8 +2515,11 @@ tbody tr:hover { background: var(--gray-50); }
   .header-authors       { display: none; }
 
   /* ── Theme nav tabs — horizontal scroll sin texto sublabel ── */
-  .theme-nav {
+  .theme-nav-wrapper {
     top: var(--header-h-mobile);
+  }
+  .theme-nav {
+    top: 0;
     padding: 0 .25rem;
     gap: 0;
     height: var(--nav-h-mobile);
@@ -4063,4 +4066,743 @@ body.dark-mode .result-value.highlight {
     opacity: 1;
     transform: translateY(0);
   }
+}
+
+
+/* ══════════════════════════════════════════════════════════════
+   TEMA 5 — SISTEMAS LINEALES ITERATIVOS
+   Jacobi · Gauss-Seidel
+   Color: Rosa/Fucsia #db2777
+══════════════════════════════════════════════════════════════ */
+
+:root {
+  --t5-color: #db2777;
+  --t5-light: #fce7f3;
+  --t5-dark:  #9d174d;
+}
+
+/* ── Icono header T5 ─────────────────────────────────────── */
+.card-header-icon.t5-icon {
+  width: 38px; height: 38px; border-radius: 10px;
+  background: linear-gradient(135deg, var(--t5-color), var(--t5-dark));
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.1rem; color: #fff; flex-shrink: 0;
+}
+
+/* ── Botón primario T5 ────────────────────────────────────── */
+.t5-btn-primary {
+  background: linear-gradient(135deg, var(--t5-color), var(--t5-dark)) !important;
+  color: #fff !important;
+  border: none !important;
+  font-weight: 600 !important;
+  transition: opacity .2s, transform .15s !important;
+}
+.t5-btn-primary:hover {
+  opacity: .9;
+  transform: translateY(-1px);
+}
+
+/* ── Etiquetas de sección ─────────────────────────────────── */
+.t5-section-label {
+  font-family: var(--font-main);
+  font-size: .78rem;
+  font-weight: 700;
+  color: var(--gray-600);
+  text-transform: uppercase;
+  letter-spacing: .4px;
+  margin-bottom: .625rem;
+}
+
+/* ── Tabla de matriz A ────────────────────────────────────── */
+.t5-matrix-table {
+  border-collapse: separate;
+  border-spacing: 4px;
+}
+.t5-matrix-table td { padding: 0; }
+.t5-matrix-input {
+  width: 80px;
+  padding: .35rem .5rem;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-mono);
+  font-size: .85rem;
+  text-align: center;
+  background: var(--card);
+  color: var(--text);
+  transition: border-color .2s;
+}
+.t5-matrix-input:focus {
+  outline: none;
+  border-color: var(--t5-color);
+  box-shadow: 0 0 0 3px rgba(219,39,119,.1);
+}
+
+/* ── Fórmulas despejadas ──────────────────────────────────── */
+.t5-formula-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: .5rem .5rem;
+  margin-bottom: .375rem;
+  border-radius: var(--radius-sm);
+  background: var(--gray-50);
+  border-left: 4px solid var(--t5-color);
+  flex-wrap: wrap;
+}
+.t5-formula-lhs {
+  font-family: var(--font-mono);
+  font-size: .95rem;
+  font-weight: 700;
+  color: var(--t5-color);
+  min-width: 120px;
+  flex-shrink: 0;
+}
+.t5-formula-frac {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  font-family: var(--font-mono);
+  font-size: .88rem;
+}
+.t5-frac-num  { padding: 0 .5rem .1rem; }
+.t5-frac-line {
+  width: 100%; height: 1.5px;
+  background: var(--gray-500);
+  margin: .15rem 0;
+}
+.t5-frac-den {
+  padding: .1rem .5rem 0;
+  color: var(--t5-color);
+  font-weight: 700;
+}
+
+/* ── Cajas de referencia T5 ───────────────────────────────── */
+.taylor-ref-box.t5-box-a { border-color: rgba(219,39,119,.25); background: linear-gradient(135deg,#fdf2f8,#fce7f3); }
+.taylor-ref-box.t5-box-b { border-color: rgba(79,70,229,.25);  background: linear-gradient(135deg,#f5f3ff,#ede9fe); }
+.taylor-ref-box.t5-box-c { border-color: rgba(16,185,129,.25); background: linear-gradient(135deg,#f0fdf4,#d1fae5); }
+.taylor-ref-box.t5-box-d { border-color: rgba(245,158,11,.25); background: linear-gradient(135deg,#fffbeb,#fef3c7); }
+
+.taylor-ref-box.t5-box-a .trb-title { color: var(--t5-dark); }
+.taylor-ref-box.t5-box-b .trb-title { color: #3730a3; }
+.taylor-ref-box.t5-box-c .trb-title { color: #065f46; }
+.taylor-ref-box.t5-box-d .trb-title { color: #92400e; }
+
+/* ── Dark mode T5 ─────────────────────────────────────────── */
+body.dark-mode .t5-matrix-input {
+  background: #1e2a3a;
+  border-color: rgba(51,65,85,.8);
+  color: #e2e8f0;
+}
+body.dark-mode .t5-matrix-input:focus {
+  border-color: var(--t5-color);
+  box-shadow: 0 0 0 3px rgba(219,39,119,.2);
+}
+body.dark-mode .t5-formula-row {
+  background: linear-gradient(160deg,#1e2a3a,#172032);
+  border-color: rgba(51,65,85,.8);
+}
+body.dark-mode .taylor-ref-box.t5-box-a { background: linear-gradient(135deg,#2d1a28,#3d1f35); border-color: rgba(219,39,119,.3); }
+body.dark-mode .taylor-ref-box.t5-box-b { background: linear-gradient(135deg,#1e1b4b,#1a1648); border-color: rgba(79,70,229,.3); }
+body.dark-mode .taylor-ref-box.t5-box-c { background: linear-gradient(135deg,#052e16,#064e3b); border-color: rgba(16,185,129,.3); }
+body.dark-mode .taylor-ref-box.t5-box-d { background: linear-gradient(135deg,#292009,#3d2c0e); border-color: rgba(245,158,11,.3); }
+
+
+/* ══════════════════════════════════════════════════════════════
+   TEMA 6 — AJUSTE DE CURVAS DISCRETAS
+   Regresión Lineal · Regresión Polinomial
+   Color: Verde Esmeralda #059669
+══════════════════════════════════════════════════════════════ */
+
+:root {
+  --t6-color: #059669;
+  --t6-light: #d1fae5;
+  --t6-dark:  #065f46;
+}
+
+/* ── Icono header T6 ─────────────────────────────────────── */
+.card-header-icon.t6-icon {
+  width: 38px; height: 38px; border-radius: 10px;
+  background: linear-gradient(135deg, var(--t6-color), var(--t6-dark));
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.05rem; color: #fff; flex-shrink: 0;
+}
+
+/* ── Botón primario T6 ────────────────────────────────────── */
+.t6-btn-primary {
+  background: linear-gradient(135deg, var(--t6-color), var(--t6-dark)) !important;
+  color: #fff !important; border: none !important;
+  font-weight: 600 !important;
+  transition: opacity .2s, transform .15s !important;
+}
+.t6-btn-primary:hover { opacity: .9; transform: translateY(-1px); }
+
+/* ── Tabla de ingreso de datos ────────────────────────────── */
+.t6-data-table {
+  width: 100%; border-collapse: collapse;
+  font-family: var(--font-main); font-size: .85rem;
+}
+.t6-data-table th {
+  padding: .5rem .875rem;
+  background: var(--t6-light);
+  color: var(--t6-dark);
+  border-bottom: 2px solid rgba(5,150,105,.25);
+  text-align: center; font-weight: 700;
+}
+.t6-data-table td { padding: .3rem .5rem; border-bottom: 1px solid var(--border); }
+.t6-cell-input {
+  width: 100%; min-width: 90px;
+  padding: .3rem .5rem;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-mono); font-size: .85rem;
+  text-align: center; background: var(--card); color: var(--text);
+  transition: border-color .2s;
+}
+.t6-cell-input:focus {
+  outline: none; border-color: var(--t6-color);
+  box-shadow: 0 0 0 3px rgba(5,150,105,.1);
+}
+
+/* ── Cards de pasos ───────────────────────────────────────── */
+.t6-step-card { margin-bottom: 1.25rem; }
+.t6-step-body {
+  padding: .875rem 1.25rem;
+  display: flex; flex-direction: column; gap: .6rem;
+}
+.t6-paso-formula {
+  font-family: var(--font-mono); font-size: .9rem; color: var(--gray-700);
+}
+.t6-paso-sust {
+  font-family: var(--font-mono); font-size: .85rem; color: var(--gray-600);
+  padding-left: 1rem;
+}
+.t6-paso-result {
+  font-family: var(--font-mono); font-size: .9rem;
+  padding-left: 1rem; padding-top: .25rem;
+}
+
+/* ── Fracción inline ──────────────────────────────────────── */
+.t6-frac-inline {
+  display: inline-flex; flex-direction: column;
+  align-items: center; vertical-align: middle;
+  margin: 0 .35rem; font-size: .82em;
+}
+.t6-frac-n { padding: 0 .35rem .1rem; border-bottom: 1.5px solid var(--gray-600); }
+.t6-frac-d { padding: .1rem .35rem 0; }
+
+/* ── Métricas ─────────────────────────────────────────────── */
+.t6-metric-card {
+  border-radius: var(--radius-sm);
+  border: 1.5px solid var(--border);
+  border-left: 5px solid var(--t6-color);
+  padding: .875rem 1rem;
+  background: var(--gray-50);
+}
+.t6-metric-label {
+  font-family: var(--font-main); font-size: .72rem;
+  font-weight: 700; color: var(--gray-500);
+  text-transform: uppercase; letter-spacing: .3px;
+  margin-bottom: .3rem;
+}
+.t6-metric-val {
+  font-family: var(--font-mono); font-size: 1.05rem;
+  font-weight: 700; margin-bottom: .25rem;
+}
+.t6-metric-sub {
+  font-family: var(--font-main); font-size: .72rem;
+  color: var(--gray-400); line-height: 1.4;
+}
+
+/* ── Tabla sistema polinomial ─────────────────────────────── */
+.t6-system-table {
+  border-collapse: collapse;
+  font-family: var(--font-mono); font-size: .82rem;
+}
+.t6-system-table td {
+  padding: .4rem .65rem;
+  border: 1px solid var(--border);
+}
+.t6-system-table tr:nth-child(odd) td { background: var(--gray-50); }
+
+/* ── Cajas de referencia T6 ───────────────────────────────── */
+.taylor-ref-box.t6-box-a { border-color: rgba(5,150,105,.25);  background: linear-gradient(135deg,#f0fdf4,#d1fae5); }
+.taylor-ref-box.t6-box-b { border-color: rgba(14,165,233,.25); background: linear-gradient(135deg,#f0f9ff,#e0f2fe); }
+.taylor-ref-box.t6-box-c { border-color: rgba(139,92,246,.25); background: linear-gradient(135deg,#faf5ff,#ede9fe); }
+.taylor-ref-box.t6-box-d { border-color: rgba(245,158,11,.25); background: linear-gradient(135deg,#fffbeb,#fef3c7); }
+
+.taylor-ref-box.t6-box-a .trb-title { color: var(--t6-dark); }
+.taylor-ref-box.t6-box-b .trb-title { color: #0c4a6e; }
+.taylor-ref-box.t6-box-c .trb-title { color: #4c1d95; }
+.taylor-ref-box.t6-box-d .trb-title { color: #92400e; }
+
+/* ── Dark mode T6 ─────────────────────────────────────────── */
+body.dark-mode .t6-cell-input {
+  background: #1e2a3a; border-color: rgba(51,65,85,.8); color: #e2e8f0;
+}
+body.dark-mode .t6-cell-input:focus {
+  border-color: var(--t6-color); box-shadow: 0 0 0 3px rgba(5,150,105,.2);
+}
+body.dark-mode .t6-metric-card {
+  background: linear-gradient(160deg,#1e2a3a,#172032);
+  border-color: rgba(51,65,85,.8);
+}
+body.dark-mode .t6-step-body .t6-paso-formula,
+body.dark-mode .t6-step-body .t6-paso-sust { color: #cbd5e1; }
+body.dark-mode .t6-data-table td { border-color: rgba(51,65,85,.6); }
+body.dark-mode .taylor-ref-box.t6-box-a { background: linear-gradient(135deg,#052e16,#064e3b); border-color: rgba(5,150,105,.3); }
+body.dark-mode .taylor-ref-box.t6-box-b { background: linear-gradient(135deg,#0c2340,#0c3a5e); border-color: rgba(14,165,233,.3); }
+body.dark-mode .taylor-ref-box.t6-box-c { background: linear-gradient(135deg,#1e1040,#2d1b69); border-color: rgba(139,92,246,.3); }
+body.dark-mode .taylor-ref-box.t6-box-d { background: linear-gradient(135deg,#292009,#3d2c0e); border-color: rgba(245,158,11,.3); }
+
+
+/* ══════════════════════════════════════════════════════════════
+   TEMA 7 — INTERPOLACIÓN POLINOMIAL
+   Newton · Lagrange · Trazadores Cúbicos
+   Color: Violeta #7c3aed
+══════════════════════════════════════════════════════════════ */
+
+:root {
+  --t7-color: #7c3aed;
+  --t7-light: #ede9fe;
+  --t7-dark:  #4c1d95;
+}
+
+.card-header-icon.t7-icon {
+  width:38px; height:38px; border-radius:10px;
+  background: linear-gradient(135deg, var(--t7-color), var(--t7-dark));
+  display:flex; align-items:center; justify-content:center;
+  font-size:1rem; color:#fff; flex-shrink:0; font-weight:700;
+}
+
+.t7-btn-primary {
+  background: linear-gradient(135deg, var(--t7-color), var(--t7-dark)) !important;
+  color:#fff !important; border:none !important; font-weight:600 !important;
+  transition: opacity .2s, transform .15s !important;
+}
+.t7-btn-primary:hover { opacity:.9; transform:translateY(-1px); }
+
+/* Cajas de referencia T7 */
+.taylor-ref-box.t7-box-a { border-color:rgba(124,58,237,.25); background:linear-gradient(135deg,#f5f3ff,#ede9fe); }
+.taylor-ref-box.t7-box-b { border-color:rgba(14,165,233,.25);  background:linear-gradient(135deg,#f0f9ff,#e0f2fe); }
+.taylor-ref-box.t7-box-c { border-color:rgba(245,158,11,.25);  background:linear-gradient(135deg,#fffbeb,#fef3c7); }
+.taylor-ref-box.t7-box-d { border-color:rgba(16,185,129,.25);  background:linear-gradient(135deg,#f0fdf4,#d1fae5); }
+
+.taylor-ref-box.t7-box-a .trb-title { color:var(--t7-dark); }
+.taylor-ref-box.t7-box-b .trb-title { color:#0c4a6e; }
+.taylor-ref-box.t7-box-c .trb-title { color:#92400e; }
+.taylor-ref-box.t7-box-d .trb-title { color:#065f46; }
+
+/* Dark mode T7 */
+body.dark-mode .taylor-ref-box.t7-box-a { background:linear-gradient(135deg,#1e1040,#2d1b69); border-color:rgba(124,58,237,.3); }
+body.dark-mode .taylor-ref-box.t7-box-b { background:linear-gradient(135deg,#0c2340,#0c3a5e); border-color:rgba(14,165,233,.3); }
+body.dark-mode .taylor-ref-box.t7-box-c { background:linear-gradient(135deg,#292009,#3d2c0e); border-color:rgba(245,158,11,.3); }
+body.dark-mode .taylor-ref-box.t7-box-d { background:linear-gradient(135deg,#052e16,#064e3b); border-color:rgba(16,185,129,.3); }
+
+
+/* ══════════════════════════════════════════════════════════════
+   TRAZADORES CÚBICOS — CSS adicional (reutiliza variables T7)
+══════════════════════════════════════════════════════════════ */
+
+/* Icono 〰 para splines */
+.card-header-icon.t7-icon[style*="〰"],
+.card-header-icon.t7-icon:has(+ *) {
+  font-size: .85rem;
+}
+
+/* Dark mode coords splines */
+body.dark-mode #splCoords {
+  background: rgba(15,23,42,.88);
+  border-color: rgba(51,65,85,.8);
+  color: #94a3b8;
+}
+
+
+/* ══════════════════════════════════════════════════════════════
+   TEMA 8 — DIFERENCIACIÓN NUMÉRICA
+   Color: Naranja #ea580c
+══════════════════════════════════════════════════════════════ */
+
+:root { --t8-color:#ea580c; --t8-light:#fff7ed; --t8-dark:#9a3412; }
+
+.card-header-icon.t8-icon {
+  width:38px;height:38px;border-radius:10px;flex-shrink:0;
+  background:linear-gradient(135deg,var(--t8-color),var(--t8-dark));
+  display:flex;align-items:center;justify-content:center;
+  font-size:.8rem;color:#fff;font-weight:700;
+}
+.t8-btn-primary {
+  background:linear-gradient(135deg,var(--t8-color),var(--t8-dark)) !important;
+  color:#fff !important;border:none !important;font-weight:600 !important;
+  transition:opacity .2s,transform .15s !important;
+}
+.t8-btn-primary:hover { opacity:.9;transform:translateY(-1px); }
+
+.t8-metric-card {
+  border-radius:var(--radius-sm);border:1.5px solid var(--border);
+  border-left:5px solid var(--t8-color);padding:.875rem 1rem;background:var(--gray-50);
+}
+.t8-metric-label {
+  font-family:var(--font-main);font-size:.72rem;font-weight:700;
+  color:var(--gray-500);text-transform:uppercase;letter-spacing:.3px;margin-bottom:.3rem;
+}
+.t8-metric-val {
+  font-family:var(--font-mono);font-size:1rem;font-weight:700;margin-bottom:.2rem;
+}
+
+/* Cajas referencia T8 */
+.taylor-ref-box.t8-box-a { border-color:rgba(59,130,246,.25); background:linear-gradient(135deg,#eff6ff,#dbeafe); }
+.taylor-ref-box.t8-box-b { border-color:rgba(139,92,246,.25); background:linear-gradient(135deg,#faf5ff,#ede9fe); }
+.taylor-ref-box.t8-box-c { border-color:rgba(234,88,12,.25);  background:linear-gradient(135deg,#fff7ed,#fed7aa); }
+.taylor-ref-box.t8-box-d { border-color:rgba(16,185,129,.25); background:linear-gradient(135deg,#f0fdf4,#d1fae5); }
+
+.taylor-ref-box.t8-box-a .trb-title { color:#1d4ed8; }
+.taylor-ref-box.t8-box-b .trb-title { color:#4c1d95; }
+.taylor-ref-box.t8-box-c .trb-title { color:var(--t8-dark); }
+.taylor-ref-box.t8-box-d .trb-title { color:#065f46; }
+
+body.dark-mode .t8-metric-card { background:linear-gradient(160deg,#1e2a3a,#172032);border-color:rgba(51,65,85,.8); }
+body.dark-mode .taylor-ref-box.t8-box-a { background:linear-gradient(135deg,#172554,#1e3a8a);border-color:rgba(59,130,246,.3); }
+body.dark-mode .taylor-ref-box.t8-box-b { background:linear-gradient(135deg,#1e1040,#2d1b69);border-color:rgba(139,92,246,.3); }
+body.dark-mode .taylor-ref-box.t8-box-c { background:linear-gradient(135deg,#431407,#7c2d12);border-color:rgba(234,88,12,.3); }
+body.dark-mode .taylor-ref-box.t8-box-d { background:linear-gradient(135deg,#052e16,#064e3b);border-color:rgba(16,185,129,.3); }
+
+
+/* ══════════════════════════════════════════════════════════════
+   TEMA 9 — INTEGRACIÓN POR APROXIMACIÓN
+   Color: Índigo #4338ca
+══════════════════════════════════════════════════════════════ */
+
+:root { --t9-color:#4338ca; --t9-light:#eef2ff; --t9-dark:#312e81; }
+
+.card-header-icon.t9-icon {
+  width:38px;height:38px;border-radius:10px;flex-shrink:0;
+  background:linear-gradient(135deg,var(--t9-color),var(--t9-dark));
+  display:flex;align-items:center;justify-content:center;
+  font-size:1rem;color:#fff;font-weight:700;
+}
+.t9-btn-primary {
+  background:linear-gradient(135deg,var(--t9-color),var(--t9-dark)) !important;
+  color:#fff !important;border:none !important;font-weight:600 !important;
+  transition:opacity .2s,transform .15s !important;
+}
+.t9-btn-primary:hover { opacity:.9;transform:translateY(-1px); }
+
+/* Cajas referencia T9 */
+.taylor-ref-box.t9-box-a { border-color:rgba(59,130,246,.25); background:linear-gradient(135deg,#eff6ff,#dbeafe); }
+.taylor-ref-box.t9-box-b { border-color:rgba(99,102,241,.25); background:linear-gradient(135deg,#eef2ff,#e0e7ff); }
+.taylor-ref-box.t9-box-c { border-color:rgba(5,150,105,.25);  background:linear-gradient(135deg,#f0fdf4,#d1fae5); }
+.taylor-ref-box.t9-box-d { border-color:rgba(217,119,6,.25);  background:linear-gradient(135deg,#fffbeb,#fef3c7); }
+
+.taylor-ref-box.t9-box-a .trb-title { color:#1d4ed8; }
+.taylor-ref-box.t9-box-b .trb-title { color:#3730a3; }
+.taylor-ref-box.t9-box-c .trb-title { color:#065f46; }
+.taylor-ref-box.t9-box-d .trb-title { color:#92400e; }
+
+body.dark-mode .taylor-ref-box.t9-box-a { background:linear-gradient(135deg,#172554,#1e3a8a);border-color:rgba(59,130,246,.3); }
+body.dark-mode .taylor-ref-box.t9-box-b { background:linear-gradient(135deg,#1e1b4b,#312e81);border-color:rgba(99,102,241,.3); }
+body.dark-mode .taylor-ref-box.t9-box-c { background:linear-gradient(135deg,#052e16,#064e3b);border-color:rgba(5,150,105,.3); }
+body.dark-mode .taylor-ref-box.t9-box-d { background:linear-gradient(135deg,#292009,#3d2c0e);border-color:rgba(217,119,6,.3); }
+
+
+/* ══════════════════════════════════════════════════════════════
+   TEMA 10 — INTEGRACIÓN DE ROMBERG
+   Color: Cian #0891b2
+══════════════════════════════════════════════════════════════ */
+
+:root { --t10-color:#0891b2; --t10-light:#ecfeff; --t10-dark:#164e63; }
+
+.card-header-icon.t10-icon {
+  width:38px;height:38px;border-radius:10px;flex-shrink:0;
+  background:linear-gradient(135deg,var(--t10-color),var(--t10-dark));
+  display:flex;align-items:center;justify-content:center;
+  font-size:1rem;color:#fff;font-weight:700;
+}
+.t10-btn-primary {
+  background:linear-gradient(135deg,var(--t10-color),var(--t10-dark)) !important;
+  color:#fff !important;border:none !important;font-weight:600 !important;
+  transition:opacity .2s,transform .15s !important;
+}
+.t10-btn-primary:hover { opacity:.9;transform:translateY(-1px); }
+
+.taylor-ref-box.t10-box-a { border-color:rgba(8,145,178,.25); background:linear-gradient(135deg,#ecfeff,#cffafe); }
+.taylor-ref-box.t10-box-b { border-color:rgba(67,56,202,.25); background:linear-gradient(135deg,#eef2ff,#e0e7ff); }
+.taylor-ref-box.t10-box-c { border-color:rgba(5,150,105,.25);  background:linear-gradient(135deg,#f0fdf4,#d1fae5); }
+.taylor-ref-box.t10-box-d { border-color:rgba(245,158,11,.25); background:linear-gradient(135deg,#fffbeb,#fef3c7); }
+
+.taylor-ref-box.t10-box-a .trb-title { color:var(--t10-dark); }
+.taylor-ref-box.t10-box-b .trb-title { color:#312e81; }
+.taylor-ref-box.t10-box-c .trb-title { color:#065f46; }
+.taylor-ref-box.t10-box-d .trb-title { color:#92400e; }
+
+body.dark-mode .taylor-ref-box.t10-box-a { background:linear-gradient(135deg,#083344,#0e4f61);border-color:rgba(8,145,178,.3); }
+body.dark-mode .taylor-ref-box.t10-box-b { background:linear-gradient(135deg,#1e1b4b,#312e81);border-color:rgba(67,56,202,.3); }
+body.dark-mode .taylor-ref-box.t10-box-c { background:linear-gradient(135deg,#052e16,#064e3b);border-color:rgba(5,150,105,.3); }
+body.dark-mode .taylor-ref-box.t10-box-d { background:linear-gradient(135deg,#292009,#3d2c0e);border-color:rgba(245,158,11,.3); }
+
+
+/* ══════════════════════════════════════════════════════════════
+   TEMA 11 — MÉTODOS DE UN PASO PARA EDO
+   Color: Rosa #be185d
+══════════════════════════════════════════════════════════════ */
+
+:root { --t11-color:#be185d; --t11-light:#fdf2f8; --t11-dark:#831843; }
+
+.card-header-icon.t11-icon {
+  width:38px;height:38px;border-radius:10px;flex-shrink:0;
+  background:linear-gradient(135deg,var(--t11-color),var(--t11-dark));
+  display:flex;align-items:center;justify-content:center;
+  font-size:1rem;color:#fff;font-weight:700;
+}
+.t11-btn-primary {
+  background:linear-gradient(135deg,var(--t11-color),var(--t11-dark)) !important;
+  color:#fff !important;border:none !important;font-weight:600 !important;
+  transition:opacity .2s,transform .15s !important;
+}
+.t11-btn-primary:hover { opacity:.9;transform:translateY(-1px); }
+
+.taylor-ref-box.t11-box-a { border-color:rgba(59,130,246,.25); background:linear-gradient(135deg,#eff6ff,#dbeafe); }
+.taylor-ref-box.t11-box-b { border-color:rgba(13,148,136,.25); background:linear-gradient(135deg,#f0fdfa,#ccfbf1); }
+.taylor-ref-box.t11-box-c { border-color:rgba(124,58,237,.25); background:linear-gradient(135deg,#f5f3ff,#ede9fe); }
+.taylor-ref-box.t11-box-d { border-color:rgba(190,24,93,.25);  background:linear-gradient(135deg,#fdf2f8,#fce7f3); }
+
+.taylor-ref-box.t11-box-a .trb-title { color:#1d4ed8; }
+.taylor-ref-box.t11-box-b .trb-title { color:#115e59; }
+.taylor-ref-box.t11-box-c .trb-title { color:#4c1d95; }
+.taylor-ref-box.t11-box-d .trb-title { color:var(--t11-dark); }
+
+body.dark-mode .taylor-ref-box.t11-box-a { background:linear-gradient(135deg,#172554,#1e3a8a);border-color:rgba(59,130,246,.3); }
+body.dark-mode .taylor-ref-box.t11-box-b { background:linear-gradient(135deg,#042f2e,#115e59);border-color:rgba(13,148,136,.3); }
+body.dark-mode .taylor-ref-box.t11-box-c { background:linear-gradient(135deg,#1e1040,#2d1b69);border-color:rgba(124,58,237,.3); }
+body.dark-mode .taylor-ref-box.t11-box-d { background:linear-gradient(135deg,#2d1726,#4a1d3a);border-color:rgba(190,24,93,.3); }
+
+
+/* ══════════════════════════════════════════════════════════════
+   TEMA 12 — SISTEMAS DE EDO
+   Color: Lima #65a30d
+══════════════════════════════════════════════════════════════ */
+
+:root { --t12-color:#65a30d; --t12-light:#f7fee7; --t12-dark:#3f6212; }
+
+.card-header-icon.t12-icon {
+  width:38px;height:38px;border-radius:10px;flex-shrink:0;
+  background:linear-gradient(135deg,var(--t12-color),var(--t12-dark));
+  display:flex;align-items:center;justify-content:center;
+  font-size:.85rem;color:#fff;font-weight:700;
+}
+.t12-btn-primary {
+  background:linear-gradient(135deg,var(--t12-color),var(--t12-dark)) !important;
+  color:#fff !important;border:none !important;font-weight:600 !important;
+  transition:opacity .2s,transform .15s !important;
+}
+.t12-btn-primary:hover { opacity:.9;transform:translateY(-1px); }
+
+.taylor-ref-box.t12-box-a { border-color:rgba(101,163,13,.25); background:linear-gradient(135deg,#f7fee7,#ecfccb); }
+.taylor-ref-box.t12-box-b { border-color:rgba(14,165,233,.25); background:linear-gradient(135deg,#f0f9ff,#e0f2fe); }
+.taylor-ref-box.t12-box-c { border-color:rgba(245,158,11,.25); background:linear-gradient(135deg,#fffbeb,#fef3c7); }
+.taylor-ref-box.t12-box-d { border-color:rgba(101,163,13,.25); background:linear-gradient(135deg,#f7fee7,#ecfccb); }
+
+.taylor-ref-box.t12-box-a .trb-title { color:var(--t12-dark); }
+.taylor-ref-box.t12-box-b .trb-title { color:#0c4a6e; }
+.taylor-ref-box.t12-box-c .trb-title { color:#92400e; }
+.taylor-ref-box.t12-box-d .trb-title { color:var(--t12-dark); }
+
+body.dark-mode .taylor-ref-box.t12-box-a { background:linear-gradient(135deg,#1a2e05,#365314);border-color:rgba(101,163,13,.3); }
+body.dark-mode .taylor-ref-box.t12-box-b { background:linear-gradient(135deg,#0c2340,#0c3a5e);border-color:rgba(14,165,233,.3); }
+body.dark-mode .taylor-ref-box.t12-box-c { background:linear-gradient(135deg,#292009,#3d2c0e);border-color:rgba(245,158,11,.3); }
+body.dark-mode .taylor-ref-box.t12-box-d { background:linear-gradient(135deg,#1a2e05,#365314);border-color:rgba(101,163,13,.3); }
+
+
+/* ══════════════════════════════════════════════════════════════
+   MÓDULO DE PROTECCIÓN Y AUTORÍA
+   © 2026 Fernando Granja & Alejandra Tinoco
+══════════════════════════════════════════════════════════════ */
+
+/* Deshabilitar selección de texto global, excepto en campos editables */
+.nmx-no-select {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+.nmx-no-select input,
+.nmx-no-select textarea,
+.nmx-no-select select,
+.nmx-no-select [contenteditable="true"] {
+  -webkit-user-select: text;
+  -moz-user-select: text;
+  -ms-user-select: text;
+  user-select: text;
+}
+
+/* Toast de notificación */
+#nmx-protection-toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background: #1e293b;
+  color: #f8fafc;
+  padding: .7rem 1.25rem;
+  border-radius: 10px;
+  font-family: 'Poppins', sans-serif;
+  font-size: .82rem;
+  font-weight: 500;
+  box-shadow: 0 8px 24px rgba(0,0,0,.25);
+  z-index: 99999;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .25s ease, transform .25s ease;
+  max-width: 90vw;
+  text-align: center;
+}
+#nmx-protection-toast.nmx-toast-show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+body.dark-mode #nmx-protection-toast {
+  background: #f8fafc;
+  color: #1e293b;
+}
+
+/* Overlay de advertencia DevTools */
+#nmx-devtools-warning {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, .92);
+  backdrop-filter: blur(6px);
+  z-index: 999999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+}
+.nmx-warning-box {
+  background: #fff;
+  border-radius: 16px;
+  padding: 2rem 2.25rem;
+  max-width: 460px;
+  text-align: center;
+  box-shadow: 0 20px 60px rgba(0,0,0,.4);
+}
+.nmx-warning-icon {
+  font-size: 2.5rem;
+  margin-bottom: .75rem;
+}
+.nmx-warning-title {
+  font-family: 'Poppins', sans-serif;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin-bottom: .75rem;
+}
+.nmx-warning-text {
+  font-family: 'Poppins', sans-serif;
+  font-size: .85rem;
+  color: #475569;
+  line-height: 1.6;
+  margin-bottom: 1.25rem;
+}
+.nmx-warning-close {
+  background: linear-gradient(135deg, #7c3aed, #4c1d95);
+  color: #fff;
+  border: none;
+  padding: .65rem 1.5rem;
+  border-radius: 10px;
+  font-family: 'Poppins', sans-serif;
+  font-weight: 600;
+  font-size: .85rem;
+  cursor: pointer;
+  transition: opacity .2s, transform .15s;
+}
+.nmx-warning-close:hover {
+  opacity: .9;
+  transform: translateY(-1px);
+}
+
+
+/* ══════════════════════════════════════════════════════════════
+   FIX — NAVEGACIÓN DE TEMAS: SCROLL HORIZONTAL CON MOUSE
+   Soluciona: tabs ocultos sin forma evidente de desplazarse
+   en desktop con mouse (antes solo funcionaba con touch/shift+rueda)
+══════════════════════════════════════════════════════════════ */
+
+.theme-nav-wrapper {
+  position: sticky;
+  top: 62px;
+  z-index: 150;
+  display: flex;
+  align-items: stretch;
+  background: var(--card);
+  border-bottom: 1px solid var(--border);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+}
+
+/* El nav interno ya no necesita ser sticky por sí mismo */
+.theme-nav-wrapper .theme-nav {
+  position: relative;
+  top: 0;
+  flex: 1;
+  min-width: 0;
+  box-shadow: none;
+  border-bottom: none;
+  /* Habilita drag-to-scroll suave con el mouse */
+  cursor: grab;
+  scroll-behavior: smooth;
+}
+.theme-nav-wrapper .theme-nav.is-dragging {
+  cursor: grabbing;
+  scroll-behavior: auto;
+}
+
+/* Botones de flecha — visibles solo en pantallas anchas con mouse */
+.theme-nav-arrow {
+  flex-shrink: 0;
+  width: 32px;
+  border: none;
+  background: var(--card);
+  color: var(--gray-500);
+  font-size: 1.4rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background .15s, color .15s;
+  z-index: 5;
+}
+.theme-nav-arrow:hover {
+  background: var(--gray-100, #f1f5f9);
+  color: var(--brand, #4f46e5);
+}
+.theme-nav-arrow:disabled {
+  opacity: .25;
+  cursor: default;
+}
+.theme-nav-arrow:disabled:hover {
+  background: var(--card);
+  color: var(--gray-500);
+}
+
+/* Ocultar flechas en mobile/touch — ahí ya funciona el swipe nativo */
+@media (max-width: 768px) {
+  .theme-nav-arrow { display: none; }
+}
+
+body.dark-mode .theme-nav-wrapper {
+  background: var(--card);
+  border-color: rgba(51,65,85,.6);
+}
+body.dark-mode .theme-nav-arrow {
+  background: var(--card);
+  color: #94a3b8;
+}
+body.dark-mode .theme-nav-arrow:hover {
+  background: rgba(99,102,241,.15);
+  color: #a5b4fc;
+}
+
+/* FIX: asegurar que el overflow-x:hidden global no rompa el
+   contexto de scroll interno del nav de temas */
+.theme-nav-wrapper, .theme-nav-wrapper .theme-nav {
+  max-width: 100%;
 }

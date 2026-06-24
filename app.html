@@ -54,7 +54,10 @@
 <!-- ══════════════════════════════════════════════════════════
      NAVEGACIÓN DE TEMAS
 ══════════════════════════════════════════════════════════ -->
-<nav class="theme-nav">
+<div class="theme-nav-wrapper">
+  <button class="theme-nav-arrow theme-nav-arrow-left" id="themeNavArrowLeft" aria-label="Desplazar a la izquierda" title="Ver módulos anteriores">‹</button>
+
+  <nav class="theme-nav" id="themeNav">
 
   <button class="theme-tab" data-theme="t1">
     <span class="tab-num">1</span>
@@ -92,7 +95,82 @@
     <span class="tab-badge" title="Módulo activo"></span>
   </button>
 
+  <button class="theme-tab" data-theme="t5">
+    <span class="tab-num">5</span>
+    <span class="tab-label">
+      Sistemas Lineales Iterativos
+      <span class="tab-sublabel">Jacobi · Gauss-Seidel</span>
+    </span>
+    <span class="tab-badge" title="Módulo activo"></span>
+  </button>
+
+  <button class="theme-tab" data-theme="t6">
+    <span class="tab-num">6</span>
+    <span class="tab-label">
+      Ajuste de Curvas
+      <span class="tab-sublabel">Mínimos Cuadrados · Regresión</span>
+    </span>
+    <span class="tab-badge" title="Módulo activo"></span>
+  </button>
+
+  <button class="theme-tab" data-theme="t7">
+    <span class="tab-num">7</span>
+    <span class="tab-label">
+      Interpolación Polinomial
+      <span class="tab-sublabel">Newton · Lagrange · Splines</span>
+    </span>
+    <span class="tab-badge" title="Módulo activo"></span>
+  </button>
+
+  <button class="theme-tab" data-theme="t8">
+    <span class="tab-num">8</span>
+    <span class="tab-label">
+      Diferenciación Numérica
+      <span class="tab-sublabel">Finitas · Richardson</span>
+    </span>
+    <span class="tab-badge" title="Módulo activo"></span>
+  </button>
+
+  <button class="theme-tab" data-theme="t9">
+    <span class="tab-num">9</span>
+    <span class="tab-label">
+      Integración por Aproximación
+      <span class="tab-sublabel">Trapecio · Simpson 1/3 · Simpson 3/8</span>
+    </span>
+    <span class="tab-badge" title="Módulo activo"></span>
+  </button>
+
+  <button class="theme-tab" data-theme="t10">
+    <span class="tab-num">10</span>
+    <span class="tab-label">
+      Integración de Romberg
+      <span class="tab-sublabel">Richardson · Tabla triangular</span>
+    </span>
+    <span class="tab-badge" title="Módulo activo"></span>
+  </button>
+
+  <button class="theme-tab" data-theme="t11">
+    <span class="tab-num">11</span>
+    <span class="tab-label">
+      Métodos de un Paso — EDO
+      <span class="tab-sublabel">Euler · Euler Mejorado · Runge-Kutta 4</span>
+    </span>
+    <span class="tab-badge" title="Módulo activo"></span>
+  </button>
+
+  <button class="theme-tab" data-theme="t12">
+    <span class="tab-num">12</span>
+    <span class="tab-label">
+      Sistemas de EDO
+      <span class="tab-sublabel">Runge-Kutta 4 acoplado</span>
+    </span>
+    <span class="tab-badge" title="Módulo activo"></span>
+  </button>
+
 </nav>
+
+  <button class="theme-nav-arrow theme-nav-arrow-right" id="themeNavArrowRight" aria-label="Desplazar a la derecha" title="Ver más módulos">›</button>
+</div><!-- /theme-nav-wrapper -->
 
 <!-- ══════════════════════════════════════════════════════════
      APP LAYOUT
@@ -1614,6 +1692,1703 @@
 </div><!-- /panel-t4 -->
 
 
+<!-- ════════════════════════════════════════════════════════
+     TEMA 5 — Sistemas Lineales Iterativos
+     Jacobi · Gauss-Seidel
+════════════════════════════════════════════════════════ -->
+<div id="panel-t5" class="theme-panel with-sidebar">
+<div class="app-main">
+
+  <!-- ══ ENCABEZADO ══════════════════════════════════════════ -->
+  <div class="page-header">
+    <h2>Sistemas Lineales Iterativos</h2>
+    <p>Resuelve sistemas <em>Ax = b</em> por métodos iterativos.<br>
+       Jacobi usa valores del paso anterior · Gauss-Seidel usa los más recientes disponibles.</p>
+  </div>
+
+  <!-- ══ CONFIGURACIÓN ══════════════════════════════════════ -->
+  <div class="card t5-card" style="margin-bottom:1.25rem;">
+    <div class="card-header">
+      <div class="card-header-icon t5-icon">⚙</div>
+      <div>
+        <div class="card-title">Configuración del Sistema</div>
+        <div class="card-subtitle">Ingresa la matriz de coeficientes A y el vector independiente b</div>
+      </div>
+      <div style="margin-left:auto;display:flex;align-items:center;gap:.75rem;flex-wrap:wrap;">
+        <div style="display:flex;align-items:center;gap:.5rem;">
+          <label style="font-family:var(--font-main);font-size:.8rem;color:var(--gray-600);">Tamaño:</label>
+          <select id="t5_n" style="padding:.35rem .65rem;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-family:var(--font-main);font-size:.875rem;background:var(--card);color:var(--text);">
+            <option value="2">2 × 2</option>
+            <option value="3" selected>3 × 3</option>
+            <option value="4">4 × 4</option>
+            <option value="5">5 × 5</option>
+          </select>
+        </div>
+        <div style="display:flex;align-items:center;gap:.5rem;">
+          <label style="font-family:var(--font-main);font-size:.8rem;color:var(--gray-600);">Método:</label>
+          <select id="t5_method" style="padding:.35rem .65rem;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-family:var(--font-main);font-size:.875rem;background:var(--card);color:var(--text);">
+            <option value="jacobi">Jacobi</option>
+            <option value="gauss">Gauss-Seidel</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- Matriz A dinámica -->
+    <div style="margin-bottom:1rem;">
+      <div class="t5-section-label">Matriz de coeficientes A</div>
+      <div id="t5-matrix-container"></div>
+    </div>
+
+    <!-- Vector b -->
+    <div style="border-top:1px solid var(--border);padding-top:1rem;margin-bottom:1rem;">
+      <div class="t5-section-label">Vector independiente b</div>
+      <div id="t5-b-container" style="display:flex;gap:.625rem;flex-wrap:wrap;"></div>
+    </div>
+
+    <!-- Vector X0 -->
+    <div style="border-top:1px solid var(--border);padding-top:1rem;margin-bottom:1rem;">
+      <div class="t5-section-label">Vector inicial X<sup>(0)</sup> <span style="font-weight:400;font-size:.78rem;color:var(--gray-400);">(por defecto todos ceros)</span></div>
+      <div id="t5-x0-container" style="display:flex;gap:.625rem;flex-wrap:wrap;"></div>
+    </div>
+
+    <!-- Parámetros -->
+    <div class="form-grid" style="margin-top:.5rem;">
+      <div class="form-group">
+        <label for="t5_tol">Tolerancia (Ea)</label>
+        <input type="number" id="t5_tol" value="0.00001" step="any" />
+        <div class="hint">Criterio: 1×10<sup>−5</sup> (recomendado por defecto)</div>
+      </div>
+      <div class="form-group">
+        <label for="t5_maxiter">Máx. iteraciones</label>
+        <input type="number" id="t5_maxiter" value="100" min="1" max="500" />
+      </div>
+    </div>
+
+    <div id="t5Alert"></div>
+    <div class="btn-group">
+      <button id="btnT5Resolver" class="btn t5-btn-primary">▶ Resolver Sistema</button>
+      <button id="btnT5Ejemplo" class="btn btn-secondary">📋 Cargar Ejemplo Clase</button>
+    </div>
+  </div>
+
+  <!-- ══ FUNDAMENTO TEÓRICO ══════════════════════════════════ -->
+  <div class="card t5-card" style="margin-bottom:1.25rem;">
+    <div class="card-header">
+      <div class="card-header-icon t5-icon">📖</div>
+      <div><div class="card-title">Fundamento de los Métodos</div></div>
+    </div>
+    <div class="taylor-ref-grid">
+      <div class="taylor-ref-box t5-box-a">
+        <div class="trb-title">Sistema Ax = b</div>
+        <div class="trb-formula">A = D + L + U<br>D: diagonal · L: tri. inf. · U: tri. sup.</div>
+      </div>
+      <div class="taylor-ref-box t5-box-b">
+        <div class="trb-title">Fórmula Jacobi</div>
+        <div class="trb-formula">x<sub>i</sub><sup>(k+1)</sup> = (1/a<sub>ii</sub>) · [b<sub>i</sub> − Σ<sub>j≠i</sub> a<sub>ij</sub> x<sub>j</sub><sup>(k)</sup>]</div>
+      </div>
+      <div class="taylor-ref-box t5-box-c">
+        <div class="trb-title">Fórmula Gauss-Seidel</div>
+        <div class="trb-formula">x<sub>i</sub><sup>(k+1)</sup> usa x<sub>j</sub><sup>(k+1)</sup> (j&lt;i) ya calculados<br>y x<sub>j</sub><sup>(k)</sup> (j&gt;i) del paso anterior</div>
+      </div>
+      <div class="taylor-ref-box t5-box-d">
+        <div class="trb-title">Convergencia</div>
+        <div class="trb-formula">|a<sub>ii</sub>| &gt; Σ<sub>j≠i</sub>|a<sub>ij</sub>| (diagonal dominante)<br>Tolerancia: Ea &lt; 1×10<sup>−5</sup></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ VERIFICACIÓN DIAGONAL DOMINANTE ════════════════════ -->
+  <div id="t5DomCard" class="card t5-card" style="display:none;margin-bottom:1.25rem;">
+    <div class="card-header">
+      <div class="card-header-icon t5-icon">🔎</div>
+      <div>
+        <div class="card-title">Verificación — Diagonal Dominante</div>
+        <div class="card-subtitle">Condición suficiente de convergencia: |a<sub>ii</sub>| &gt; Σ<sub>j≠i</sub>|a<sub>ij</sub>|</div>
+      </div>
+    </div>
+    <div id="t5DomContent"></div>
+  </div>
+
+  <!-- ══ FÓRMULAS DESPEJADAS ═════════════════════════════════ -->
+  <div id="t5FormulasCard" class="card t5-card" style="display:none;margin-bottom:1.25rem;">
+    <div class="card-header">
+      <div class="card-header-icon t5-icon">📐</div>
+      <div>
+        <div class="card-title">Fórmulas Despejadas</div>
+        <div class="card-subtitle">Ecuación de actualización para cada variable en la iteración k+1</div>
+      </div>
+    </div>
+    <div id="t5FormulasContent"></div>
+  </div>
+
+  <!-- ══ TABLA DE ITERACIONES ════════════════════════════════ -->
+  <div id="t5TableCard" class="card t5-card" style="display:none;padding:0;overflow:hidden;margin-bottom:1.25rem;">
+    <div class="card-header" style="padding:.75rem 1.25rem;border-bottom:1px solid var(--border);">
+      <div class="card-header-icon t5-icon">📋</div>
+      <div>
+        <div class="card-title">Tabla de Iteraciones</div>
+        <div id="t5TableSubtitle" class="card-subtitle"></div>
+      </div>
+    </div>
+    <div id="t5TableContent" class="table-wrapper" style="overflow-x:auto;"></div>
+  </div>
+
+  <!-- ══ SOLUCIÓN FINAL ══════════════════════════════════════ -->
+  <div id="t5ResultCard" class="card t5-card" style="display:none;margin-bottom:1.25rem;">
+    <div class="card-header">
+      <div class="card-header-icon t5-icon">🎯</div>
+      <div>
+        <div class="card-title">Solución Final</div>
+        <div id="t5ResultSubtitle" class="card-subtitle"></div>
+      </div>
+    </div>
+    <div id="t5ResultContent"></div>
+  </div>
+
+  <!-- ══ GRÁFICA DE CONVERGENCIA ════════════════════════════ -->
+  <div id="t5GraphCard" class="card t5-card" style="display:none;padding:0;overflow:hidden;position:relative;margin-bottom:1.25rem;">
+    <div style="display:flex;align-items:center;gap:.75rem;padding:.75rem 1rem;border-bottom:1px solid var(--border);flex-wrap:wrap;">
+      <span style="font-family:var(--font-main);font-size:.8rem;font-weight:600;color:var(--gray-600);">📈 Convergencia — Error absoluto por iteración (escala logarítmica)</span>
+      <div style="margin-left:auto;display:flex;gap:.4rem;">
+        <button onclick="t5GReset()" style="padding:0 .6rem;height:28px;border:1px solid var(--border);border-radius:6px;background:var(--card);font-family:var(--font-main);font-size:.72rem;cursor:pointer;color:var(--text);">⟳ Vista</button>
+      </div>
+    </div>
+    <canvas id="t5Canvas" style="display:block;width:100%;cursor:crosshair;"></canvas>
+  </div>
+
+  <!-- ══ BOTÓN DESCARGA ══════════════════════════════════════ -->
+  <div id="t5-download-bar" style="display:none;margin-top:1rem;">
+    <button onclick="numerixExport.t5()" class="btn-download-excel">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/></svg>
+      Descargar Excel — Sistemas Lineales Iterativos
+    </button>
+  </div>
+
+</div><!-- /app-main T5 -->
+</div><!-- /panel-t5 -->
+
+
+<!-- ════════════════════════════════════════════════════════
+     TEMA 6 — AJUSTE DE CURVAS DISCRETAS
+     Mínimos Cuadrados · Regresión Lineal · Regresión Polinomial
+════════════════════════════════════════════════════════ -->
+<div id="panel-t6" class="theme-panel with-sidebar">
+
+  <!-- ══ SIDEBAR T6 ════════════════════════════════════════ -->
+  <nav class="inner-sidebar">
+    <div class="nav-section-label">Datos</div>
+    <a class="nav-item t6-nav active" data-t6="t6-input">
+      <span class="nav-icon">📝</span> Ingreso de datos
+    </a>
+    <div class="nav-section-label">Regresión Lineal</div>
+    <a class="nav-item t6-nav" data-t6="t6-lin-tabla">
+      <span class="nav-icon">📋</span> 1. Tabla auxiliar
+    </a>
+    <a class="nav-item t6-nav" data-t6="t6-lin-coef">
+      <span class="nav-icon">β</span> 2. Coeficientes β
+    </a>
+    <a class="nav-item t6-nav" data-t6="t6-lin-error">
+      <span class="nav-icon">📊</span> 3. Análisis del error
+    </a>
+    <a class="nav-item t6-nav" data-t6="t6-lin-grafica">
+      <span class="nav-icon">📈</span> 4. Gráfica
+    </a>
+    <div class="nav-section-label">Regresión Polinomial</div>
+    <a class="nav-item t6-nav" data-t6="t6-pol-sistema">
+      <span class="nav-icon">∑</span> 5. Sistema 3×3
+    </a>
+    <a class="nav-item t6-nav" data-t6="t6-pol-gauss">
+      <span class="nav-icon">⚙</span> 6. Gauss-Jordan
+    </a>
+    <a class="nav-item t6-nav" data-t6="t6-pol-resultado">
+      <span class="nav-icon">🎯</span> 7. Modelo y R²
+    </a>
+  </nav>
+
+  <!-- ══ MOBILE NAV T6 ══════════════════════════════════════ -->
+  <div class="mobile-inner-nav">
+    <button class="mobile-inner-item t6-nav active" data-t6="t6-input">
+      <span class="mobile-inner-icon">📝</span>Datos
+    </button>
+    <button class="mobile-inner-item t6-nav" data-t6="t6-lin-tabla">
+      <span class="mobile-inner-icon">📋</span>Tabla
+    </button>
+    <button class="mobile-inner-item t6-nav" data-t6="t6-lin-coef">
+      <span class="mobile-inner-icon">β</span>Coef.
+    </button>
+    <button class="mobile-inner-item t6-nav" data-t6="t6-lin-error">
+      <span class="mobile-inner-icon">📊</span>Error
+    </button>
+    <button class="mobile-inner-item t6-nav" data-t6="t6-lin-grafica">
+      <span class="mobile-inner-icon">📈</span>Gráfica
+    </button>
+    <button class="mobile-inner-item t6-nav" data-t6="t6-pol-sistema">
+      <span class="mobile-inner-icon">∑</span>Sistema
+    </button>
+    <button class="mobile-inner-item t6-nav" data-t6="t6-pol-gauss">
+      <span class="mobile-inner-icon">⚙</span>Gauss
+    </button>
+    <button class="mobile-inner-item t6-nav" data-t6="t6-pol-resultado">
+      <span class="mobile-inner-icon">🎯</span>Modelo
+    </button>
+  </div>
+
+  <!-- ══ CONTENIDO T6 ════════════════════════════════════════ -->
+  <div class="app-main">
+
+    <!-- ── INGRESO DE DATOS ───────────────────────────────── -->
+    <div id="t6-input" class="t6-sec active">
+      <div class="page-header">
+        <h2>Ajuste de Curvas — Ingreso de Datos</h2>
+        <p>Ingresa los pares ordenados (x, y). Mínimo 3 puntos para regresión lineal,<br>
+           mínimo 4 para regresión polinomial cuadrática.</p>
+      </div>
+
+      <!-- Tipo de análisis -->
+      <div class="card" style="margin-bottom:1.25rem;">
+        <div class="card-header">
+          <div class="card-header-icon t6-icon">📐</div>
+          <div>
+            <div class="card-title">Tipo de análisis</div>
+            <div class="card-subtitle">Selecciona qué modelos calcular con los datos ingresados</div>
+          </div>
+        </div>
+        <div class="mode-radio-group" style="padding:0 0 .5rem;">
+          <label class="mode-radio-item">
+            <input type="radio" name="t6Mode" value="lineal" checked />
+            <span class="mode-radio-box">
+              <span class="mode-radio-icon">📉</span>
+              <span class="mode-radio-text">
+                <strong>Solo Regresión Lineal</strong>
+                <small>Y = β₀ + β₁X — modelo de primer grado</small>
+              </span>
+            </span>
+          </label>
+          <label class="mode-radio-item">
+            <input type="radio" name="t6Mode" value="polinomial" />
+            <span class="mode-radio-box">
+              <span class="mode-radio-icon">📈</span>
+              <span class="mode-radio-text">
+                <strong>Solo Regresión Polinomial</strong>
+                <small>Y = β₀ + β₁X + β₂X² — modelo cuadrático</small>
+              </span>
+            </span>
+          </label>
+          <label class="mode-radio-item">
+            <input type="radio" name="t6Mode" value="ambos" />
+            <span class="mode-radio-box">
+              <span class="mode-radio-icon">🔀</span>
+              <span class="mode-radio-text">
+                <strong>Ambos modelos</strong>
+                <small>Calcula y compara lineal y polinomial</small>
+              </span>
+            </span>
+          </label>
+        </div>
+      </div>
+
+      <!-- Tabla de datos -->
+      <div class="card" style="margin-bottom:1.25rem;">
+        <div class="card-header">
+          <div class="card-header-icon t6-icon">📋</div>
+          <div>
+            <div class="card-title">Tabla de datos (xᵢ, yᵢ)</div>
+            <div class="card-subtitle">Ingresa los pares ordenados · Variables: X (independiente) · Y (dependiente)</div>
+          </div>
+          <div style="margin-left:auto;display:flex;gap:.5rem;align-items:center;">
+            <button id="btnT6AddRow" class="btn btn-secondary" style="padding:.35rem .85rem;font-size:.78rem;">+ Fila</button>
+            <button id="btnT6RemRow" class="btn btn-secondary" style="padding:.35rem .85rem;font-size:.78rem;">− Fila</button>
+          </div>
+        </div>
+
+        <!-- Etiquetas de columnas opcionales -->
+        <div style="display:flex;gap:1rem;margin-bottom:.75rem;flex-wrap:wrap;">
+          <div class="form-group" style="flex:1;min-width:160px;max-width:280px;">
+            <label>Etiqueta variable X <span style="font-weight:400;color:var(--gray-400);">(opcional)</span></label>
+            <input type="text" id="t6LabelX" placeholder="Ej: Horas de estudio" />
+          </div>
+          <div class="form-group" style="flex:1;min-width:160px;max-width:280px;">
+            <label>Etiqueta variable Y <span style="font-weight:400;color:var(--gray-400);">(opcional)</span></label>
+            <input type="text" id="t6LabelY" placeholder="Ej: Calificación obtenida" />
+          </div>
+        </div>
+
+        <div style="overflow-x:auto;">
+          <table class="t6-data-table" id="t6DataTable">
+            <thead>
+              <tr>
+                <th>i</th>
+                <th>xᵢ</th>
+                <th>yᵢ</th>
+              </tr>
+            </thead>
+            <tbody id="t6DataBody"></tbody>
+          </table>
+        </div>
+
+        <div id="t6Alert"></div>
+        <div class="btn-group" style="margin-top:1rem;">
+          <button id="btnT6Calcular" class="btn t6-btn-primary">▶ Calcular</button>
+          <button id="btnT6Ejemplo" class="btn btn-secondary">📋 Ejemplo Clase (Publicidad)</button>
+          <button id="btnT6EjemploPol" class="btn btn-secondary">📋 Ejemplo Polinomial</button>
+        </div>
+      </div>
+
+      <!-- Referencia teórica -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-header-icon t6-icon">📖</div>
+          <div><div class="card-title">Fórmulas de referencia</div></div>
+        </div>
+        <div class="taylor-ref-grid">
+          <div class="taylor-ref-box t6-box-a">
+            <div class="trb-title">Modelo Lineal</div>
+            <div class="trb-formula">Y = β₀ + β₁X<br>β₀: intercepto · β₁: pendiente</div>
+          </div>
+          <div class="taylor-ref-box t6-box-b">
+            <div class="trb-title">β₁ (pendiente)</div>
+            <div class="trb-formula">β₁ = [n·ΣxᵢYᵢ − (Σxᵢ)(ΣYᵢ)] / [n·Σxᵢ² − (Σxᵢ)²]</div>
+          </div>
+          <div class="taylor-ref-box t6-box-c">
+            <div class="trb-title">β₀ (intercepto)</div>
+            <div class="trb-formula">β₀ = Ȳ − β₁·X̄</div>
+          </div>
+          <div class="taylor-ref-box t6-box-d">
+            <div class="trb-title">R² y correlación</div>
+            <div class="trb-formula">R² = [Σ(xᵢ−x̄)(yᵢ−ȳ)]² / [Σ(xᵢ−x̄)²·Σ(yᵢ−ȳ)²]<br>r = √R²</div>
+          </div>
+        </div>
+      </div>
+    </div><!-- /t6-input -->
+
+    <!-- ── Alert global T6 (visible en todas las secciones) ── -->
+    <div id="t6AlertGlobal" style="margin-bottom:.75rem;"></div>
+
+    <!-- ── SECCIONES RESULTADO (renderizadas por JS) ──────── -->
+    <div id="t6-lin-tabla"    class="t6-sec" style="display:none;"></div>
+    <div id="t6-lin-coef"     class="t6-sec" style="display:none;"></div>
+    <div id="t6-lin-error"    class="t6-sec" style="display:none;"></div>
+    <div id="t6-lin-grafica"  class="t6-sec" style="display:none;">
+      <div class="page-header">
+        <h2>Gráfica Interactiva — Regresión Lineal</h2>
+        <p>Puntos de datos vs recta de regresión Ŷ = β₀ + β₁X. Arrastra · Zoom con rueda.</p>
+      </div>
+      <div class="card" style="padding:0;overflow:hidden;position:relative;">
+        <canvas id="t6LinCanvas" style="display:block;width:100%;cursor:crosshair;touch-action:none;"></canvas>
+        <div id="t6LinTooltip" style="position:absolute;pointer-events:none;display:none;
+          background:#1e293b;color:#f8fafc;font-family:'JetBrains Mono',monospace;
+          font-size:.75rem;padding:.35rem .65rem;border-radius:6px;
+          box-shadow:0 4px 16px rgba(0,0,0,.25);border:1px solid #334155;
+          white-space:nowrap;z-index:10;line-height:1.6;"></div>
+        <div id="t6LinCoords" style="position:absolute;bottom:10px;left:10px;
+          background:rgba(255,255,255,.88);backdrop-filter:blur(4px);
+          border:1px solid #e2e8f0;border-radius:6px;padding:.2rem .55rem;
+          font-family:'JetBrains Mono',monospace;font-size:.72rem;color:#64748b;">
+          x = — &nbsp; y = —
+        </div>
+        <div style="position:absolute;bottom:12px;right:12px;display:flex;flex-direction:column;gap:4px;">
+          <button onclick="t6LinZoom(0.75)" style="width:30px;height:30px;border:1px solid #e2e8f0;border-radius:6px;background:rgba(255,255,255,.92);backdrop-filter:blur(4px);font-size:16px;cursor:pointer;">+</button>
+          <button onclick="t6LinZoom(1.35)" style="width:30px;height:30px;border:1px solid #e2e8f0;border-radius:6px;background:rgba(255,255,255,.92);backdrop-filter:blur(4px);font-size:16px;cursor:pointer;">−</button>
+        </div>
+      </div>
+    </div>
+    <div id="t6-pol-sistema"  class="t6-sec" style="display:none;"></div>
+    <div id="t6-pol-gauss"    class="t6-sec" style="display:none;"></div>
+    <div id="t6-pol-resultado" class="t6-sec" style="display:none;"></div>
+
+    <!-- Botón descarga T6 — dentro de sección t6-sec para que t6GoTo la controle -->
+    <div id="t6-download-bar" class="t6-sec" style="display:none;padding:0 1.5rem 1.5rem;">
+      <button onclick="numerixExport.t6()" class="btn-download-excel">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/></svg>
+        Descargar Excel — Ajuste de Curvas
+      </button>
+    </div>
+
+  </div><!-- /app-main T6 -->
+</div><!-- /panel-t6 -->
+
+
+<!-- ════════════════════════════════════════════════════════
+     TEMA 7 — INTERPOLACIÓN POLINOMIAL
+     Newton Diferencias Divididas · Lagrange · Trazadores Cúbicos
+════════════════════════════════════════════════════════ -->
+<div id="panel-t7" class="theme-panel with-sidebar">
+
+  <!-- ══ SIDEBAR T7 ════════════════════════════════════════ -->
+  <nav class="inner-sidebar">
+    <div class="nav-section-label">Datos</div>
+    <a class="nav-item t7-nav active" data-t7="t7-input">
+      <span class="nav-icon">📝</span> Ingreso de datos
+    </a>
+    <div class="nav-section-label">Newton — Dif. Divididas</div>
+    <a class="nav-item t7-nav" data-t7="t7-newton-tabla">
+      <span class="nav-icon">📋</span> 1. Tabla de DD
+    </a>
+    <a class="nav-item t7-nav" data-t7="t7-newton-pol">
+      <span class="nav-icon">Pₙ</span> 2. Polinomio
+    </a>
+    <div class="nav-section-label">Lagrange</div>
+    <a class="nav-item t7-nav" data-t7="t7-lag-bases">
+      <span class="nav-icon">Lᵢ</span> 3. Bases Lᵢ(x)
+    </a>
+    <a class="nav-item t7-nav" data-t7="t7-lag-pol">
+      <span class="nav-icon">🎯</span> 4. Polinomio
+    </a>
+    <div class="nav-section-label">Visualización</div>
+    <a class="nav-item t7-nav" data-t7="t7-grafica">
+      <span class="nav-icon">📈</span> 5. Gráfica
+    </a>
+    <div class="nav-section-label">Trazadores Cúbicos</div>
+    <a class="nav-item t7-nav" data-t7="t7-splines-hi">
+      <span class="nav-icon">hᵢ</span> 6. Intervalos hᵢ
+    </a>
+    <a class="nav-item t7-nav" data-t7="t7-splines-sistema">
+      <span class="nav-icon">∑</span> 7. Sistema tridiagonal
+    </a>
+    <a class="nav-item t7-nav" data-t7="t7-splines-coef">
+      <span class="nav-icon">📋</span> 8. Coeficientes a,b,c,d
+    </a>
+    <a class="nav-item t7-nav" data-t7="t7-splines-eval">
+      <span class="nav-icon">🎯</span> 9. Evaluación
+    </a>
+    <a class="nav-item t7-nav" data-t7="t7-splines-grafica">
+      <span class="nav-icon">📈</span> 10. Gráfica Splines
+    </a>
+  </nav>
+
+  <!-- ══ MOBILE NAV T7 ══════════════════════════════════════ -->
+  <div class="mobile-inner-nav">
+    <button class="mobile-inner-item t7-nav active" data-t7="t7-input">
+      <span class="mobile-inner-icon">📝</span>Datos
+    </button>
+    <button class="mobile-inner-item t7-nav" data-t7="t7-newton-tabla">
+      <span class="mobile-inner-icon">📋</span>Tabla DD
+    </button>
+    <button class="mobile-inner-item t7-nav" data-t7="t7-newton-pol">
+      <span class="mobile-inner-icon">Pₙ</span>Newton
+    </button>
+    <button class="mobile-inner-item t7-nav" data-t7="t7-lag-bases">
+      <span class="mobile-inner-icon">Lᵢ</span>Bases
+    </button>
+    <button class="mobile-inner-item t7-nav" data-t7="t7-lag-pol">
+      <span class="mobile-inner-icon">🎯</span>Lagrange
+    </button>
+    <button class="mobile-inner-item t7-nav" data-t7="t7-grafica">
+      <span class="mobile-inner-icon">📈</span>Gráfica
+    </button>
+    <button class="mobile-inner-item t7-nav" data-t7="t7-splines-hi">
+      <span class="mobile-inner-icon">hᵢ</span>hᵢ
+    </button>
+    <button class="mobile-inner-item t7-nav" data-t7="t7-splines-sistema">
+      <span class="mobile-inner-icon">∑</span>Sistema
+    </button>
+    <button class="mobile-inner-item t7-nav" data-t7="t7-splines-coef">
+      <span class="mobile-inner-icon">📋</span>Coef.
+    </button>
+    <button class="mobile-inner-item t7-nav" data-t7="t7-splines-eval">
+      <span class="mobile-inner-icon">🎯</span>Eval.
+    </button>
+    <button class="mobile-inner-item t7-nav" data-t7="t7-splines-grafica">
+      <span class="mobile-inner-icon">📈</span>Graf.
+    </button>
+  </div>
+
+  <!-- ══ CONTENIDO T7 ════════════════════════════════════════ -->
+  <div class="app-main">
+
+    <!-- ── Alert global T7 ───────────────────────────────── -->
+    <div id="t7AlertGlobal" style="margin-bottom:.75rem;"></div>
+
+    <!-- ── INGRESO DE DATOS ───────────────────────────────── -->
+    <div id="t7-input" class="t7-sec active">
+      <div class="page-header">
+        <h2>Interpolación Polinomial — Ingreso de Datos</h2>
+        <p>Ingresa los puntos (xᵢ, f(xᵢ)) y el valor de x donde deseas predecir f(x).<br>
+           La interpolación construye un polinomio que <strong>pasa exactamente</strong> por todos los puntos.</p>
+      </div>
+
+      <!-- Método -->
+      <div class="card" style="margin-bottom:1.25rem;">
+        <div class="card-header">
+          <div class="card-header-icon t7-icon">📐</div>
+          <div>
+            <div class="card-title">Método de interpolación</div>
+            <div class="card-subtitle">Selecciona qué métodos calcular con los datos ingresados</div>
+          </div>
+        </div>
+        <div class="mode-radio-group" style="padding:0 0 .5rem;">
+          <label class="mode-radio-item">
+            <input type="radio" name="t7Mode" value="newton" checked />
+            <span class="mode-radio-box">
+              <span class="mode-radio-icon">📊</span>
+              <span class="mode-radio-text">
+                <strong>Solo Newton</strong>
+                <small>Diferencias divididas — tabla escalonada</small>
+              </span>
+            </span>
+          </label>
+          <label class="mode-radio-item">
+            <input type="radio" name="t7Mode" value="lagrange" />
+            <span class="mode-radio-box">
+              <span class="mode-radio-icon">🔢</span>
+              <span class="mode-radio-text">
+                <strong>Solo Lagrange</strong>
+                <small>Funciones base Lᵢ(x) — forma clásica</small>
+              </span>
+            </span>
+          </label>
+          <label class="mode-radio-item">
+            <input type="radio" name="t7Mode" value="ambos" />
+            <span class="mode-radio-box">
+              <span class="mode-radio-icon">🔀</span>
+              <span class="mode-radio-text">
+                <strong>Ambos métodos</strong>
+                <small>Compara Newton y Lagrange — deben dar el mismo resultado</small>
+              </span>
+            </span>
+          </label>
+          <label class="mode-radio-item">
+            <input type="radio" name="t7Mode" value="splines" />
+            <span class="mode-radio-box">
+              <span class="mode-radio-icon">〰</span>
+              <span class="mode-radio-text">
+                <strong>Trazadores Cúbicos</strong>
+                <small>Spline cúbico natural — un polinomio por intervalo</small>
+              </span>
+            </span>
+          </label>
+        </div>
+      </div>
+
+      <!-- Tabla de datos -->
+      <div class="card" style="margin-bottom:1.25rem;">
+        <div class="card-header">
+          <div class="card-header-icon t7-icon">📋</div>
+          <div>
+            <div class="card-title">Puntos de interpolación (xᵢ, f(xᵢ))</div>
+            <div class="card-subtitle">Mínimo 2 puntos · Los xᵢ deben ser distintos</div>
+          </div>
+          <div style="margin-left:auto;display:flex;gap:.5rem;align-items:center;">
+            <button id="btnT7AddRow" class="btn btn-secondary" style="padding:.35rem .85rem;font-size:.78rem;">+ Punto</button>
+            <button id="btnT7RemRow" class="btn btn-secondary" style="padding:.35rem .85rem;font-size:.78rem;">− Punto</button>
+          </div>
+        </div>
+
+        <div style="overflow-x:auto;">
+          <table class="t6-data-table" id="t7DataTable">
+            <thead>
+              <tr>
+                <th>i</th>
+                <th>xᵢ</th>
+                <th>f(xᵢ) = yᵢ</th>
+              </tr>
+            </thead>
+            <tbody id="t7DataBody"></tbody>
+          </table>
+        </div>
+
+        <!-- Valor a predecir + grado del polinomio -->
+        <div style="border-top:1px solid var(--border);padding-top:1rem;margin-top:1rem;
+                    display:flex;gap:1.5rem;flex-wrap:wrap;align-items:flex-start;">
+          <div class="form-group" style="min-width:200px;max-width:280px;">
+            <label>Valor de x a predecir</label>
+            <input type="number" id="t7XPred" value="1.5" step="any" />
+            <div class="hint">El polinomio evaluará P(x) en este punto</div>
+          </div>
+          <div class="form-group" style="min-width:200px;max-width:280px;">
+            <label>Grado del polinomio</label>
+            <select id="t7Grado" style="padding:.45rem .75rem;border:1.5px solid var(--border);
+              border-radius:var(--radius-sm);font-family:var(--font-main);font-size:.875rem;
+              background:var(--card);color:var(--text);width:100%;">
+              <option value="1">Grado 1 — Lineal (2 puntos)</option>
+              <option value="2">Grado 2 — Cuadrático (3 puntos)</option>
+              <option value="3" selected>Grado 3 — Cúbico (4 puntos)</option>
+              <option value="4">Grado 4 — Cuártico (5 puntos)</option>
+              <option value="5">Grado 5 — Quíntico (6 puntos)</option>
+            </select>
+            <div class="hint" id="t7GradoHint">Usará los primeros 4 puntos de la tabla</div>
+          </div>
+        </div>
+
+        <!-- Campos adicionales para Splines (ocultos por defecto) -->
+        <div id="t7SplExtra" style="display:none;border-top:1px solid var(--border);padding-top:1rem;margin-top:1rem;">
+          <div style="background:linear-gradient(135deg,#f5f3ff,#ede9fe);border:1.5px solid #7c3aed33;
+                      border-radius:var(--radius-sm);padding:.75rem 1rem;margin-bottom:.875rem;">
+            <div style="font-family:var(--font-main);font-size:.8rem;font-weight:700;color:#4c1d95;margin-bottom:.25rem;">
+              〰 Trazadores Cúbicos Naturales
+            </div>
+            <div style="font-family:var(--font-main);font-size:.78rem;color:#6d28d9;">
+              Se usarán los mismos puntos de la tabla de arriba · Los xᵢ deben estar ordenados · Mínimo 3 puntos
+            </div>
+          </div>
+          <div class="form-group" style="max-width:280px;">
+            <label>Valor de x a evaluar S(x)</label>
+            <input type="number" id="splXEval" value="3" step="any" />
+            <div class="hint">Se identificará el tramo correcto y se evaluará el spline cúbico</div>
+          </div>
+          <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.5rem;">
+            <button id="btnSplEj1" class="btn btn-secondary" style="font-size:.78rem;">📋 Ejemplo 1 — f(x)=1/x</button>
+            <button id="btnSplEj2" class="btn btn-secondary" style="font-size:.78rem;">📋 Ejemplo 2 — 5 puntos</button>
+          </div>
+        </div>
+
+        <div id="t7Alert"></div>
+        <div class="btn-group" style="margin-top:1rem;">
+          <button id="btnT7Calcular" class="btn t7-btn-primary">▶ Calcular</button>
+          <button id="btnT7EjNewton" class="btn btn-secondary">📋 Ejemplo Newton</button>
+          <button id="btnT7EjLag"    class="btn btn-secondary">📋 Ejemplo Lagrange</button>
+        </div>
+      </div>
+
+      <!-- Referencia teórica -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-header-icon t7-icon">📖</div>
+          <div><div class="card-title">Referencia teórica</div></div>
+        </div>
+        <div class="taylor-ref-grid">
+          <div class="taylor-ref-box t7-box-a">
+            <div class="trb-title">Polinomio de Newton</div>
+            <div class="trb-formula">Pₙ(x) = a₀ + a₁(x−x₀) + a₂(x−x₀)(x−x₁) + …<br>
+              aᵢ = f[x₀, x₁, …, xᵢ] (primer diagonal)</div>
+          </div>
+          <div class="taylor-ref-box t7-box-b">
+            <div class="trb-title">Diferencias Divididas</div>
+            <div class="trb-formula">f[xᵢ, xᵢ₊₁] = (f(xᵢ₊₁) − f(xᵢ)) / (xᵢ₊₁ − xᵢ)<br>
+              f[xᵢ,…,xⱼ] = (f[xᵢ₊₁,…,xⱼ] − f[xᵢ,…,xⱼ₋₁]) / (xⱼ − xᵢ)</div>
+          </div>
+          <div class="taylor-ref-box t7-box-c">
+            <div class="trb-title">Polinomio de Lagrange</div>
+            <div class="trb-formula">Pₙ(x) = Σ f(xᵢ)·Lᵢ(x)<br>
+              Lᵢ(x) = ∏ (x−xⱼ)/(xᵢ−xⱼ)  j≠i</div>
+          </div>
+          <div class="taylor-ref-box t7-box-d">
+            <div class="trb-title">Propiedad clave</div>
+            <div class="trb-formula">Lᵢ(xᵢ) = 1 · Lᵢ(xⱼ) = 0 (j≠i)<br>
+              Newton ≡ Lagrange — mismo polinomio, distinta forma</div>
+          </div>
+        </div>
+      </div>
+    </div><!-- /t7-input -->
+
+    <!-- ── SECCIONES RESULTADO ────────────────────────────── -->
+    <div id="t7-newton-tabla" class="t7-sec" style="display:none;"></div>
+    <div id="t7-newton-pol"   class="t7-sec" style="display:none;"></div>
+    <div id="t7-lag-bases"    class="t7-sec" style="display:none;"></div>
+    <div id="t7-lag-pol"      class="t7-sec" style="display:none;"></div>
+
+    <!-- Gráfica T7 -->
+    <div id="t7-grafica" class="t7-sec" style="display:none;">
+      <div class="page-header">
+        <h2>Gráfica — Polinomio Interpolante</h2>
+        <p>Puntos de datos · curva interpolante · punto predicho. Arrastra · Zoom con rueda.</p>
+      </div>
+      <div class="card" style="padding:0;overflow:hidden;position:relative;">
+        <canvas id="t7Canvas" style="display:block;width:100%;cursor:crosshair;touch-action:none;"></canvas>
+        <div id="t7Tooltip" style="position:absolute;pointer-events:none;display:none;
+          background:#1e293b;color:#f8fafc;font-family:'JetBrains Mono',monospace;
+          font-size:.75rem;padding:.35rem .65rem;border-radius:6px;
+          box-shadow:0 4px 16px rgba(0,0,0,.25);border:1px solid #334155;
+          white-space:nowrap;z-index:10;line-height:1.6;"></div>
+        <div id="t7Coords" style="position:absolute;bottom:10px;left:10px;
+          background:rgba(255,255,255,.88);backdrop-filter:blur(4px);
+          border:1px solid #e2e8f0;border-radius:6px;padding:.2rem .55rem;
+          font-family:'JetBrains Mono',monospace;font-size:.72rem;color:#64748b;">
+          x = — &nbsp; y = —
+        </div>
+        <div style="position:absolute;bottom:12px;right:12px;display:flex;flex-direction:column;gap:4px;">
+          <button onclick="t7Zoom(0.75)" style="width:30px;height:30px;border:1px solid #e2e8f0;border-radius:6px;background:rgba(255,255,255,.92);backdrop-filter:blur(4px);font-size:16px;cursor:pointer;">+</button>
+          <button onclick="t7Zoom(1.35)" style="width:30px;height:30px;border:1px solid #e2e8f0;border-radius:6px;background:rgba(255,255,255,.92);backdrop-filter:blur(4px);font-size:16px;cursor:pointer;">−</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- TRAZADORES CÚBICOS NATURALES -->
+
+
+    <!-- Sección 7: Intervalos hᵢ -->
+    <div id="t7-splines-hi"      class="t7-sec" style="display:none;"></div>
+
+    <!-- Sección 8: Sistema tridiagonal -->
+    <div id="t7-splines-sistema" class="t7-sec" style="display:none;"></div>
+
+    <!-- Sección 9: Coeficientes -->
+    <div id="t7-splines-coef"    class="t7-sec" style="display:none;"></div>
+
+    <!-- Sección 10: Evaluación -->
+    <div id="t7-splines-eval"    class="t7-sec" style="display:none;"></div>
+
+    <!-- Sección 11: Gráfica Splines -->
+    <div id="t7-splines-grafica" class="t7-sec" style="display:none;">
+      <div class="page-header">
+        <h2>Trazadores Cúbicos — Gráfica</h2>
+        <p>Cada tramo Sᵢ(x) se dibuja en un color distinto · punto evaluado en rojo.</p>
+      </div>
+      <div class="card" style="padding:0;overflow:hidden;position:relative;">
+        <canvas id="splCanvas" style="display:block;width:100%;cursor:crosshair;touch-action:none;"></canvas>
+        <div id="splTooltip" style="position:absolute;pointer-events:none;display:none;
+          background:#1e293b;color:#f8fafc;font-family:'JetBrains Mono',monospace;
+          font-size:.75rem;padding:.35rem .65rem;border-radius:6px;
+          box-shadow:0 4px 16px rgba(0,0,0,.25);border:1px solid #334155;
+          white-space:nowrap;z-index:10;line-height:1.6;"></div>
+        <div id="splCoords" style="position:absolute;bottom:10px;left:10px;
+          background:rgba(255,255,255,.88);backdrop-filter:blur(4px);
+          border:1px solid #e2e8f0;border-radius:6px;padding:.2rem .55rem;
+          font-family:'JetBrains Mono',monospace;font-size:.72rem;color:#64748b;">
+          x = — &nbsp; y = —
+        </div>
+        <div style="position:absolute;bottom:12px;right:12px;display:flex;flex-direction:column;gap:4px;">
+          <button onclick="splZoom(0.75)" style="width:30px;height:30px;border:1px solid #e2e8f0;border-radius:6px;background:rgba(255,255,255,.92);font-size:16px;cursor:pointer;">+</button>
+          <button onclick="splZoom(1.35)" style="width:30px;height:30px;border:1px solid #e2e8f0;border-radius:6px;background:rgba(255,255,255,.92);font-size:16px;cursor:pointer;">−</button>
+        </div>
+      </div>
+    </div><!-- /t7-splines-grafica -->
+
+    <!-- Botón descarga T7 -->
+    <div id="t7-download-bar" class="t7-sec" style="display:none;padding:0 1.5rem 1.5rem;">
+      <div style="display:flex;gap:.75rem;flex-wrap:wrap;">
+        <button onclick="numerixExport.t7()" class="btn-download-excel" style="flex:1;min-width:240px;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/></svg>
+          Excel — Newton / Lagrange
+        </button>
+        <button onclick="numerixExport.t7spl()" class="btn-download-excel" style="flex:1;min-width:240px;background:linear-gradient(135deg,#7c3aed,#4c1d95);">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/></svg>
+          Excel — Trazadores Cúbicos
+        </button>
+      </div>
+    </div>
+
+  </div><!-- /app-main T7 -->
+</div><!-- /panel-t7 -->
+
+
+<!-- ════════════════════════════════════════════════════════
+     TEMA 8 — DIFERENCIACIÓN NUMÉRICA
+     Diferencias Finitas · Extrapolación de Richardson
+════════════════════════════════════════════════════════ -->
+<div id="panel-t8" class="theme-panel with-sidebar">
+
+  <!-- ══ SIDEBAR T8 ════════════════════════════════════════ -->
+  <nav class="inner-sidebar">
+    <div class="nav-section-label">Entrada</div>
+    <a class="nav-item t8-nav active" data-t8="t8-input">
+      <span class="nav-icon">📝</span> Ingreso de datos
+    </a>
+    <div class="nav-section-label">Primera Derivada</div>
+    <a class="nav-item t8-nav" data-t8="t8-adelante">
+      <span class="nav-icon">→</span> 1. Dif. hacia adelante
+    </a>
+    <a class="nav-item t8-nav" data-t8="t8-atras">
+      <span class="nav-icon">←</span> 2. Dif. hacia atrás
+    </a>
+    <a class="nav-item t8-nav" data-t8="t8-central">
+      <span class="nav-icon">↔</span> 3. Dif. central
+    </a>
+    <div class="nav-section-label">Segunda Derivada</div>
+    <a class="nav-item t8-nav" data-t8="t8-segunda">
+      <span class="nav-icon">f''</span> 4. Segunda derivada
+    </a>
+    <div class="nav-section-label">Richardson</div>
+    <a class="nav-item t8-nav" data-t8="t8-richardson">
+      <span class="nav-icon">R</span> 5. Extrapolación
+    </a>
+    <div class="nav-section-label">Comparación</div>
+    <a class="nav-item t8-nav" data-t8="t8-resumen">
+      <span class="nav-icon">📊</span> 6. Resumen
+    </a>
+  </nav>
+
+  <!-- ══ MOBILE NAV T8 ══════════════════════════════════════ -->
+  <div class="mobile-inner-nav">
+    <button class="mobile-inner-item t8-nav active" data-t8="t8-input">
+      <span class="mobile-inner-icon">📝</span>Datos
+    </button>
+    <button class="mobile-inner-item t8-nav" data-t8="t8-adelante">
+      <span class="mobile-inner-icon">→</span>Adel.
+    </button>
+    <button class="mobile-inner-item t8-nav" data-t8="t8-atras">
+      <span class="mobile-inner-icon">←</span>Atrás
+    </button>
+    <button class="mobile-inner-item t8-nav" data-t8="t8-central">
+      <span class="mobile-inner-icon">↔</span>Central
+    </button>
+    <button class="mobile-inner-item t8-nav" data-t8="t8-segunda">
+      <span class="mobile-inner-icon">f''</span>2da
+    </button>
+    <button class="mobile-inner-item t8-nav" data-t8="t8-richardson">
+      <span class="mobile-inner-icon">R</span>Rich.
+    </button>
+    <button class="mobile-inner-item t8-nav" data-t8="t8-resumen">
+      <span class="mobile-inner-icon">📊</span>Res.
+    </button>
+  </div>
+
+  <!-- ══ CONTENIDO T8 ════════════════════════════════════════ -->
+  <div class="app-main">
+
+    <!-- Alert global T8 -->
+    <div id="t8AlertGlobal" style="margin-bottom:.75rem;"></div>
+
+    <!-- ── INGRESO DE DATOS ────────────────────────────────── -->
+    <div id="t8-input" class="t8-sec active">
+      <div class="page-header">
+        <h2>Diferenciación Numérica</h2>
+        <p>Aproxima derivadas cuando no se conoce el modelo matemático exacto o cuando
+           se trabaja con datos discretos. Tres tipos de diferencias finitas.</p>
+      </div>
+
+      <!-- Modo de entrada -->
+      <div class="card" style="margin-bottom:1.25rem;">
+        <div class="card-header">
+          <div class="card-header-icon t8-icon">📐</div>
+          <div>
+            <div class="card-title">Modo de entrada</div>
+            <div class="card-subtitle">Elige si ingresas una función f(x) o una tabla de datos (xᵢ, f(xᵢ))</div>
+          </div>
+        </div>
+        <div class="mode-radio-group" style="padding:0 0 .5rem;">
+          <label class="mode-radio-item">
+            <input type="radio" name="t8Mode" value="funcion" checked />
+            <span class="mode-radio-box">
+              <span class="mode-radio-icon">f(x)</span>
+              <span class="mode-radio-text">
+                <strong>Función f(x)</strong>
+                <small>Ingresa la expresión matemática — el sistema calcula f(x₀±h)</small>
+              </span>
+            </span>
+          </label>
+          <label class="mode-radio-item">
+            <input type="radio" name="t8Mode" value="tabla" />
+            <span class="mode-radio-box">
+              <span class="mode-radio-icon">📋</span>
+              <span class="mode-radio-text">
+                <strong>Tabla de datos</strong>
+                <small>Ingresa pares (xᵢ, f(xᵢ)) discretos — como el ejemplo temperatura de clase</small>
+              </span>
+            </span>
+          </label>
+        </div>
+      </div>
+
+      <!-- Panel función -->
+      <div id="t8PanelFuncion" class="card" style="margin-bottom:1.25rem;">
+        <div class="card-header">
+          <div class="card-header-icon t8-icon">f(x)</div>
+          <div>
+            <div class="card-title">Función f(x)</div>
+            <div class="card-subtitle">Usa: sin, cos, exp, log, sqrt, pow(x,n), PI</div>
+          </div>
+        </div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>f(x) =</label>
+            <input type="text" id="t8Fx" value="sin(x)" placeholder="ej: sin(x), exp(x), 4*pow(x,3)-5*x" />
+            <div class="hint">Usa la misma sintaxis que los otros módulos: sin(x), cos(x), exp(x)…</div>
+          </div>
+          <div class="form-group">
+            <label>f'(x) exacta <span style="font-weight:400;color:var(--gray-400);">(opcional — para calcular error)</span></label>
+            <input type="text" id="t8FxExacta" value="cos(x)" placeholder="ej: cos(x)" />
+          </div>
+          <div class="form-group">
+            <label>x₀ (punto a derivar)</label>
+            <input type="number" id="t8X0" value="0" step="any" />
+          </div>
+          <div class="form-group">
+            <label>h (valor de paso)</label>
+            <input type="number" id="t8H" value="0.2" step="any" />
+          </div>
+        </div>
+      </div>
+
+      <!-- Panel tabla -->
+      <div id="t8PanelTabla" class="card" style="display:none;margin-bottom:1.25rem;">
+        <div class="card-header">
+          <div class="card-header-icon t8-icon">📋</div>
+          <div>
+            <div class="card-title">Tabla de datos (xᵢ, f(xᵢ))</div>
+            <div class="card-subtitle">Ingresa los pares ordenados por xᵢ ascendente · Mínimo 3 puntos</div>
+          </div>
+          <div style="margin-left:auto;display:flex;gap:.5rem;">
+            <button id="btnT8AddRow" class="btn btn-secondary" style="padding:.35rem .85rem;font-size:.78rem;">+ Fila</button>
+            <button id="btnT8RemRow" class="btn btn-secondary" style="padding:.35rem .85rem;font-size:.78rem;">− Fila</button>
+          </div>
+        </div>
+        <div style="overflow-x:auto;">
+          <table class="t6-data-table" id="t8DataTable">
+            <thead><tr><th>i</th><th>xᵢ</th><th>f(xᵢ)</th></tr></thead>
+            <tbody id="t8DataBody"></tbody>
+          </table>
+        </div>
+        <div style="border-top:1px solid var(--border);padding-top:1rem;margin-top:1rem;">
+          <div class="form-group" style="max-width:280px;">
+            <label>x₀ (punto a derivar)</label>
+            <input type="number" id="t8X0Tab" value="2" step="any" />
+            <div class="hint">Debe existir en la tabla o ser un punto interior</div>
+          </div>
+        </div>
+      </div>
+
+      <div id="t8Alert"></div>
+      <div class="btn-group" style="margin-top:1rem;">
+        <button id="btnT8Calc" class="btn t8-btn-primary">▶ Calcular derivadas</button>
+        <button id="btnT8EjFx"  class="btn btn-secondary">📋 Ejemplo función (clase)</button>
+        <button id="btnT8EjTab" class="btn btn-secondary">📋 Ejemplo tabla (temperatura)</button>
+        <button id="btnT8EjDron" class="btn btn-secondary">📋 Ejemplo tabla (dron)</button>
+      </div>
+
+      <!-- Referencia -->
+      <div class="card" style="margin-top:1.25rem;">
+        <div class="card-header">
+          <div class="card-header-icon t8-icon">📖</div>
+          <div><div class="card-title">Fórmulas de referencia</div></div>
+        </div>
+        <div class="taylor-ref-grid">
+          <div class="taylor-ref-box t8-box-a">
+            <div class="trb-title">Dif. hacia adelante</div>
+            <div class="trb-formula">f'(x₀) ≈ [f(x₀+h) − f(x₀)] / h<br>
+              Error proporcional a h</div>
+          </div>
+          <div class="taylor-ref-box t8-box-b">
+            <div class="trb-title">Dif. hacia atrás</div>
+            <div class="trb-formula">f'(x₀) ≈ [f(x₀) − f(x₀−h)] / h<br>
+              Error proporcional a h</div>
+          </div>
+          <div class="taylor-ref-box t8-box-c">
+            <div class="trb-title">Dif. central ⭐</div>
+            <div class="trb-formula">f'(x₀) ≈ [f(x₀+h) − f(x₀−h)] / 2h<br>
+              Más recomendada · Error O(h²)</div>
+          </div>
+          <div class="taylor-ref-box t8-box-d">
+            <div class="trb-title">Segunda derivada</div>
+            <div class="trb-formula">f''(x) ≈ [f(x+h) − 2f(x) + f(x−h)] / h²<br>
+              Aceleración / curvatura</div>
+          </div>
+        </div>
+      </div>
+    </div><!-- /t8-input -->
+
+    <!-- Secciones resultado -->
+    <div id="t8-adelante"   class="t8-sec" style="display:none;"></div>
+    <div id="t8-atras"      class="t8-sec" style="display:none;"></div>
+    <div id="t8-central"    class="t8-sec" style="display:none;"></div>
+    <div id="t8-segunda"    class="t8-sec" style="display:none;"></div>
+    <div id="t8-richardson" class="t8-sec" style="display:none;"></div>
+    <div id="t8-resumen"    class="t8-sec" style="display:none;"></div>
+
+    <!-- Download bar T8 -->
+    <div id="t8-download-bar" class="t8-sec" style="display:none;padding:0 1.5rem 1.5rem;">
+      <button onclick="numerixExport.t8()" class="btn-download-excel">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/></svg>
+        Descargar Excel — Diferenciación Numérica
+      </button>
+    </div>
+
+  </div><!-- /app-main T8 -->
+</div><!-- /panel-t8 -->
+
+
+<!-- ════════════════════════════════════════════════════════
+     TEMA 9 — INTEGRACIÓN POR APROXIMACIÓN
+     Trapecio · Simpson 1/3 · Simpson 3/8
+════════════════════════════════════════════════════════ -->
+<div id="panel-t9" class="theme-panel with-sidebar">
+
+  <!-- ══ SIDEBAR T9 ════════════════════════════════════════ -->
+  <nav class="inner-sidebar">
+    <div class="nav-section-label">Entrada</div>
+    <a class="nav-item t9-nav active" data-t9="t9-input">
+      <span class="nav-icon">📝</span> Ingreso de datos
+    </a>
+    <div class="nav-section-label">Regla del Trapecio</div>
+    <a class="nav-item t9-nav" data-t9="t9-trap-simple">
+      <span class="nav-icon">◻</span> 1. Simple (n=1)
+    </a>
+    <a class="nav-item t9-nav" data-t9="t9-trap-comp">
+      <span class="nav-icon">▦</span> 2. Compuesta (n≥2)
+    </a>
+    <div class="nav-section-label">Simpson 1/3</div>
+    <a class="nav-item t9-nav" data-t9="t9-s13-simple">
+      <span class="nav-icon">⌒</span> 3. Simple (n=2)
+    </a>
+    <a class="nav-item t9-nav" data-t9="t9-s13-comp">
+      <span class="nav-icon">⌣</span> 4. Compuesta (n par)
+    </a>
+    <div class="nav-section-label">Simpson 3/8</div>
+    <a class="nav-item t9-nav" data-t9="t9-s38-simple">
+      <span class="nav-icon">∫</span> 5. Simple (n=3)
+    </a>
+    <a class="nav-item t9-nav" data-t9="t9-s38-comp">
+      <span class="nav-icon">∬</span> 6. Compuesta (n múlt.3)
+    </a>
+    <div class="nav-section-label">Comparación</div>
+    <a class="nav-item t9-nav" data-t9="t9-resumen">
+      <span class="nav-icon">📊</span> 7. Resumen
+    </a>
+  </nav>
+
+  <!-- ══ MOBILE NAV T9 ══════════════════════════════════════ -->
+  <div class="mobile-inner-nav">
+    <button class="mobile-inner-item t9-nav active" data-t9="t9-input"><span class="mobile-inner-icon">📝</span>Datos</button>
+    <button class="mobile-inner-item t9-nav" data-t9="t9-trap-simple"><span class="mobile-inner-icon">◻</span>Trap.S</button>
+    <button class="mobile-inner-item t9-nav" data-t9="t9-trap-comp"><span class="mobile-inner-icon">▦</span>Trap.C</button>
+    <button class="mobile-inner-item t9-nav" data-t9="t9-s13-simple"><span class="mobile-inner-icon">⌒</span>S1/3 S</button>
+    <button class="mobile-inner-item t9-nav" data-t9="t9-s13-comp"><span class="mobile-inner-icon">⌣</span>S1/3 C</button>
+    <button class="mobile-inner-item t9-nav" data-t9="t9-s38-simple"><span class="mobile-inner-icon">∫</span>S3/8 S</button>
+    <button class="mobile-inner-item t9-nav" data-t9="t9-s38-comp"><span class="mobile-inner-icon">∬</span>S3/8 C</button>
+    <button class="mobile-inner-item t9-nav" data-t9="t9-resumen"><span class="mobile-inner-icon">📊</span>Res.</button>
+  </div>
+
+  <!-- ══ CONTENIDO T9 ════════════════════════════════════════ -->
+  <div class="app-main">
+
+    <div id="t9AlertGlobal" style="margin-bottom:.75rem;"></div>
+
+    <!-- ── INGRESO DE DATOS ────────────────────────────────── -->
+    <div id="t9-input" class="t9-sec active">
+      <div class="page-header">
+        <h2>Integración por Aproximación — Newton-Cotes</h2>
+        <p>Aproxima el valor de ∫ₐᵇ f(x)dx usando polinomios interpolantes.<br>
+           Ingresa la función, los límites [a,b] y el número de subintervalos n.</p>
+      </div>
+
+      <div class="card" style="margin-bottom:1.25rem;">
+        <div class="card-header">
+          <div class="card-header-icon t9-icon">∫</div>
+          <div>
+            <div class="card-title">Función e intervalo</div>
+            <div class="card-subtitle">Se calcularán los 6 métodos automáticamente</div>
+          </div>
+        </div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>f(x) =</label>
+            <input type="text" id="t9Fx" value="exp(x)" placeholder="ej: exp(x), sin(x), pow(x,2)" />
+            <div class="hint">Usa: sin, cos, exp, log, sqrt, pow(x,n), PI</div>
+          </div>
+          <div class="form-group">
+            <label>Valor exacto (opcional — para calcular ε)</label>
+            <input type="number" id="t9Exacto" value="6.38905609893065" step="any" />
+            <div class="hint">Para ∫₀² eˣdx el valor exacto es e²−1 = 6.38905609893065</div>
+          </div>
+          <div class="form-group">
+            <label>Límite inferior a</label>
+            <input type="number" id="t9A" value="0" step="any" />
+          </div>
+          <div class="form-group">
+            <label>Límite superior b</label>
+            <input type="number" id="t9B" value="2" step="any" />
+          </div>
+          <div class="form-group">
+            <label>n (subintervalos compuesta)</label>
+            <input type="number" id="t9N" value="4" min="1" max="100" />
+            <div class="hint" id="t9NHint">n=4: par ✓ para Simpson 1/3 · múltiplo de 3: no</div>
+          </div>
+        </div>
+
+        <div id="t9Alert"></div>
+        <div class="btn-group" style="margin-top:1rem;">
+          <button id="btnT9Calc" class="btn t9-btn-primary">▶ Calcular todas las reglas</button>
+          <button id="btnT9EjEx" class="btn btn-secondary">📋 Ejemplo clase (∫₀² eˣdx)</button>
+        </div>
+      </div>
+
+      <!-- Referencia teórica -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-header-icon t9-icon">📖</div>
+          <div><div class="card-title">Fórmulas de referencia — Newton-Cotes</div></div>
+        </div>
+        <div class="taylor-ref-grid">
+          <div class="taylor-ref-box t9-box-a">
+            <div class="trb-title">Trapecio simple</div>
+            <div class="trb-formula">∫ ≈ (h/2)[f(x₀)+f(xₙ)]<br>h = b−a</div>
+          </div>
+          <div class="taylor-ref-box t9-box-b">
+            <div class="trb-title">Trapecio compuesta</div>
+            <div class="trb-formula">∫ ≈ (h/2)[f(x₀)+2Σf(xᵢ)+f(xₙ)]<br>h = (b−a)/n</div>
+          </div>
+          <div class="taylor-ref-box t9-box-c">
+            <div class="trb-title">Simpson 1/3 simple</div>
+            <div class="trb-formula">∫ ≈ (h/3)[f(x₀)+4f(x₁)+f(x₂)]<br>h = (b−a)/2</div>
+          </div>
+          <div class="taylor-ref-box t9-box-d">
+            <div class="trb-title">Simpson 3/8 simple</div>
+            <div class="trb-formula">∫ ≈ (3h/8)[f(x₀)+3f(x₁)+3f(x₂)+f(x₃)]<br>h = (b−a)/3</div>
+          </div>
+        </div>
+      </div>
+    </div><!-- /t9-input -->
+
+    <!-- Secciones resultado -->
+    <div id="t9-trap-simple" class="t9-sec" style="display:none;"></div>
+    <div id="t9-trap-comp"   class="t9-sec" style="display:none;"></div>
+    <div id="t9-s13-simple"  class="t9-sec" style="display:none;"></div>
+    <div id="t9-s13-comp"    class="t9-sec" style="display:none;"></div>
+    <div id="t9-s38-simple"  class="t9-sec" style="display:none;"></div>
+    <div id="t9-s38-comp"    class="t9-sec" style="display:none;"></div>
+    <div id="t9-resumen"     class="t9-sec" style="display:none;"></div>
+
+    <!-- Download -->
+    <div id="t9-download-bar" class="t9-sec" style="display:none;padding:0 1.5rem 1.5rem;">
+      <button onclick="numerixExport.t9()" class="btn-download-excel">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/></svg>
+        Descargar Excel — Integración por Aproximación
+      </button>
+    </div>
+
+  </div><!-- /app-main T9 -->
+</div><!-- /panel-t9 -->
+
+
+<!-- ════════════════════════════════════════════════════════
+     TEMA 10 — INTEGRACIÓN DE ROMBERG
+     Extrapolación de Richardson sobre Trapecio Compuesta
+════════════════════════════════════════════════════════ -->
+<div id="panel-t10" class="theme-panel with-sidebar">
+
+  <nav class="inner-sidebar">
+    <div class="nav-section-label">Entrada</div>
+    <a class="nav-item t10-nav active" data-t10="t10-input">
+      <span class="nav-icon">📝</span> Ingreso de datos
+    </a>
+    <div class="nav-section-label">Procedimiento</div>
+    <a class="nav-item t10-nav" data-t10="t10-col1">
+      <span class="nav-icon">◼</span> 1. Columna K=1 (Trapecio)
+    </a>
+    <a class="nav-item t10-nav" data-t10="t10-tabla">
+      <span class="nav-icon">📋</span> 2. Tabla de Romberg
+    </a>
+    <a class="nav-item t10-nav" data-t10="t10-resultado">
+      <span class="nav-icon">🎯</span> 3. Resultado final
+    </a>
+  </nav>
+
+  <div class="mobile-inner-nav">
+    <button class="mobile-inner-item t10-nav active" data-t10="t10-input"><span class="mobile-inner-icon">📝</span>Datos</button>
+    <button class="mobile-inner-item t10-nav" data-t10="t10-col1"><span class="mobile-inner-icon">◼</span>K=1</button>
+    <button class="mobile-inner-item t10-nav" data-t10="t10-tabla"><span class="mobile-inner-icon">📋</span>Tabla</button>
+    <button class="mobile-inner-item t10-nav" data-t10="t10-resultado"><span class="mobile-inner-icon">🎯</span>Resultado</button>
+  </div>
+
+  <div class="app-main">
+
+    <div id="t10AlertGlobal" style="margin-bottom:.75rem;"></div>
+
+    <!-- INGRESO -->
+    <div id="t10-input" class="t10-sec active">
+      <div class="page-header">
+        <h2>Integración de Romberg</h2>
+        <p>Combina la <strong>Regla del Trapecio Compuesta</strong> con la
+           <strong>Extrapolación de Richardson</strong> para obtener resultados
+           de alta precisión usando una tabla triangular I<sub>j,k</sub>.</p>
+      </div>
+
+      <div class="card" style="margin-bottom:1.25rem;">
+        <div class="card-header">
+          <div class="card-header-icon t10-icon">∫</div>
+          <div>
+            <div class="card-title">Función e intervalo</div>
+            <div class="card-subtitle">Se construirá la tabla de Romberg hasta alcanzar la tolerancia o el máximo de filas</div>
+          </div>
+        </div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>f(x) =</label>
+            <input type="text" id="t10Fx" value="exp(x)" placeholder="ej: exp(x), sin(x)" />
+            <div class="hint">Usa: sin, cos, exp, log, sqrt, pow(x,n), PI</div>
+          </div>
+          <div class="form-group">
+            <label>Valor exacto <span style="font-weight:400;color:var(--gray-400);">(opcional)</span></label>
+            <input type="number" id="t10Exacto" value="6.38905609893065" step="any" />
+          </div>
+          <div class="form-group">
+            <label>Límite inferior a</label>
+            <input type="number" id="t10A" value="0" step="any" />
+          </div>
+          <div class="form-group">
+            <label>Límite superior b</label>
+            <input type="number" id="t10B" value="2" step="any" />
+          </div>
+          <div class="form-group">
+            <label>Máximo de filas (j)</label>
+            <input type="number" id="t10MaxJ" value="5" min="2" max="10" />
+            <div class="hint">K=1 usa n=2^(j-1) intervalos → más filas = mayor precisión</div>
+          </div>
+          <div class="form-group">
+            <label>Tolerancia ε</label>
+            <input type="number" id="t10Tol" value="0.00001" step="any" />
+            <div class="hint">Se detiene cuando |ε| &lt; tolerancia · 10⁻⁵ recomendado</div>
+          </div>
+        </div>
+
+        <div id="t10Alert"></div>
+        <div class="btn-group" style="margin-top:1rem;">
+          <button id="btnT10Calc" class="btn t10-btn-primary">▶ Construir tabla de Romberg</button>
+          <button id="btnT10Ej"   class="btn btn-secondary">📋 Ejemplo clase (∫₀² eˣdx)</button>
+        </div>
+      </div>
+
+      <!-- Referencia -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-header-icon t10-icon">📖</div>
+          <div><div class="card-title">Fundamento — Romberg</div></div>
+        </div>
+        <div class="taylor-ref-grid">
+          <div class="taylor-ref-box t10-box-a">
+            <div class="trb-title">Columna K=1</div>
+            <div class="trb-formula">Iⱼ,₁ = Trapecio con n = 2^(j-1)<br>
+              I₁,₁ → n=2 · I₂,₁ → n=4 · I₃,₁ → n=8</div>
+          </div>
+          <div class="taylor-ref-box t10-box-b">
+            <div class="trb-title">Columna K≥2 (Richardson)</div>
+            <div class="trb-formula">Iⱼ,ₖ = [4^(k-1)·Iⱼ₊₁,ₖ₋₁ − Iⱼ,ₖ₋₁] / (4^(k-1)−1)</div>
+          </div>
+          <div class="taylor-ref-box t10-box-c">
+            <div class="trb-title">Estructura triangular</div>
+            <div class="trb-formula">I₁,₁ → I₁,₂ → I₁,₃ → …<br>
+              Diagonal superior = refinamientos</div>
+          </div>
+          <div class="taylor-ref-box t10-box-d">
+            <div class="trb-title">Criterio de parada</div>
+            <div class="trb-formula">|ε| = |Iⱼ,ₖ − Iⱼ₋₁,ₖ₋₁| &lt; tolerancia<br>
+              Tolerancia recomendada: 10⁻⁵</div>
+          </div>
+        </div>
+      </div>
+    </div><!-- /t10-input -->
+
+    <div id="t10-col1"     class="t10-sec" style="display:none;"></div>
+    <div id="t10-tabla"    class="t10-sec" style="display:none;"></div>
+    <div id="t10-resultado" class="t10-sec" style="display:none;"></div>
+
+    <!-- Download -->
+    <div id="t10-download-bar" class="t10-sec" style="display:none;padding:0 1.5rem 1.5rem;">
+      <button onclick="numerixExport.t10()" class="btn-download-excel">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/></svg>
+        Descargar Excel — Integración de Romberg
+      </button>
+    </div>
+
+  </div><!-- /app-main T10 -->
+</div><!-- /panel-t10 -->
+
+
+<!-- ════════════════════════════════════════════════════════
+     TEMA 11 — MÉTODOS DE UN PASO PARA EDO
+     Euler · Euler Mejorado (Heun) · Runge-Kutta 4to Orden
+════════════════════════════════════════════════════════ -->
+<div id="panel-t11" class="theme-panel with-sidebar">
+
+  <nav class="inner-sidebar">
+    <div class="nav-section-label">Entrada</div>
+    <a class="nav-item t11-nav active" data-t11="t11-input">
+      <span class="nav-icon">📝</span> Ingreso de datos
+    </a>
+    <div class="nav-section-label">Procedimiento</div>
+    <a class="nav-item t11-nav" data-t11="t11-formula">
+      <span class="nav-icon">📐</span> 1. Fórmula del método
+    </a>
+    <a class="nav-item t11-nav" data-t11="t11-iteraciones">
+      <span class="nav-icon">🔄</span> 2. Iteraciones paso a paso
+    </a>
+    <a class="nav-item t11-nav" data-t11="t11-tabla">
+      <span class="nav-icon">📋</span> 3. Tabla de resultados
+    </a>
+    <a class="nav-item t11-nav" data-t11="t11-grafica">
+      <span class="nav-icon">📈</span> 4. Gráfica
+    </a>
+    <div class="nav-section-label">Comparación</div>
+    <a class="nav-item t11-nav" data-t11="t11-comparar">
+      <span class="nav-icon">⚖</span> 5. Comparar los 3 métodos
+    </a>
+  </nav>
+
+  <div class="mobile-inner-nav">
+    <button class="mobile-inner-item t11-nav active" data-t11="t11-input"><span class="mobile-inner-icon">📝</span>Datos</button>
+    <button class="mobile-inner-item t11-nav" data-t11="t11-formula"><span class="mobile-inner-icon">📐</span>Fórmula</button>
+    <button class="mobile-inner-item t11-nav" data-t11="t11-iteraciones"><span class="mobile-inner-icon">🔄</span>Iter.</button>
+    <button class="mobile-inner-item t11-nav" data-t11="t11-tabla"><span class="mobile-inner-icon">📋</span>Tabla</button>
+    <button class="mobile-inner-item t11-nav" data-t11="t11-grafica"><span class="mobile-inner-icon">📈</span>Gráf.</button>
+    <button class="mobile-inner-item t11-nav" data-t11="t11-comparar"><span class="mobile-inner-icon">⚖</span>Comp.</button>
+  </div>
+
+  <div class="app-main">
+
+    <div id="t11AlertGlobal" style="margin-bottom:.75rem;"></div>
+
+    <!-- INGRESO -->
+    <div id="t11-input" class="t11-sec active">
+      <div class="page-header">
+        <h2>Métodos de un Paso — EDO de Primer Orden</h2>
+        <p>Aproxima la solución de dy/dx = f(x,y) con condición inicial y(x₀)=y₀.<br>
+           Elige el método y los 3 se calculan automáticamente para comparar.</p>
+      </div>
+
+      <!-- Selector de método principal -->
+      <div class="card" style="margin-bottom:1.25rem;">
+        <div class="card-header">
+          <div class="card-header-icon t11-icon">⚙</div>
+          <div>
+            <div class="card-title">Método a destacar</div>
+            <div class="card-subtitle">Los 3 métodos se calculan siempre — este selecciona cuál ver primero en detalle</div>
+          </div>
+        </div>
+        <div class="mode-radio-group" style="padding:0 0 .5rem;">
+          <label class="mode-radio-item">
+            <input type="radio" name="t11Method" value="euler" checked />
+            <span class="mode-radio-box">
+              <span class="mode-radio-icon">①</span>
+              <span class="mode-radio-text"><strong>Euler</strong><small>yᵢ₊₁ = yᵢ + h·f(xᵢ,yᵢ) — el más simple, O(h)</small></span>
+            </span>
+          </label>
+          <label class="mode-radio-item">
+            <input type="radio" name="t11Method" value="heun" />
+            <span class="mode-radio-box">
+              <span class="mode-radio-icon">②</span>
+              <span class="mode-radio-text"><strong>Euler Mejorado (Heun)</strong><small>Predictor-corrector — O(h²)</small></span>
+            </span>
+          </label>
+          <label class="mode-radio-item">
+            <input type="radio" name="t11Method" value="rk4" />
+            <span class="mode-radio-box">
+              <span class="mode-radio-icon">③</span>
+              <span class="mode-radio-text"><strong>Runge-Kutta 4to orden</strong><small>4 pendientes ponderadas — O(h⁴), el más preciso</small></span>
+            </span>
+          </label>
+        </div>
+      </div>
+
+      <!-- PVI -->
+      <div class="card" style="margin-bottom:1.25rem;">
+        <div class="card-header">
+          <div class="card-header-icon t11-icon">f(x,y)</div>
+          <div>
+            <div class="card-title">Problema de Valor Inicial (PVI)</div>
+            <div class="card-subtitle">dy/dx = f(x,y) &nbsp;·&nbsp; y(x₀) = y₀</div>
+          </div>
+        </div>
+        <div class="form-grid">
+          <div class="form-group" style="grid-column:1/-1;">
+            <label>f(x,y) = dy/dx</label>
+            <input type="text" id="t11Fxy" value="x+y" placeholder="ej: x+y, x-y, 2*x*y" />
+            <div class="hint">Usa: x, y, sin, cos, exp, log, sqrt, pow(x,n), PI</div>
+          </div>
+          <div class="form-group">
+            <label>x₀</label>
+            <input type="number" id="t11X0" value="0" step="any" />
+          </div>
+          <div class="form-group">
+            <label>y₀ = y(x₀)</label>
+            <input type="number" id="t11Y0" value="1" step="any" />
+          </div>
+          <div class="form-group">
+            <label>h (tamaño de paso)</label>
+            <input type="number" id="t11H" value="0.1" step="any" min="0.001" />
+          </div>
+          <div class="form-group">
+            <label>xₙ (valor final a aproximar)</label>
+            <input type="number" id="t11Xn" value="0.5" step="any" />
+            <div class="hint" id="t11NHint">5 pasos desde x₀ hasta xₙ</div>
+          </div>
+        </div>
+        <div class="form-group" style="margin-top:.5rem;max-width:400px;">
+          <label>Solución exacta y(x) <span style="font-weight:400;color:var(--gray-400);">(opcional — para calcular error)</span></label>
+          <input type="text" id="t11Exacta" value="-x-1+2*exp(x)" placeholder="ej: -x-1+2*exp(x)" />
+        </div>
+
+        <div id="t11Alert"></div>
+        <div class="btn-group" style="margin-top:1rem;">
+          <button id="btnT11Calc" class="btn t11-btn-primary">▶ Resolver EDO</button>
+          <button id="btnT11Ej1"  class="btn btn-secondary">📋 Ejemplo clase 1 (y'=x+y)</button>
+          <button id="btnT11Ej2"  class="btn btn-secondary">📋 Ejemplo clase 2 (y'=x−y)</button>
+        </div>
+      </div>
+
+      <!-- Referencia -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-header-icon t11-icon">📖</div>
+          <div><div class="card-title">Fórmulas de referencia</div></div>
+        </div>
+        <div class="taylor-ref-grid">
+          <div class="taylor-ref-box t11-box-a">
+            <div class="trb-title">① Euler</div>
+            <div class="trb-formula">yᵢ₊₁ = yᵢ + h·f(xᵢ,yᵢ)<br>Error local O(h²) · global O(h)</div>
+          </div>
+          <div class="taylor-ref-box t11-box-b">
+            <div class="trb-title">② Euler Mejorado (Heun)</div>
+            <div class="trb-formula">Predictor: y*=yᵢ+h·f(xᵢ,yᵢ)<br>Corrector: yᵢ₊₁=yᵢ+h/2·[f(xᵢ,yᵢ)+f(xᵢ₊₁,y*)]</div>
+          </div>
+          <div class="taylor-ref-box t11-box-c">
+            <div class="trb-title">③ Runge-Kutta 4</div>
+            <div class="trb-formula">k₁=hf(xᵢ,yᵢ) · k₂=hf(xᵢ+h/2,yᵢ+k₁/2)<br>k₃=hf(xᵢ+h/2,yᵢ+k₂/2) · k₄=hf(xᵢ+h,yᵢ+k₃)<br>yᵢ₊₁=yᵢ+(k₁+2k₂+2k₃+k₄)/6</div>
+          </div>
+          <div class="taylor-ref-box t11-box-d">
+            <div class="trb-title">Orden de precisión</div>
+            <div class="trb-formula">Euler: O(h) · Heun: O(h²) · RK4: O(h⁴)<br>RK4 es el más exacto para el mismo h</div>
+          </div>
+        </div>
+      </div>
+    </div><!-- /t11-input -->
+
+    <div id="t11-formula"     class="t11-sec" style="display:none;"></div>
+    <div id="t11-iteraciones" class="t11-sec" style="display:none;"></div>
+    <div id="t11-tabla"       class="t11-sec" style="display:none;"></div>
+    <div id="t11-comparar"    class="t11-sec" style="display:none;"></div>
+
+    <!-- Gráfica -->
+    <div id="t11-grafica" class="t11-sec" style="display:none;">
+      <div class="page-header">
+        <h2>Gráfica — Curva Solución</h2>
+        <p>Comparación visual de Euler, Heun y RK4 vs solución exacta (si fue ingresada).</p>
+      </div>
+      <div class="card" style="padding:0;overflow:hidden;position:relative;">
+        <canvas id="t11Canvas" style="display:block;width:100%;cursor:crosshair;touch-action:none;"></canvas>
+        <div id="t11Tooltip" style="position:absolute;pointer-events:none;display:none;
+          background:#1e293b;color:#f8fafc;font-family:'JetBrains Mono',monospace;
+          font-size:.75rem;padding:.35rem .65rem;border-radius:6px;
+          box-shadow:0 4px 16px rgba(0,0,0,.25);border:1px solid #334155;white-space:nowrap;z-index:10;"></div>
+        <div id="t11Coords" style="position:absolute;bottom:10px;left:10px;
+          background:rgba(255,255,255,.88);border:1px solid #e2e8f0;border-radius:6px;
+          padding:.2rem .55rem;font-family:'JetBrains Mono',monospace;font-size:.72rem;color:#64748b;">x = — &nbsp; y = —</div>
+        <div style="position:absolute;bottom:12px;right:12px;display:flex;flex-direction:column;gap:4px;">
+          <button onclick="t11Zoom(0.75)" style="width:30px;height:30px;border:1px solid #e2e8f0;border-radius:6px;background:rgba(255,255,255,.92);font-size:16px;cursor:pointer;">+</button>
+          <button onclick="t11Zoom(1.35)" style="width:30px;height:30px;border:1px solid #e2e8f0;border-radius:6px;background:rgba(255,255,255,.92);font-size:16px;cursor:pointer;">−</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Download -->
+    <div id="t11-download-bar" class="t11-sec" style="display:none;padding:0 1.5rem 1.5rem;">
+      <button onclick="numerixExport.t11()" class="btn-download-excel">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/></svg>
+        Descargar Excel — Euler / Heun / RK4
+      </button>
+    </div>
+
+  </div><!-- /app-main T11 -->
+</div><!-- /panel-t11 -->
+
+
+<!-- ════════════════════════════════════════════════════════
+     TEMA 12 — SISTEMAS DE ECUACIONES DIFERENCIALES ORDINARIAS
+     Runge-Kutta 4to Orden acoplado (2 y 3 variables)
+════════════════════════════════════════════════════════ -->
+<div id="panel-t12" class="theme-panel with-sidebar">
+
+  <nav class="inner-sidebar">
+    <div class="nav-section-label">Entrada</div>
+    <a class="nav-item t12-nav active" data-t12="t12-input">
+      <span class="nav-icon">📝</span> Ingreso de datos
+    </a>
+    <div class="nav-section-label">Procedimiento</div>
+    <a class="nav-item t12-nav" data-t12="t12-formula">
+      <span class="nav-icon">📐</span> 1. Fórmula del sistema
+    </a>
+    <a class="nav-item t12-nav" data-t12="t12-iteraciones">
+      <span class="nav-icon">🔄</span> 2. Iteraciones paso a paso
+    </a>
+    <a class="nav-item t12-nav" data-t12="t12-tabla">
+      <span class="nav-icon">📋</span> 3. Tabla de resultados
+    </a>
+    <a class="nav-item t12-nav" data-t12="t12-grafica">
+      <span class="nav-icon">📈</span> 4. Gráfica x,y vs t
+    </a>
+    <a class="nav-item t12-nav" data-t12="t12-fase">
+      <span class="nav-icon">🌀</span> 5. Plano de fase
+    </a>
+  </nav>
+
+  <div class="mobile-inner-nav">
+    <button class="mobile-inner-item t12-nav active" data-t12="t12-input"><span class="mobile-inner-icon">📝</span>Datos</button>
+    <button class="mobile-inner-item t12-nav" data-t12="t12-formula"><span class="mobile-inner-icon">📐</span>Fórmula</button>
+    <button class="mobile-inner-item t12-nav" data-t12="t12-iteraciones"><span class="mobile-inner-icon">🔄</span>Iter.</button>
+    <button class="mobile-inner-item t12-nav" data-t12="t12-tabla"><span class="mobile-inner-icon">📋</span>Tabla</button>
+    <button class="mobile-inner-item t12-nav" data-t12="t12-grafica"><span class="mobile-inner-icon">📈</span>Gráf.</button>
+    <button class="mobile-inner-item t12-nav" data-t12="t12-fase"><span class="mobile-inner-icon">🌀</span>Fase</button>
+  </div>
+
+  <div class="app-main">
+
+    <div id="t12AlertGlobal" style="margin-bottom:.75rem;"></div>
+
+    <!-- INGRESO -->
+    <div id="t12-input" class="t12-sec active">
+      <div class="page-header">
+        <h2>Sistemas de Ecuaciones Diferenciales Ordinarias</h2>
+        <p>Resuelve sistemas acoplados con Runge-Kutta 4to orden:<br>
+           dx/dt = f(t,x,y) &nbsp;·&nbsp; dy/dt = g(t,x,y) &nbsp;·&nbsp; con x(t₀)=x₀, y(t₀)=y₀</p>
+      </div>
+
+      <!-- Tamaño del sistema -->
+      <div class="card" style="margin-bottom:1.25rem;">
+        <div class="card-header">
+          <div class="card-header-icon t12-icon">⚙</div>
+          <div>
+            <div class="card-title">Tamaño del sistema</div>
+            <div class="card-subtitle">2 ecuaciones acopladas (x,y) o 3 ecuaciones (x,y,z)</div>
+          </div>
+        </div>
+        <div class="mode-radio-group" style="padding:0 0 .5rem;">
+          <label class="mode-radio-item">
+            <input type="radio" name="t12Size" value="2" checked />
+            <span class="mode-radio-box">
+              <span class="mode-radio-icon">②</span>
+              <span class="mode-radio-text"><strong>Sistema 2×2</strong><small>dx/dt=f(t,x,y) · dy/dt=g(t,x,y)</small></span>
+            </span>
+          </label>
+          <label class="mode-radio-item">
+            <input type="radio" name="t12Size" value="3" />
+            <span class="mode-radio-box">
+              <span class="mode-radio-icon">③</span>
+              <span class="mode-radio-text"><strong>Sistema 3×3</strong><small>dx/dt, dy/dt, dz/dt acopladas</small></span>
+            </span>
+          </label>
+        </div>
+      </div>
+
+      <!-- PVI del sistema -->
+      <div class="card" style="margin-bottom:1.25rem;">
+        <div class="card-header">
+          <div class="card-header-icon t12-icon">f,g</div>
+          <div>
+            <div class="card-title">Sistema y Condiciones Iniciales</div>
+            <div class="card-subtitle">Variable independiente: t</div>
+          </div>
+        </div>
+        <div class="form-grid">
+          <div class="form-group" style="grid-column:1/-1;">
+            <label>dx/dt = f(t,x,y<span id="t12Zlabel1" style="display:none;">,z</span>)</label>
+            <input type="text" id="t12Fx" value="x-y" placeholder="ej: x-y, -y, x*y" />
+          </div>
+          <div class="form-group" style="grid-column:1/-1;">
+            <label>dy/dt = g(t,x,y<span id="t12Zlabel2" style="display:none;">,z</span>)</label>
+            <input type="text" id="t12Fy" value="x+y" placeholder="ej: x+y, x, -x*y" />
+          </div>
+          <div class="form-group" id="t12FzGroup" style="grid-column:1/-1;display:none;">
+            <label>dz/dt = p(t,x,y,z)</label>
+            <input type="text" id="t12Fz" value="x+y-z" placeholder="ej: x+y-z" />
+          </div>
+          <div class="form-group">
+            <label>t₀</label>
+            <input type="number" id="t12T0" value="0" step="any" />
+          </div>
+          <div class="form-group">
+            <label>x₀ = x(t₀)</label>
+            <input type="number" id="t12X0" value="1" step="any" />
+          </div>
+          <div class="form-group">
+            <label>y₀ = y(t₀)</label>
+            <input type="number" id="t12Y0" value="0" step="any" />
+          </div>
+          <div class="form-group" id="t12Z0Group" style="display:none;">
+            <label>z₀ = z(t₀)</label>
+            <input type="number" id="t12Z0" value="0" step="any" />
+          </div>
+          <div class="form-group">
+            <label>h (tamaño de paso)</label>
+            <input type="number" id="t12H" value="0.1" step="any" min="0.001" />
+          </div>
+          <div class="form-group">
+            <label>tₙ (valor final)</label>
+            <input type="number" id="t12Tn" value="0.5" step="any" />
+            <div class="hint" id="t12NHint">5 pasos desde t₀ hasta tₙ</div>
+          </div>
+        </div>
+
+        <div id="t12Alert"></div>
+        <div class="btn-group" style="margin-top:1rem;">
+          <button id="btnT12Calc" class="btn t12-btn-primary">▶ Resolver Sistema</button>
+          <button id="btnT12Ej1"  class="btn btn-secondary">📋 Ejemplo (oscilador x'=x−y, y'=x+y)</button>
+          <button id="btnT12Ej2"  class="btn btn-secondary">📋 Ejemplo depredador-presa</button>
+        </div>
+      </div>
+
+      <!-- Referencia -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-header-icon t12-icon">📖</div>
+          <div><div class="card-title">Fundamento — RK4 para sistemas</div></div>
+        </div>
+        <div class="taylor-ref-grid">
+          <div class="taylor-ref-box t12-box-a">
+            <div class="trb-title">Sistema acoplado</div>
+            <div class="trb-formula">dx/dt = f(t,x,y)<br>dy/dt = g(t,x,y)<br>Se calculan k's y l's en paralelo</div>
+          </div>
+          <div class="taylor-ref-box t12-box-b">
+            <div class="trb-title">Pendientes k (para x)</div>
+            <div class="trb-formula">k₁=hf(t,x,y) · k₂=hf(t+h/2,x+k₁/2,y+l₁/2)<br>k₃=hf(t+h/2,x+k₂/2,y+l₂/2) · k₄=hf(t+h,x+k₃,y+l₃)</div>
+          </div>
+          <div class="taylor-ref-box t12-box-c">
+            <div class="trb-title">Pendientes l (para y)</div>
+            <div class="trb-formula">l₁=hg(t,x,y) · l₂=hg(t+h/2,x+k₁/2,y+l₁/2)<br>l₃=hg(t+h/2,x+k₂/2,y+l₂/2) · l₄=hg(t+h,x+k₃,y+l₃)</div>
+          </div>
+          <div class="taylor-ref-box t12-box-d">
+            <div class="trb-title">Actualización</div>
+            <div class="trb-formula">xᵢ₊₁=xᵢ+(k₁+2k₂+2k₃+k₄)/6<br>yᵢ₊₁=yᵢ+(l₁+2l₂+2l₃+l₄)/6</div>
+          </div>
+        </div>
+      </div>
+    </div><!-- /t12-input -->
+
+    <div id="t12-formula"     class="t12-sec" style="display:none;"></div>
+    <div id="t12-iteraciones" class="t12-sec" style="display:none;"></div>
+    <div id="t12-tabla"       class="t12-sec" style="display:none;"></div>
+
+    <!-- Gráfica x,y vs t -->
+    <div id="t12-grafica" class="t12-sec" style="display:none;">
+      <div class="page-header">
+        <h2>Gráfica — x(t), y(t) vs Tiempo</h2>
+        <p>Evolución de cada variable en función de t.</p>
+      </div>
+      <div class="card" style="padding:0;overflow:hidden;position:relative;">
+        <canvas id="t12Canvas" style="display:block;width:100%;cursor:crosshair;touch-action:none;"></canvas>
+        <div id="t12Tooltip" style="position:absolute;pointer-events:none;display:none;
+          background:#1e293b;color:#f8fafc;font-family:'JetBrains Mono',monospace;font-size:.75rem;
+          padding:.35rem .65rem;border-radius:6px;box-shadow:0 4px 16px rgba(0,0,0,.25);
+          border:1px solid #334155;white-space:nowrap;z-index:10;"></div>
+        <div id="t12Coords" style="position:absolute;bottom:10px;left:10px;
+          background:rgba(255,255,255,.88);border:1px solid #e2e8f0;border-radius:6px;
+          padding:.2rem .55rem;font-family:'JetBrains Mono',monospace;font-size:.72rem;color:#64748b;">t = — &nbsp; valor = —</div>
+        <div style="position:absolute;bottom:12px;right:12px;display:flex;flex-direction:column;gap:4px;">
+          <button onclick="t12Zoom(0.75,'t')" style="width:30px;height:30px;border:1px solid #e2e8f0;border-radius:6px;background:rgba(255,255,255,.92);font-size:16px;cursor:pointer;">+</button>
+          <button onclick="t12Zoom(1.35,'t')" style="width:30px;height:30px;border:1px solid #e2e8f0;border-radius:6px;background:rgba(255,255,255,.92);font-size:16px;cursor:pointer;">−</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Plano de fase x vs y -->
+    <div id="t12-fase" class="t12-sec" style="display:none;">
+      <div class="page-header">
+        <h2>Plano de Fase — x vs y</h2>
+        <p>Trayectoria de la solución en el espacio de estados (x,y), eliminando el tiempo.</p>
+      </div>
+      <div class="card" style="padding:0;overflow:hidden;position:relative;">
+        <canvas id="t12CanvasFase" style="display:block;width:100%;cursor:crosshair;touch-action:none;"></canvas>
+        <div id="t12CoordsFase" style="position:absolute;bottom:10px;left:10px;
+          background:rgba(255,255,255,.88);border:1px solid #e2e8f0;border-radius:6px;
+          padding:.2rem .55rem;font-family:'JetBrains Mono',monospace;font-size:.72rem;color:#64748b;">x = — &nbsp; y = —</div>
+        <div style="position:absolute;bottom:12px;right:12px;display:flex;flex-direction:column;gap:4px;">
+          <button onclick="t12Zoom(0.75,'fase')" style="width:30px;height:30px;border:1px solid #e2e8f0;border-radius:6px;background:rgba(255,255,255,.92);font-size:16px;cursor:pointer;">+</button>
+          <button onclick="t12Zoom(1.35,'fase')" style="width:30px;height:30px;border:1px solid #e2e8f0;border-radius:6px;background:rgba(255,255,255,.92);font-size:16px;cursor:pointer;">−</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Download -->
+    <div id="t12-download-bar" class="t12-sec" style="display:none;padding:0 1.5rem 1.5rem;">
+      <button onclick="numerixExport.t12()" class="btn-download-excel">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/></svg>
+        Descargar Excel — Sistema de EDO
+      </button>
+    </div>
+
+  </div><!-- /app-main T12 -->
+</div><!-- /panel-t12 -->
+
+
 </div><!-- /app-layout -->
 
 <!-- ══════════════════════════════════════════════════════════
@@ -1638,6 +3413,7 @@
   </div>
 </footer>
 
+<script src="security.js"></script>
 <script src="script.js"></script>
 </body>
 </html>
